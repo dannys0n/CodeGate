@@ -43,10 +43,11 @@ async function handleStartupCommand(mode) {
 
 function startServer() {
   const serverEntry = path.join(appRoot, 'build', 'index.js');
+  const captureServerOutput = smokeTest;
   serverProcess = spawn(process.execPath, [serverEntry], {
     cwd: appRoot,
     windowsHide: true,
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: captureServerOutput ? ['ignore', 'pipe', 'pipe'] : 'ignore',
     env: {
       ...process.env,
       ELECTRON_RUN_AS_NODE: '1',
@@ -57,8 +58,10 @@ function startServer() {
       BROWSER: 'none'
     }
   });
-  serverProcess.stdout?.on('data', (chunk) => process.stdout.write(`[server] ${chunk}`));
-  serverProcess.stderr?.on('data', (chunk) => process.stderr.write(`[server] ${chunk}`));
+  if (captureServerOutput) {
+    serverProcess.stdout?.on('data', (chunk) => process.stdout.write(`[server] ${chunk}`));
+    serverProcess.stderr?.on('data', (chunk) => process.stderr.write(`[server] ${chunk}`));
+  }
   serverProcess.once('exit', (code) => {
     if (uiReady && !quitting && !released) showRecovery(serverExitDiagnostics(code));
   });
@@ -140,9 +143,7 @@ app.on('window-all-closed', () => { if (!released && !quitting) void release('ab
 
 const requestedStartupMode = startupMode();
 
-if (requestedStartupMode) {
-  await handleStartupCommand(requestedStartupMode);
-} else if (smokeTest) {
+async function runSmokeTest() {
   startServer();
   const server = await waitForServer(baseUrl, 60, 250, instanceToken);
   const docker = await checkDocker();
@@ -152,8 +153,9 @@ if (requestedStartupMode) {
   serverProcess?.kill();
   await new Promise((resolve) => serverProcess?.once('exit', resolve) ?? resolve());
   process.exit(diagnostics.length === 0 ? 0 : 1);
-} else {
-  await app.whenReady();
+}
+
+async function runDesktop() {
   uiReady = true;
   startServer();
   const server = await waitForServer(baseUrl, 60, 250, instanceToken);
@@ -161,11 +163,30 @@ if (requestedStartupMode) {
   const diagnostics = [...(server.ok ? [] : [server.error]), ...(docker.ok ? [] : docker.diagnostics)];
   if (diagnostics.length > 0) {
     showRecovery(diagnostics);
-  } else {
-    try {
-      await openGateWindows(await resolveGateUrl());
-    } catch (error) {
-      showRecovery([error instanceof Error ? error.message : String(error)]);
-    }
+    return;
   }
+  try {
+    await openGateWindows(await resolveGateUrl());
+  } catch (error) {
+    showRecovery([error instanceof Error ? error.message : String(error)]);
+  }
+}
+
+function handleLaunchFailure(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  process.stderr.write(`CodeGate failed to launch: ${message}\n`);
+  if (app.isReady()) {
+    uiReady = true;
+    showRecovery([message]);
+  } else {
+    app.exit(1);
+  }
+}
+
+if (requestedStartupMode) {
+  await handleStartupCommand(requestedStartupMode);
+} else if (smokeTest) {
+  void app.whenReady().then(runSmokeTest).catch(handleLaunchFailure);
+} else {
+  void app.whenReady().then(runDesktop).catch(handleLaunchFailure);
 }

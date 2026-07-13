@@ -278,6 +278,17 @@ Final evidence:
   trigger SmartScreen. Signing requires an external publisher certificate and is documented as a
   release step; it does not affect the validated local build or runtime behavior.
 
+Post-completion desktop launch correction (2026-07-12):
+
+- [x] Remove the Electron ESM startup deadlock by registering `app.whenReady()` continuations
+  without blocking main-module evaluation; the readiness smoke now covers Electron readiness.
+- [x] Avoid forwarding the packaged server's output into the GUI process's absent console, which
+  previously raised an uncaught `EPIPE` before the challenge renderer opened.
+- [x] Re-run `node --check desktop/main.mjs`, desktop tests (7/7), readiness smoke (server and
+  Docker healthy), the production build, and NSIS packaging. Reinstall the corrected per-user
+  package and verify one visible challenge window, a listener on port 5375, and health reporting
+  40 playable variants. Sign-in startup remains disabled.
+
 Validation:
 
 ```powershell
