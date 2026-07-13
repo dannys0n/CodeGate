@@ -13,6 +13,9 @@ const appRoot = app.getAppPath();
 const preload = path.join(appRoot, 'desktop', 'preload.cjs');
 const instanceToken = randomUUID();
 const smokeTest = process.argv.includes('--smoke-test');
+const requestedStartupMode = startupMode();
+const requiresSingleInstance = !smokeTest && !requestedStartupMode;
+const hasSingleInstanceLock = !requiresSingleInstance || app.requestSingleInstanceLock();
 let serverProcess;
 let windows = [];
 let activeDesktopSession = null;
@@ -148,8 +151,14 @@ ipcMain.handle('codegate:startup-status', () => {
 
 app.on('before-quit', () => { quitting = true; if (serverProcess && !serverProcess.killed) serverProcess.kill(); });
 app.on('window-all-closed', () => { if (!released && !quitting) void release('abandoned'); });
-
-const requestedStartupMode = startupMode();
+if (requiresSingleInstance && hasSingleInstanceLock) {
+  app.on('second-instance', () => {
+    const win = windows.find((candidate) => !candidate.isDestroyed());
+    if (!win) return;
+    if (win.isMinimized()) win.restore();
+    win.focus();
+  });
+}
 
 async function runSmokeTest() {
   const wsl = wakeWsl();
@@ -192,7 +201,9 @@ function handleLaunchFailure(error) {
   }
 }
 
-if (requestedStartupMode) {
+if (!hasSingleInstanceLock) {
+  app.quit();
+} else if (requestedStartupMode) {
   await handleStartupCommand(requestedStartupMode);
 } else if (smokeTest) {
   void app.whenReady().then(runSmokeTest).catch(handleLaunchFailure);
