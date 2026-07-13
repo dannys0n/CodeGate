@@ -137,7 +137,7 @@ async function importRecord(problem, record, repositoryRoot) {
     const outputReference = path.join(problem.root, 'reference', `${language}.${extension}`);
     const outputIncorrect = path.join(problem.root, 'reference', 'incorrect', `${language}.${extension}`);
     await Promise.all([atomicText(outputReference, reference), atomicText(outputIncorrect, incorrect)]);
-    const variants = generateVariants({ metadata, language, reference });
+    const variants = generateVariants({ metadata, language, reference, hints: record.difficultyHints ?? [] });
     const variantPaths = {};
     for (const level of difficultyLevels) {
       const output = path.join(problem.root, 'variants', language, `${level}.${extension}`);

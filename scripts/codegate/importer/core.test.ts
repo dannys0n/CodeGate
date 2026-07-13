@@ -55,6 +55,6 @@ describe('offline importer', () => {
     expect(first.failed).toHaveLength(2);
     expect(await fs.readFile(path.join(root, 'codegate', 'import-report.json'), 'utf8')).toBe(firstReport);
     expect(await fs.readFile(path.join(root, 'problems', 'example', 'codegate.json'), 'utf8')).toBe(firstConfig);
-    expect(await fs.readFile(path.join(root, 'problems', 'example', 'variants', 'python', '25.py'), 'utf8')).toContain('TODO: restore');
+    expect(await fs.readFile(path.join(root, 'problems', 'example', 'variants', 'python', '25.py'), 'utf8')).toContain('Hint:');
   });
 });

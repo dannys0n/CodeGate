@@ -14,15 +14,15 @@ function isProtectedLine(line, language) {
     || /\+\+|--/.test(trimmed);
 }
 
-function replacement(line, language, suppliedPercent) {
+function replacement(line, language, hint) {
   const indent = line.match(/^\s*/)?.[0] ?? '';
-  const guidance = `TODO: restore implementation; ${suppliedPercent}% solution supplied.`;
+  const guidance = `Hint: ${hint}`;
   if (language === 'python') return `${indent}pass  # ${guidance}`;
   if (/^\s*return\b/.test(line)) return `${indent}return {}; // ${guidance}`;
   return `${indent}// ${guidance}`;
 }
 
-function reduceReference(reference, language, suppliedPercent) {
+function reduceReference(reference, language, suppliedPercent, hints) {
   const lines = reference.trimEnd().split(/\r?\n/);
   const candidates = lines
     .map((line, index) => ({ line, index }))
@@ -33,20 +33,26 @@ function reduceReference(reference, language, suppliedPercent) {
     const rightReturn = /^\s*return\b/.test(right.line) ? 1 : 0;
     return rightReturn - leftReturn || right.index - left.index;
   });
-  for (const candidate of removalOrder.slice(0, removalCount)) {
-    lines[candidate.index] = replacement(candidate.line, language, suppliedPercent);
+  for (const [index, candidate] of removalOrder.slice(0, removalCount).entries()) {
+    lines[candidate.index] = replacement(candidate.line, language, hints[index % hints.length]);
   }
   return `${lines.join('\n')}\n`;
 }
 
-export function generateVariants({ metadata, language, reference }) {
+export function generateVariants({ metadata, language, reference, hints = [] }) {
   const starter = metadata.starterCode?.[language];
   if (typeof starter !== 'string' || !starter.trim()) throw new Error(`missing ${language} starter code`);
+  const availableHints = [...hints, ...(metadata.hints ?? [])]
+    .filter((hint) => typeof hint === 'string' && hint.trim())
+    .map((hint) => hint.replaceAll('`', '').trim());
+  if (availableHints.length === 0) {
+    availableHints.push(`Implement ${metadata.functionName ?? 'the method'} using the problem constraints.`);
+  }
   return {
     '0': `${starter.trimEnd()}\n`,
-    '25': reduceReference(reference, language, 25),
-    '50': reduceReference(reference, language, 50),
-    '75': reduceReference(reference, language, 75),
+    '25': reduceReference(reference, language, 25, availableHints),
+    '50': reduceReference(reference, language, 50, availableHints),
+    '75': reduceReference(reference, language, 75, availableHints),
     '100': `${reference.trimEnd()}\n`
   };
 }

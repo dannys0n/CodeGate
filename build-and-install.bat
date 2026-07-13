@@ -4,9 +4,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0build-and-install.
 if errorlevel 1 (
     echo.
     echo CodeGate build or installation failed.
-    pause
     exit /b 1
 )
 echo.
 echo CodeGate build and installation completed successfully.
-pause

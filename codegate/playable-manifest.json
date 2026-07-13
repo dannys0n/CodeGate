@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-13T08:35:51.499Z",
+  "generatedAt": "2026-07-13T09:27:00.883Z",
   "sourceRevision": "e05a062533a5dbb43d89cb261aadd6381e35a7e5,fixture-v1-2026-07-12",
   "variants": [
     {
@@ -12,7 +12,7 @@
       "sourcePath": "problems/minimum-window-substring/variants/python/0.py",
       "sourceSha256": "f531221df23170ed7be5d3d71c23437b6dfaee13c15bb3188c1f68084e77858e",
       "judgeSha256": "772c72e02a4df903f38a8ab8da086e2998e734a89652a9557b82e2aa2561aab5",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -22,9 +22,9 @@
       "language": "python",
       "difficulty": "25",
       "sourcePath": "problems/minimum-window-substring/variants/python/25.py",
-      "sourceSha256": "8b46490fa45371bf3b6f5e473f1874f09d0e4642d8d5792e3d0d7658fe5fd016",
+      "sourceSha256": "d0731513b84724f565ae15f6a3fa6ee2926ba6f8b4d47069ccb11f314ee44520",
       "judgeSha256": "772c72e02a4df903f38a8ab8da086e2998e734a89652a9557b82e2aa2561aab5",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -34,9 +34,9 @@
       "language": "python",
       "difficulty": "50",
       "sourcePath": "problems/minimum-window-substring/variants/python/50.py",
-      "sourceSha256": "b094fdd61ebf4767f75a60e7d9d8e24a0592061aa4e2bfaf1bc46cce74611121",
+      "sourceSha256": "d644e25d7111306b4e379b5520b6fb46f5a8cbe0dacd5f36621c7dc7a6b41a6a",
       "judgeSha256": "772c72e02a4df903f38a8ab8da086e2998e734a89652a9557b82e2aa2561aab5",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -46,9 +46,9 @@
       "language": "python",
       "difficulty": "75",
       "sourcePath": "problems/minimum-window-substring/variants/python/75.py",
-      "sourceSha256": "a2730b52ca7b6ee561afa692708305f9b9799d0f562e72934968f499732dfd9a",
+      "sourceSha256": "58d86abca7184369df829d2b8434589a663c079b0bb212873f5cb01ee8cdd4bc",
       "judgeSha256": "772c72e02a4df903f38a8ab8da086e2998e734a89652a9557b82e2aa2561aab5",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -60,7 +60,7 @@
       "sourcePath": "problems/minimum-window-substring/variants/python/100.py",
       "sourceSha256": "2209c336529162e22d1330091952861d617949ab14683051e8e641edd2998c59",
       "judgeSha256": "772c72e02a4df903f38a8ab8da086e2998e734a89652a9557b82e2aa2561aab5",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -72,7 +72,7 @@
       "sourcePath": "problems/minimum-window-substring/variants/cpp/0.cpp",
       "sourceSha256": "c281558bf9d826fb4b7e86a6057709e902ea9e0d72fcd996e710a9182edbb5b2",
       "judgeSha256": "772c72e02a4df903f38a8ab8da086e2998e734a89652a9557b82e2aa2561aab5",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -82,9 +82,9 @@
       "language": "cpp",
       "difficulty": "25",
       "sourcePath": "problems/minimum-window-substring/variants/cpp/25.cpp",
-      "sourceSha256": "bd79a69c0654b06a7fb3ab5f8f781da0b121ce3800624337ece276573dc5a5c8",
+      "sourceSha256": "563252242d4c953f496353c02b4227a45ba860cf2667a66c4e1bb907ff43e8c4",
       "judgeSha256": "772c72e02a4df903f38a8ab8da086e2998e734a89652a9557b82e2aa2561aab5",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -94,9 +94,9 @@
       "language": "cpp",
       "difficulty": "50",
       "sourcePath": "problems/minimum-window-substring/variants/cpp/50.cpp",
-      "sourceSha256": "0e3647d1511d26b54c8db7ebfc76d538ea6b19161c136243a65894acbb491a32",
+      "sourceSha256": "9da8b8326398bd94b20caf3eab30d631c2fc2cd960193669fc19c941b6256484",
       "judgeSha256": "772c72e02a4df903f38a8ab8da086e2998e734a89652a9557b82e2aa2561aab5",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -106,9 +106,9 @@
       "language": "cpp",
       "difficulty": "75",
       "sourcePath": "problems/minimum-window-substring/variants/cpp/75.cpp",
-      "sourceSha256": "c4eb314f5f8ed6a54573988223b948d3b0e048490008de894855c5898fab59fe",
+      "sourceSha256": "6284af00a493e86922ab6b60d0555daf7527fa0d4534921ad5b24508f95670a9",
       "judgeSha256": "772c72e02a4df903f38a8ab8da086e2998e734a89652a9557b82e2aa2561aab5",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -120,7 +120,7 @@
       "sourcePath": "problems/minimum-window-substring/variants/cpp/100.cpp",
       "sourceSha256": "c8f49066e1770fcbd2d9e617ad1ecc9259dd39c3006945ae76e892ab798925ef",
       "judgeSha256": "772c72e02a4df903f38a8ab8da086e2998e734a89652a9557b82e2aa2561aab5",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -132,7 +132,7 @@
       "sourcePath": "problems/top-k-frequent-elements/variants/python/0.py",
       "sourceSha256": "166a70509ec073735bfa27d02884d513566dc9897ce162a0fc334f660fc05635",
       "judgeSha256": "07aa8521e28f30c27309b93c3627c804b7f6fd26f03338fbae77d2b9edcd974e",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -142,9 +142,9 @@
       "language": "python",
       "difficulty": "25",
       "sourcePath": "problems/top-k-frequent-elements/variants/python/25.py",
-      "sourceSha256": "4c9b945fc40fe3077d137d81fe3e568b5c1fa730c9227f7c116319a27b1d8617",
+      "sourceSha256": "a416b26156b766adb842482318bddf1a02852ff864106afb3949a665132c120e",
       "judgeSha256": "07aa8521e28f30c27309b93c3627c804b7f6fd26f03338fbae77d2b9edcd974e",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -154,9 +154,9 @@
       "language": "python",
       "difficulty": "50",
       "sourcePath": "problems/top-k-frequent-elements/variants/python/50.py",
-      "sourceSha256": "5814abccea134df34c93f33bad5050a952d3396d803040ef9dba2e748de6a530",
+      "sourceSha256": "a0f4d514f9d6f160482d573497b00b8dbd1fc27eaa2ec5e9ca36dab648db81d8",
       "judgeSha256": "07aa8521e28f30c27309b93c3627c804b7f6fd26f03338fbae77d2b9edcd974e",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -166,9 +166,9 @@
       "language": "python",
       "difficulty": "75",
       "sourcePath": "problems/top-k-frequent-elements/variants/python/75.py",
-      "sourceSha256": "b6db7f3b7df00a0d603cdced4c5bd18b9bc422d65343580cae18e65f325eb2c5",
+      "sourceSha256": "708ae72688d1c6fcd6a589e9904d9710aa49103624146147c94ebd246691f6b4",
       "judgeSha256": "07aa8521e28f30c27309b93c3627c804b7f6fd26f03338fbae77d2b9edcd974e",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -180,7 +180,7 @@
       "sourcePath": "problems/top-k-frequent-elements/variants/python/100.py",
       "sourceSha256": "a0864817de400a93d4008843f6cad9fe123c70e4e5ad69e9ef52e6ad6af03fc7",
       "judgeSha256": "07aa8521e28f30c27309b93c3627c804b7f6fd26f03338fbae77d2b9edcd974e",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -192,7 +192,7 @@
       "sourcePath": "problems/top-k-frequent-elements/variants/cpp/0.cpp",
       "sourceSha256": "2c63aab34050f154b94f1a03f1746636d4913a2f249f73994ab5324d3b7d150c",
       "judgeSha256": "07aa8521e28f30c27309b93c3627c804b7f6fd26f03338fbae77d2b9edcd974e",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -202,9 +202,9 @@
       "language": "cpp",
       "difficulty": "25",
       "sourcePath": "problems/top-k-frequent-elements/variants/cpp/25.cpp",
-      "sourceSha256": "9c295f45ddf9a217f8f0f1e355cec3a5c4c01ccba9a4324f85d36bb4da4977f9",
+      "sourceSha256": "d735279675b8e55ae3c339d02dadfe8219cc4273876d0ea0a93243d149a39f8a",
       "judgeSha256": "07aa8521e28f30c27309b93c3627c804b7f6fd26f03338fbae77d2b9edcd974e",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -214,9 +214,9 @@
       "language": "cpp",
       "difficulty": "50",
       "sourcePath": "problems/top-k-frequent-elements/variants/cpp/50.cpp",
-      "sourceSha256": "8cd4aae683cd480962de76051e2d6f4b5132e6ddfde97d3664055315edaa72a0",
+      "sourceSha256": "6230e531f599b7af9e4472bdde95c012471ea2a99e8a43ca6d304c8dd1d9f906",
       "judgeSha256": "07aa8521e28f30c27309b93c3627c804b7f6fd26f03338fbae77d2b9edcd974e",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -226,9 +226,9 @@
       "language": "cpp",
       "difficulty": "75",
       "sourcePath": "problems/top-k-frequent-elements/variants/cpp/75.cpp",
-      "sourceSha256": "e20d101282ea8653d2e40cda3db63602673231bd19b20f5094afbcef32a64b2b",
+      "sourceSha256": "e9466ab54245c5f25ee652f8fbc16fdf90dfef94e571765a45d99c4e1e22a324",
       "judgeSha256": "07aa8521e28f30c27309b93c3627c804b7f6fd26f03338fbae77d2b9edcd974e",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -240,7 +240,7 @@
       "sourcePath": "problems/top-k-frequent-elements/variants/cpp/100.cpp",
       "sourceSha256": "013ffa1ccd43a80dd4883b4edc22ced0ad6c98475cf16c4e5d8c2fe725529107",
       "judgeSha256": "07aa8521e28f30c27309b93c3627c804b7f6fd26f03338fbae77d2b9edcd974e",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -252,7 +252,7 @@
       "sourcePath": "problems/two-sum/variants/python/0.py",
       "sourceSha256": "d19b8c6f6680c15c314ae17b7559084372976e1cb861723389836dfc9fcc9356",
       "judgeSha256": "78c4ad6d54fd70896266670ef69138878d5b06591aaf9ac059993a05c0491301",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -262,9 +262,9 @@
       "language": "python",
       "difficulty": "25",
       "sourcePath": "problems/two-sum/variants/python/25.py",
-      "sourceSha256": "fbf194766c52115a307548f6053154e7568a9c22813e10325aa37dfb1dc56837",
+      "sourceSha256": "4bad5bcf9a36783f017db1a8b1487effdb53f4742ad54a84c8b889fde1550189",
       "judgeSha256": "78c4ad6d54fd70896266670ef69138878d5b06591aaf9ac059993a05c0491301",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -274,9 +274,9 @@
       "language": "python",
       "difficulty": "50",
       "sourcePath": "problems/two-sum/variants/python/50.py",
-      "sourceSha256": "584f1c49bc15b58dbcebc8f52ad85718743d82740d0f8af5c0778d3413f793f2",
+      "sourceSha256": "d3e31d101b86386773a41174c916dfc4fdfb4d294121fe8661a8f1944eb495f1",
       "judgeSha256": "78c4ad6d54fd70896266670ef69138878d5b06591aaf9ac059993a05c0491301",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -286,9 +286,9 @@
       "language": "python",
       "difficulty": "75",
       "sourcePath": "problems/two-sum/variants/python/75.py",
-      "sourceSha256": "af7c83f28798b3814a76ebc4b23f8bcbae23978e282d961d61c7bd4179524b39",
+      "sourceSha256": "efc7e9d130996fb36014f3881641ad9a430f773e37b166cd9f3738a973f13f95",
       "judgeSha256": "78c4ad6d54fd70896266670ef69138878d5b06591aaf9ac059993a05c0491301",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -300,7 +300,7 @@
       "sourcePath": "problems/two-sum/variants/python/100.py",
       "sourceSha256": "f9ca89892acae94db6a8b5862c796ce5683cfed98eb3e9a206ff57dc018388ff",
       "judgeSha256": "78c4ad6d54fd70896266670ef69138878d5b06591aaf9ac059993a05c0491301",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -312,7 +312,7 @@
       "sourcePath": "problems/two-sum/variants/cpp/0.cpp",
       "sourceSha256": "38c00a1e699f407cad29d440b577789e3f115721feaf18f06f2e09974a8bdf55",
       "judgeSha256": "78c4ad6d54fd70896266670ef69138878d5b06591aaf9ac059993a05c0491301",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -322,9 +322,9 @@
       "language": "cpp",
       "difficulty": "25",
       "sourcePath": "problems/two-sum/variants/cpp/25.cpp",
-      "sourceSha256": "faa574c64bf13c4709cd8d64d6874b53dadd6f457c962e107ae9f38d2af942ec",
+      "sourceSha256": "90dbb0056950c826ec277d2f6c6a808cb2cf8d35462eea208914b13244304fe1",
       "judgeSha256": "78c4ad6d54fd70896266670ef69138878d5b06591aaf9ac059993a05c0491301",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -334,9 +334,9 @@
       "language": "cpp",
       "difficulty": "50",
       "sourcePath": "problems/two-sum/variants/cpp/50.cpp",
-      "sourceSha256": "b1ff9d6d6ca3679ace5ad6a09c71e5949f8b73d5ebee8d4b7bf5684f50c7ba67",
+      "sourceSha256": "026940ab4b577b942d2cd806628f1a9df7973c9207574f5be6d5c28d8633c2da",
       "judgeSha256": "78c4ad6d54fd70896266670ef69138878d5b06591aaf9ac059993a05c0491301",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -346,9 +346,9 @@
       "language": "cpp",
       "difficulty": "75",
       "sourcePath": "problems/two-sum/variants/cpp/75.cpp",
-      "sourceSha256": "6cd569c90cb4b706fa96ad6df850a236c352ab88e7b441a9ff36df45beab7016",
+      "sourceSha256": "370b19d4f5381eec1971d6b1f3dc29ef5c50b3a95388d77315c7ed6473b1974c",
       "judgeSha256": "78c4ad6d54fd70896266670ef69138878d5b06591aaf9ac059993a05c0491301",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -360,7 +360,7 @@
       "sourcePath": "problems/two-sum/variants/cpp/100.cpp",
       "sourceSha256": "144a9d7897ea9005afe3ab07f495481af0e982ed79cfefa8a4a2e9289bab4192",
       "judgeSha256": "78c4ad6d54fd70896266670ef69138878d5b06591aaf9ac059993a05c0491301",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -372,7 +372,7 @@
       "sourcePath": "problems/valid-parentheses/variants/python/0.py",
       "sourceSha256": "6a5f1fb5eefde4b28d7aeb90e240d9899da77c745f4183fd51103ebc5f6108f3",
       "judgeSha256": "9a17eaaaa3fd2d2af01dc1d50a143d1a93917dd38b09a84e8e57ac5f6b60ec38",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -382,9 +382,9 @@
       "language": "python",
       "difficulty": "25",
       "sourcePath": "problems/valid-parentheses/variants/python/25.py",
-      "sourceSha256": "bfcecec7f17198c4dc941fdbb02318e14702f09fb8dabcbfd3a650c3b23b4412",
+      "sourceSha256": "6d47442bee5bd94b3928f6dabf3dc41eb4c811909423f2ba229b18a2a43df231",
       "judgeSha256": "9a17eaaaa3fd2d2af01dc1d50a143d1a93917dd38b09a84e8e57ac5f6b60ec38",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -394,9 +394,9 @@
       "language": "python",
       "difficulty": "50",
       "sourcePath": "problems/valid-parentheses/variants/python/50.py",
-      "sourceSha256": "80a7f1efbab9e40ce09c76dcfc5a208b460a66709083c6167b90d33fea5936ba",
+      "sourceSha256": "a8466f73e6bc8f013931173317d40398388ecd3224d5962e8443aad15b9f3311",
       "judgeSha256": "9a17eaaaa3fd2d2af01dc1d50a143d1a93917dd38b09a84e8e57ac5f6b60ec38",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -406,9 +406,9 @@
       "language": "python",
       "difficulty": "75",
       "sourcePath": "problems/valid-parentheses/variants/python/75.py",
-      "sourceSha256": "d6ccf32a5cdf594ae5355b1f5fe98e81d1719690baa8c803c8a34f3be387d588",
+      "sourceSha256": "49fc48b091d35a76dbe300c599f3553dc8b03b96fb4d61881dec346ce9e5ebc2",
       "judgeSha256": "9a17eaaaa3fd2d2af01dc1d50a143d1a93917dd38b09a84e8e57ac5f6b60ec38",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -420,7 +420,7 @@
       "sourcePath": "problems/valid-parentheses/variants/python/100.py",
       "sourceSha256": "609505430bece22416dee710ef6bfd0d7ef32f64a5d0f26d74d74f48d4944f21",
       "judgeSha256": "9a17eaaaa3fd2d2af01dc1d50a143d1a93917dd38b09a84e8e57ac5f6b60ec38",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -432,7 +432,7 @@
       "sourcePath": "problems/valid-parentheses/variants/cpp/0.cpp",
       "sourceSha256": "bbaa1dfb59b28a05fb760a0b9e2ff7ccbc6fd4e2aa77982cb4374ef4e2eb8249",
       "judgeSha256": "9a17eaaaa3fd2d2af01dc1d50a143d1a93917dd38b09a84e8e57ac5f6b60ec38",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -442,9 +442,9 @@
       "language": "cpp",
       "difficulty": "25",
       "sourcePath": "problems/valid-parentheses/variants/cpp/25.cpp",
-      "sourceSha256": "0e112247a186976e511790736b314f1abdd4143c406f9b75efd5bef5daea33b2",
+      "sourceSha256": "e812e40023672fba0ca45ae96e51dffaef564ed204b7db3b4c88ca2be6dfa30d",
       "judgeSha256": "9a17eaaaa3fd2d2af01dc1d50a143d1a93917dd38b09a84e8e57ac5f6b60ec38",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -454,9 +454,9 @@
       "language": "cpp",
       "difficulty": "50",
       "sourcePath": "problems/valid-parentheses/variants/cpp/50.cpp",
-      "sourceSha256": "65c87ae55d9b6bdb3d9b43cc880805a4cf737ea30ca5622a074e4bca108a9f1e",
+      "sourceSha256": "ecb700dd7bdfbcfaa5d2bf38b79625f60da37e4c8c023f74be799999950a45ec",
       "judgeSha256": "9a17eaaaa3fd2d2af01dc1d50a143d1a93917dd38b09a84e8e57ac5f6b60ec38",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -466,9 +466,9 @@
       "language": "cpp",
       "difficulty": "75",
       "sourcePath": "problems/valid-parentheses/variants/cpp/75.cpp",
-      "sourceSha256": "828b5d8bcddc0924467aec227d83007764a58c1a981f045c3b4e88ef5f5c27cc",
+      "sourceSha256": "c38c85509a52e6d6229c1b04807094da46aa48ff11a63f86c85c7c0b5ea970b7",
       "judgeSha256": "9a17eaaaa3fd2d2af01dc1d50a143d1a93917dd38b09a84e8e57ac5f6b60ec38",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     },
     {
@@ -480,7 +480,7 @@
       "sourcePath": "problems/valid-parentheses/variants/cpp/100.cpp",
       "sourceSha256": "f8123736924209ebc9512c66ce4eddcbc33e27e2a084527f3d77cd505bde2785",
       "judgeSha256": "9a17eaaaa3fd2d2af01dc1d50a143d1a93917dd38b09a84e8e57ac5f6b60ec38",
-      "validatedAt": "2026-07-13T08:35:51.499Z",
+      "validatedAt": "2026-07-13T09:27:00.883Z",
       "validationStatus": "validated"
     }
   ]

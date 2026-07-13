@@ -18,13 +18,13 @@ public:
             if (need[incoming]-- > 0) --missing;
             while (missing == 0) {
                 if (right - left + 1 < bestLength) {
-                    // TODO: restore implementation; 75% solution supplied.
-                    // TODO: restore implementation; 75% solution supplied.
+                    // Hint: Sliding window with a frequency map. Expand right to satisfy all requirements, then contract left to find the minimum window while maintaining validity.
+                    // Hint: Sliding window with a frequency map. Expand right to satisfy all requirements, then contract left to find the minimum window while maintaining validity.
                 }
                 const unsigned char outgoing = s[left++];
                 if (++need[outgoing] > 0) ++missing;
             }
         }
-        return {}; // TODO: restore implementation; 75% solution supplied.
+        return {}; // Hint: Sliding window with a frequency map. Expand right to satisfy all requirements, then contract left to find the minimum window while maintaining validity.
     }
 };

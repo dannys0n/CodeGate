@@ -7,5 +7,5 @@ class Solution:
                 stack.append(character)
             elif character in pairs:
                 if not stack or stack.pop() != pairs[character]:
-                    pass  # TODO: restore implementation; 75% solution supplied.
-        pass  # TODO: restore implementation; 75% solution supplied.
+                    pass  # Hint: Use a stack to match opening and closing brackets. Ensure types match and stack is empty at the end.
+        pass  # Hint: Use a stack to match opening and closing brackets. Ensure types match and stack is empty at the end.

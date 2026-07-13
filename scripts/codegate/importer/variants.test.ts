@@ -4,6 +4,7 @@ import { generateVariants } from './variants.mjs';
 const metadata = {
   functionName: 'answer',
   params: [{ name: 'value', type: 'int' }],
+  hints: ['Use the input value to build the result.'],
   starterCode: {
     python: 'import math\n\nclass Solution:\n    def answer(self, value: int) -> int:\n        pass\n'
   }
@@ -23,10 +24,10 @@ describe('offline percentage difficulty generation', () => {
       expect(variants[level]).toContain('class Solution:');
       expect(variants[level]).toContain('def answer(self, value: int) -> int:');
       expect(variants[level]).toContain('value += 1');
-      expect(variants[level]).toContain(`${level}% solution supplied`);
+      expect(variants[level]).toContain('Hint: Use the input value to build the result.');
     }
-    const todoCount = (source: string) => source.match(/TODO: restore/g)?.length ?? 0;
-    expect(todoCount(variants['25'])).toBeGreaterThan(todoCount(variants['50']));
-    expect(todoCount(variants['50'])).toBeGreaterThan(todoCount(variants['75']));
+    const hintCount = (source: string) => source.match(/Hint:/g)?.length ?? 0;
+    expect(hintCount(variants['25'])).toBeGreaterThan(hintCount(variants['50']));
+    expect(hintCount(variants['50'])).toBeGreaterThan(hintCount(variants['75']));
   });
 });

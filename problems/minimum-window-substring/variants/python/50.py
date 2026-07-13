@@ -4,7 +4,7 @@ from collections import Counter
 class Solution:
     def minWindow(self, s: str, t: str) -> str:
         if not t or len(s) < len(t):
-            pass  # TODO: restore implementation; 50% solution supplied.
+            pass  # Hint: Sliding window with a frequency map. Expand right to satisfy all requirements, then contract left to find the minimum window while maintaining validity.
         need = Counter(t)
         missing = len(t)
         left = best_left = 0
@@ -15,10 +15,10 @@ class Solution:
             need[character] -= 1
             while missing == 0:
                 if right - left < best_length:
-                    pass  # TODO: restore implementation; 50% solution supplied.
-                pass  # TODO: restore implementation; 50% solution supplied.
+                    pass  # Hint: Sliding window with a frequency map. Expand right to satisfy all requirements, then contract left to find the minimum window while maintaining validity.
+                pass  # Hint: Sliding window with a frequency map. Expand right to satisfy all requirements, then contract left to find the minimum window while maintaining validity.
                 need[outgoing] += 1
                 if need[outgoing] > 0:
                     missing += 1
                 left += 1
-        pass  # TODO: restore implementation; 50% solution supplied.
+        pass  # Hint: Sliding window with a frequency map. Expand right to satisfy all requirements, then contract left to find the minimum window while maintaining validity.

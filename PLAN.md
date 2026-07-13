@@ -395,6 +395,13 @@ per-user installation all completed with exit code 0; functional testing was lef
 `build-and-install.bat` is a double-clickable wrapper that applies PowerShell execution-policy
 bypass only to the child process and forwards failures without changing the user's policy.
 
+Difficulty hint polish (2026-07-13): generated 25/50/75 percent variants use the problem's
+metadata/import hints in place of generic TODO comments. Hints rotate across removed lines, headers
+remain unchanged, and a signature-based hint is used only when a pack supplies none. Focused
+generation and required activation validation passed; all 40 combinations remain playable with no
+quarantine. Per user preference, routine small changes now proceed directly through
+`build-and-install.bat` without broad verification unless risk or catalog activation requires it.
+
 Validation:
 
 ```powershell

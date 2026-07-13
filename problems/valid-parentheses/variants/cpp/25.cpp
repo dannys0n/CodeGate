@@ -9,12 +9,12 @@ public:
         const unordered_map<char, char> pairs{{')', '('}, {']', '['}, {'}', '{'}};
         vector<char> stack;
         for (char character : s) {
-            // TODO: restore implementation; 25% solution supplied.
+            // Hint: Use a stack to match opening and closing brackets. Ensure types match and stack is empty at the end.
             else if (pairs.count(character)) {
-                // TODO: restore implementation; 25% solution supplied.
-                // TODO: restore implementation; 25% solution supplied.
+                // Hint: Use a stack to match opening and closing brackets. Ensure types match and stack is empty at the end.
+                // Hint: Use a stack to match opening and closing brackets. Ensure types match and stack is empty at the end.
             }
         }
-        return {}; // TODO: restore implementation; 25% solution supplied.
+        return {}; // Hint: Use a stack to match opening and closing brackets. Ensure types match and stack is empty at the end.
     }
 };

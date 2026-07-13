@@ -12,9 +12,9 @@ public:
             if (character == '(' || character == '[' || character == '{') stack.push_back(character);
             else if (pairs.count(character)) {
                 if (stack.empty() || stack.back() != pairs.at(character)) return false;
-                // TODO: restore implementation; 75% solution supplied.
+                // Hint: Use a stack to match opening and closing brackets. Ensure types match and stack is empty at the end.
             }
         }
-        return {}; // TODO: restore implementation; 75% solution supplied.
+        return {}; // Hint: Use a stack to match opening and closing brackets. Ensure types match and stack is empty at the end.
     }
 };

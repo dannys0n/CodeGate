@@ -12,19 +12,19 @@ public:
         int missing = static_cast<int>(t.size());
         int left = 0;
         int bestLeft = 0;
-        // TODO: restore implementation; 50% solution supplied.
+        // Hint: Sliding window with a frequency map. Expand right to satisfy all requirements, then contract left to find the minimum window while maintaining validity.
         for (int right = 0; right < static_cast<int>(s.size()); ++right) {
-            // TODO: restore implementation; 50% solution supplied.
+            // Hint: Sliding window with a frequency map. Expand right to satisfy all requirements, then contract left to find the minimum window while maintaining validity.
             if (need[incoming]-- > 0) --missing;
             while (missing == 0) {
                 if (right - left + 1 < bestLength) {
-                    // TODO: restore implementation; 50% solution supplied.
-                    // TODO: restore implementation; 50% solution supplied.
+                    // Hint: Sliding window with a frequency map. Expand right to satisfy all requirements, then contract left to find the minimum window while maintaining validity.
+                    // Hint: Sliding window with a frequency map. Expand right to satisfy all requirements, then contract left to find the minimum window while maintaining validity.
                 }
                 const unsigned char outgoing = s[left++];
                 if (++need[outgoing] > 0) ++missing;
             }
         }
-        return {}; // TODO: restore implementation; 50% solution supplied.
+        return {}; // Hint: Sliding window with a frequency map. Expand right to satisfy all requirements, then contract left to find the minimum window while maintaining validity.
     }
 };
