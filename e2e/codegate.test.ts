@@ -34,7 +34,7 @@ test('normal practice mode remains outside the gate flow', async ({ page }) => {
     await expect(page.getByText('Reference Solution')).toBeVisible();
 });
 
-test('gate toolbar refreshes the challenge and Give Up releases without the judge', async ({ page }) => {
+test('gate toolbar keeps the problem while switching variants and Give Up releases without the judge', async ({ page }) => {
     await page.goto('/gate?language=python&scaffold=medium');
     await expect(page).toHaveURL(/codegate=1/);
     await expect(page.getByLabel('Language')).toHaveValue('python');
@@ -47,14 +47,53 @@ test('gate toolbar refreshes the challenge and Give Up releases without the judg
     const problemId = new URL(page.url()).pathname.split('/').pop()!;
     await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), `codegate:draft:${problemId}:python:medium`)).toContain('autosaved gate draft');
 
+    const initialProblemId = new URL(page.url()).pathname.split('/').pop()!;
     const first = bindingFrom(page);
-    await page.getByRole('button', { name: 'Different Problem' }).click();
+
+    await page.getByLabel('Language').selectOption('cpp');
     await expect.poll(() => bindingFrom(page).challengeId).not.toBe(first.challengeId);
+    expect(new URL(page.url()).pathname.split('/').pop()).toBe(initialProblemId);
+    await expect(page.getByLabel('Language')).toHaveValue('cpp');
+
+    const languageSwitch = bindingFrom(page);
+    await page.getByLabel('Scaffold').selectOption('hard');
+    await expect.poll(() => bindingFrom(page).challengeId).not.toBe(languageSwitch.challengeId);
+    expect(new URL(page.url()).pathname.split('/').pop()).toBe(initialProblemId);
+    await expect(page.getByLabel('Scaffold')).toHaveValue('hard');
+
+    const variantSwitch = bindingFrom(page);
+    await page.getByRole('button', { name: 'Different Problem' }).click();
+    await expect.poll(() => bindingFrom(page).challengeId).not.toBe(variantSwitch.challengeId);
+    expect(new URL(page.url()).pathname.split('/').pop()).not.toBe(initialProblemId);
 
     page.on('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Give Up' }).click();
     await expect(page).toHaveURL(/\/gate\/released\?outcome=given-up/);
     await expect(page.getByText('Session released')).toBeVisible();
+});
+
+test('tooltips and editor settings stay inside narrow viewport bounds', async ({ page }) => {
+    await page.setViewportSize({ width: 420, height: 720 });
+    await page.goto('/problems/two-sum');
+
+    const paneToggle = page.getByRole('button', { name: 'Hide problem pane' });
+    await paneToggle.hover();
+    const tooltip = page.locator('.tooltip-box');
+    await expect(tooltip).toBeVisible();
+    const tooltipBox = await tooltip.boundingBox();
+    expect(tooltipBox).not.toBeNull();
+    expect(tooltipBox!.x).toBeGreaterThanOrEqual(0);
+    expect(tooltipBox!.x + tooltipBox!.width).toBeLessThanOrEqual(420);
+
+    await page.getByRole('button', { name: 'Editor Settings' }).click();
+    const settings = page.getByRole('dialog', { name: 'Editor settings' });
+    await expect(settings).toBeVisible();
+    const settingsBox = await settings.boundingBox();
+    expect(settingsBox).not.toBeNull();
+    expect(settingsBox!.x).toBeGreaterThanOrEqual(0);
+    expect(settingsBox!.x + settingsBox!.width).toBeLessThanOrEqual(420);
+    expect(settingsBox!.y).toBeGreaterThanOrEqual(0);
+    expect(settingsBox!.y + settingsBox!.height).toBeLessThanOrEqual(720);
 });
 
 test('stale challenges are rejected and full-suite acceptance releases exactly once', async ({ page }) => {

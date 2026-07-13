@@ -83,6 +83,26 @@ export function refreshGateChallenge(
     return session;
 }
 
+export function switchGateVariant(
+    sessionId: string,
+    challengeId: string,
+    manifest: PlayableManifest,
+    language: GateLanguage,
+    scaffold: ScaffoldLevel
+): GateSession {
+    const session = requireActiveChallenge(sessionId, challengeId);
+    const problemId = session.challenge.variant.problemId;
+    const variant = manifest.variants.find((candidate) =>
+        candidate.problemId === problemId
+        && candidate.language === language
+        && candidate.scaffold === scaffold
+    );
+    if (!variant) throw new Error(`No validated ${language}/${scaffold} variant is available for ${problemId}`);
+    session.activeSubmission = undefined;
+    session.challenge = { id: randomUUID(), variant };
+    return session;
+}
+
 export function releaseGateSession(sessionId: string, challengeId: string, outcome: GateOutcome): GateSession {
     const session = requireActiveChallenge(sessionId, challengeId);
     session.status = 'released';

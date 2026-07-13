@@ -173,6 +173,10 @@
 
     let showSettings = false;
     let settingsContainer: HTMLElement | null = null;
+    let settingsButton: HTMLButtonElement | null = null;
+    let settingsDropdown: HTMLElement | null = null;
+    let settingsLeft = 0;
+    let settingsTop = 0;
     const fontSizes: number[] = Array.from({ length: 13 }, (_, i) => 12 + i); // 12..24
     let fontSize: number = $userSettingsStorage.editorFontSize ?? 14;
     let theme: ThemeChoice = $userSettingsStorage.theme ?? 'light';
@@ -378,6 +382,7 @@
         let newPercentage = (newWidth / workspaceRect.width) * 100;
         const constrainedPercentage = Math.min(90, newPercentage);
         $leftPaneWidthStore = constrainedPercentage;
+        updateSettingsPosition();
     }
 
     function handleMouseUp() {
@@ -465,15 +470,43 @@
         const handleUnload = () => {
             saveCurrentViewState();
         };
+        const handleOverlayMove = () => updateSettingsPosition();
         document.addEventListener('click', handleDocClick);
         document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('scroll', handleOverlayMove, true);
+        window.addEventListener('resize', handleOverlayMove);
         window.addEventListener('beforeunload', handleUnload);
         return () => {
             document.removeEventListener('click', handleDocClick);
             document.removeEventListener('keydown', handleKeyDown);
+            document.removeEventListener('scroll', handleOverlayMove, true);
+            window.removeEventListener('resize', handleOverlayMove);
             window.removeEventListener('beforeunload', handleUnload);
         };
     });
+
+    function updateSettingsPosition() {
+        if (!showSettings || !settingsButton || !settingsDropdown) return;
+        const margin = 8;
+        const gap = 8;
+        const anchor = settingsButton.getBoundingClientRect();
+        const popup = settingsDropdown.getBoundingClientRect();
+        const maxLeft = Math.max(margin, window.innerWidth - popup.width - margin);
+        settingsLeft = Math.min(maxLeft, Math.max(margin, anchor.right - popup.width));
+        const below = anchor.bottom + gap;
+        const above = anchor.top - popup.height - gap;
+        const preferredTop = below + popup.height <= window.innerHeight - margin ? below : above;
+        const maxTop = Math.max(margin, window.innerHeight - popup.height - margin);
+        settingsTop = Math.min(maxTop, Math.max(margin, preferredTop));
+    }
+
+    async function toggleSettings() {
+        showSettings = !showSettings;
+        if (showSettings) {
+            await tick();
+            updateSettingsPosition();
+        }
+    }
 
     function saveCurrentViewState() {
         if (!editorComponent || activeTabId < 0 || activeTabId >= tabs.length) return;
@@ -634,17 +667,17 @@
         }
     }
 
-    async function replaceGateChallenge() {
+    async function updateGateChallenge(action: 'refresh' | 'switch-variant') {
         if (!isCodeGate || gateActionPending) return;
         gateActionPending = true;
         try {
             const response = await fetch('/api/codegate/session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'refresh', sessionId: gateSessionId, challengeId: gateChallengeId, language, scaffold })
+                body: JSON.stringify({ action, sessionId: gateSessionId, challengeId: gateChallengeId, language, scaffold })
             });
             const session = await response.json();
-            if (!response.ok) throw new Error(session.error ?? 'Unable to replace challenge');
+            if (!response.ok) throw new Error(session.error ?? (action === 'refresh' ? 'Unable to replace challenge' : 'Unable to switch variant'));
             const selected = session.challenge.variant;
             const target = new URL(`/problems/${selected.problemId}`, window.location.origin);
             target.searchParams.set('codegate', '1');
@@ -654,10 +687,15 @@
             target.searchParams.set('challengeId', session.challenge.id);
             window.location.assign(`${target.pathname}${target.search}`);
         } catch (error) {
+            language = data.codegate?.selected.language ?? language;
+            scaffold = data.codegate?.selected.scaffold ?? scaffold;
             alert(error instanceof Error ? error.message : String(error));
             gateActionPending = false;
         }
     }
+
+    const replaceGateChallenge = () => updateGateChallenge('refresh');
+    const switchGateVariant = () => updateGateChallenge('switch-variant');
 
     async function giveUpGate() {
         if (!isCodeGate || gateActionPending || !confirm('Give up this CodeGate session? You will be released immediately.')) return;
@@ -850,7 +888,7 @@
                         on:keydown={() => (suppressSave = true)}
                         on:change={() => {
                             saveCurrentViewState();
-                            if (isCodeGate) replaceGateChallenge();
+                            if (isCodeGate) switchGateVariant();
                             else userSettingsStorage.update((s) => ({ ...s, preferredLanguage: language }));
                         }}
                         on:blur={() => (suppressSave = false)}
@@ -870,7 +908,7 @@
                     </select>
                     {#if isCodeGate}
                         <label for="scaffold-select" style="font-size:0.9rem;color:var(--color-text-secondary);">Scaffold</label>
-                        <select id="scaffold-select" bind:value={scaffold} on:change={replaceGateChallenge} disabled={gateActionPending}>
+                        <select id="scaffold-select" bind:value={scaffold} on:change={switchGateVariant} disabled={gateActionPending}>
                             <option value="very-easy">Very Easy</option>
                             <option value="easy">Easy</option>
                             <option value="medium">Medium</option>
@@ -980,10 +1018,11 @@
                 <div class="settings-wrapper" bind:this={settingsContainer}>
                     <Tooltip text={"Settings"} pos={"bottom"}>
                         <button
+                            bind:this={settingsButton}
                             class="icon-button"
                             title="Editor Settings"
                             aria-label="Editor Settings"
-                            on:click={() => (showSettings = !showSettings)}
+                            on:click={toggleSettings}
                         >
                             <!-- Cog icon -->
                             <svg width="16px" height="16px" viewBox="0 0 32 32" id="Lager_100" data-name="Lager 100" xmlns="http://www.w3.org/2000/svg">
@@ -993,7 +1032,13 @@
                         </button>
                     </Tooltip>
                     {#if showSettings}
-                        <div class="settings-dropdown" role="dialog" aria-label="Editor settings">
+                        <div
+                            class="settings-dropdown"
+                            bind:this={settingsDropdown}
+                            style={`top:${settingsTop}px;left:${settingsLeft}px`}
+                            role="dialog"
+                            aria-label="Editor settings"
+                        >
                             <label for="font-size-select">Font size</label>
                             <select id="font-size-select" bind:value={fontSize}>
                                 {#each fontSizes as size}
@@ -1508,16 +1553,18 @@
         display: inline-block;
     }
     .settings-dropdown {
-        position: absolute;
-        top: 36px;
-        right: 0;
+        position: fixed;
         border: 1px solid var(--color-border);
         background-color: var(--color-bg);
         border-radius: var(--border-radius-md);
         padding: var(--spacing-2);
         box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-        z-index: 20;
+        z-index: 1000;
         min-width: 170px;
+        max-width: calc(100vw - 16px);
+        max-height: calc(100vh - 16px);
+        overflow-y: auto;
+        box-sizing: border-box;
         display: grid;
         gap: var(--spacing-1);
     }

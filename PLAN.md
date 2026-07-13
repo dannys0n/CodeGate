@@ -289,6 +289,24 @@ Post-completion desktop launch correction (2026-07-12):
   package and verify one visible challenge window, a listener on port 5375, and health reporting
   40 playable variants. Sign-in startup remains disabled.
 
+## Post-completion UI polish (2026-07-13)
+
+- [x] Separate same-problem language/scaffold switching from random problem refresh while
+  retaining new challenge IDs and stale-submission invalidation.
+- [x] Keep tooltips, editor overflow widgets, and the editor-settings popup visible at narrow pane
+  and viewport boundaries.
+- [x] Add focused session and Playwright regression coverage for problem identity and popup bounds.
+- [x] Run unit, type, build, E2E, desktop smoke, and installed desktop verification; review the
+  diff for regressions and keep normal CoJudge behavior unchanged.
+
+Polish validation: Svelte check passed with 0 errors/0 warnings; unit tests passed 33/33;
+Playwright passed 5/5 including normal-mode, same-problem selector, popup-boundary, stale-result,
+and full-suite release coverage; the Playwright production build passed with only the existing
+Monaco chunk-size advisory; desktop smoke reported server and Docker healthy. The rebuilt NSIS
+package was installed and opened one responding challenge window on port 5375. An installed-runtime
+test session kept `two-sum` while switching Python to C++, then changed to
+`minimum-window-substring` only through the refresh action; health reported 40 playable variants.
+
 Validation:
 
 ```powershell
