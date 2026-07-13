@@ -1,0 +1,125 @@
+#!/usr/bin/env node
+
+import path from "path";
+import fs from "fs";
+import { rootDir, getPort, getPIDs, openBrowser, printVersion, updateRepo } from "./lib/utils.js";
+import { showHelp } from "./lib/help.js";
+import { startServer, streamLogs, killServer } from "./lib/server.js";
+import { markProblem } from "./lib/progress.js";
+import { handleStart } from "./lib/commands/start.js";
+import { handleRun } from "./lib/commands/run.js";
+import { handleSubmit } from "./lib/commands/submit.js";
+import { handleInit } from "./lib/commands/init.js";
+import { listProblems } from "./lib/commands/list.js";
+import { handleScrape } from "./lib/commands/scrape.js";
+
+const args = process.argv.slice(2);
+const PORT = getPort(args);
+
+async function main() {
+  const action = args[0];
+
+  if (action === "start") {
+    handleStart(args, PORT);
+    return;
+  }
+
+  if (action === "run") {
+    await handleRun(args, PORT);
+    return;
+  }
+
+  if (action === "submit") {
+    await handleSubmit(args, PORT);
+    return;
+  }
+
+  if (action === "init") {
+    handleInit(args);
+    return;
+  }
+
+  if (action === "list") {
+    listProblems();
+    return;
+  }
+
+  if (action === "mark") {
+    const slug = args[1];
+    if (!slug) {
+      console.error("Error: Please specify a problem slug to mark.");
+      return;
+    }
+    markProblem(slug, true);
+    return;
+  }
+
+  if (action === "unmark") {
+    const slug = args[1];
+    if (!slug) {
+      console.error("Error: Please specify a problem slug to unmark.");
+      return;
+    }
+    markProblem(slug, false);
+    return;
+  }
+
+  if (action === "scrape") {
+    await handleScrape(args);
+    return;
+  }
+
+  if (!action || action === "-p" || action === "--port") {
+    const pids = getPIDs(PORT);
+    if (pids.length > 0) {
+      console.log(
+        `CoJudge is already running on port ${PORT} (PID: ${pids.join(", ")})`,
+      );
+      openBrowser(PORT);
+      setTimeout(() => process.exit(0), 1000);
+    } else {
+      startServer(PORT, () => openBrowser(PORT));
+    }
+  } else if (action === "-v" || action === "--version") {
+    printVersion(rootDir);
+  } else if (action === "-u" || action === "--update") {
+    updateRepo(rootDir);
+  } else if (action === "-s" || action === "--status") {
+    const pids = getPIDs(PORT);
+    if (pids.length > 0) {
+      console.log(
+        `cojudge is RUNNING (PID: ${pids.join(", ")}) on port ${PORT}`,
+      );
+    } else {
+      console.log(`cojudge is NOT RUNNING on port ${PORT}`);
+    }
+  } else if (action === "-l" || action === "--logs") {
+    streamLogs();
+  } else if (action === "-k" || action === "--kill") {
+    killServer(PORT);
+  } else if (action === "-h" || action === "--help") {
+    showHelp();
+  } else {
+    if (action && !action.startsWith("-")) {
+      const isFile = fs.existsSync(action);
+      const isProblemSlug = fs.existsSync(
+        path.join(rootDir, "problems", action),
+      );
+
+      if (isFile && !isProblemSlug) {
+        handleStart(["start", "playground", action], PORT);
+      } else if (!isProblemSlug) {
+        console.error(
+          `Error: '${action}' is neither a valid file nor problem slug. Check 'cojudge list' for the problem set or make sure the file exists`,
+        );
+      } else {
+        handleStart(["start", ...args], PORT);
+      }
+      return;
+    }
+    console.log(`Unknown command: ${action}`);
+    showHelp();
+  }
+}
+
+main();

@@ -1,0 +1,65 @@
+[
+  {
+    "frontendId": "20",
+    "slug": "valid-parentheses",
+    "shape": "function",
+    "validatorKinds": ["custom"],
+    "scaffoldHints": ["Use a stack and map each closing delimiter to its matching opener."],
+    "languages": {
+      "python": { "reference": "references/valid-parentheses.py", "incorrect": "incorrect/valid-parentheses.py" },
+      "cpp": { "reference": "references/valid-parentheses.cpp", "incorrect": "incorrect/valid-parentheses.cpp" }
+    }
+  },
+  {
+    "frontendId": "347",
+    "slug": "top-k-frequent-elements",
+    "shape": "function",
+    "validatorKinds": ["custom"],
+    "scaffoldHints": ["Count values, then rank or bucket them by descending frequency."],
+    "languages": {
+      "python": { "reference": "references/top-k-frequent-elements.py", "incorrect": "incorrect/top-k-frequent-elements.py" },
+      "cpp": { "reference": "references/top-k-frequent-elements.cpp", "incorrect": "incorrect/top-k-frequent-elements.cpp" }
+    }
+  },
+  {
+    "frontendId": "76",
+    "slug": "minimum-window-substring",
+    "shape": "function",
+    "validatorKinds": ["custom"],
+    "scaffoldHints": ["Expand a frequency-counted window, then shrink it whenever all required characters are covered."],
+    "languages": {
+      "python": { "reference": "references/minimum-window-substring.py", "incorrect": "incorrect/minimum-window-substring.py" },
+      "cpp": { "reference": "references/minimum-window-substring.cpp", "incorrect": "incorrect/minimum-window-substring.cpp" }
+    }
+  },
+  {
+    "frontendId": "295",
+    "slug": "find-median-from-data-stream",
+    "shape": "design",
+    "languages": { "python": {} }
+  },
+  {
+    "frontendId": "206",
+    "slug": "reverse-linked-list",
+    "shape": "linked-structure",
+    "languages": { "cpp": {} }
+  },
+  {
+    "frontendId": "990001",
+    "slug": "valid-anagram",
+    "shape": "function",
+    "languages": { "python": {} }
+  },
+  {
+    "frontendId": "990001",
+    "slug": "contains-duplicate",
+    "shape": "function",
+    "languages": { "python": {} }
+  },
+  {
+    "frontendId": "990002",
+    "slug": "offline-source-only-problem",
+    "shape": "function",
+    "languages": { "python": {} }
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "problemId": "two-sum",
+  "source": {
+    "name": "cojudge/cojudge",
+    "revision": "e05a062533a5dbb43d89cb261aadd6381e35a7e5"
+  },
+  "languages": {
+    "python": {
+      "reference": "reference/python.py",
+      "incorrect": "../../tests/fixtures/submissions/two-sum.incorrect.py",
+      "variants": {
+        "very-easy": "variants/python/very-easy.py",
+        "easy": "variants/python/easy.py",
+        "medium": "variants/python/medium.py",
+        "hard": "variants/python/hard.py",
+        "original": "variants/python/original.py"
+      }
+    },
+    "cpp": {
+      "reference": "reference/cpp.cpp",
+      "incorrect": "../../tests/fixtures/submissions/two-sum.incorrect.cpp",
+      "variants": {
+        "very-easy": "variants/cpp/very-easy.cpp",
+        "easy": "variants/cpp/easy.cpp",
+        "medium": "variants/cpp/medium.cpp",
+        "hard": "variants/cpp/hard.cpp",
+        "original": "variants/cpp/original.cpp"
+      }
+    }
+  }
+}

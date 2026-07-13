@@ -5,10 +5,18 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-.pnpm-debug.log*
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Crash dumps and interrupted atomic writes
+*.dmp
+*.tmp
 
 # Runtime data
 pids
@@ -20,11 +28,11 @@ pids
 lib-cov
 
 # Coverage directory used by tools like istanbul
-coverage
+coverage/
 *.lcov
 
 # nyc test coverage
-.nyc_output
+.nyc_output/
 
 # Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
@@ -49,19 +57,13 @@ web_modules/
 *.tsbuildinfo
 
 # Optional npm cache directory
-.npm
+.npm/
 
 # Optional eslint cache
 .eslintcache
 
 # Optional stylelint cache
 .stylelintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
 
 # Optional REPL history
 .node_repl_history
@@ -74,10 +76,8 @@ web_modules/
 
 # dotenv environment variable files
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env.*
+!.env.example
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -89,7 +89,8 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
+dist/
+dist-desktop/
 
 # Gatsby files
 .cache/
@@ -103,6 +104,9 @@ dist
 # vuepress v2.x temp and cache directory
 .temp
 .cache
+
+# Sveltekit cache directory
+.svelte-kit/
 
 # vitepress build output
 **/.vitepress/dist
@@ -122,15 +126,36 @@ dist
 # DynamoDB Local files
 .dynamodb/
 
+# Firebase cache directory
+.firebase/
+
 # TernJS port file
 .tern-port
 
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
-# yarn v2
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
+# yarn v3
 .pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Vite logs files
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+**/temp/run-*/**
+
+test-results/
+playwright-report/
+blob-report/
+.vitest/
+
+# User Progress Data
+.cojudge_progress.json
+
+/build/

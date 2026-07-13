@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "problemId": "minimum-window-substring",
+  "frontendId": "76",
+  "source": {
+    "name": "codegate-mixed-difficulty-fixture",
+    "revision": "fixture-v1-2026-07-12",
+    "record": "fixtures/import/records.json#2"
+  },
+  "validation": {
+    "status": "pending",
+    "judge": "existing-cojudge",
+    "limits": "existing-runner-limits"
+  },
+  "languages": {
+    "python": {
+      "reference": "reference/python.py",
+      "incorrect": "reference/incorrect/python.py",
+      "variants": {
+        "very-easy": "variants/python/very-easy.py",
+        "easy": "variants/python/easy.py",
+        "medium": "variants/python/medium.py",
+        "hard": "variants/python/hard.py",
+        "original": "variants/python/original.py"
+      }
+    },
+    "cpp": {
+      "reference": "reference/cpp.cpp",
+      "incorrect": "reference/incorrect/cpp.cpp",
+      "variants": {
+        "very-easy": "variants/cpp/very-easy.cpp",
+        "easy": "variants/cpp/easy.cpp",
+        "medium": "variants/cpp/medium.cpp",
+        "hard": "variants/cpp/hard.cpp",
+        "original": "variants/cpp/original.cpp"
+      }
+    }
+  }
+}

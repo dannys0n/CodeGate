@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "offline": true,
+  "sources": [
+    {
+      "adapter": "local-json",
+      "name": "codegate-mixed-difficulty-fixture",
+      "revision": "fixture-v1-2026-07-12",
+      "path": "records.json"
+    }
+  ],
+  "limits": "Existing CoJudge Docker runner compilation, runtime, memory, and output limits",
+  "accepted": [
+    {
+      "frontendId": "20",
+      "slug": "valid-parentheses",
+      "problemId": "valid-parentheses",
+      "difficulty": "Easy",
+      "languages": [
+        "python",
+        "cpp"
+      ],
+      "status": "pending-validation"
+    },
+    {
+      "frontendId": "347",
+      "slug": "top-k-frequent-elements",
+      "problemId": "top-k-frequent-elements",
+      "difficulty": "Medium",
+      "languages": [
+        "python",
+        "cpp"
+      ],
+      "status": "pending-validation"
+    },
+    {
+      "frontendId": "76",
+      "slug": "minimum-window-substring",
+      "problemId": "minimum-window-substring",
+      "difficulty": "Hard",
+      "languages": [
+        "python",
+        "cpp"
+      ],
+      "status": "pending-validation"
+    }
+  ],
+  "skipped": [
+    {
+      "frontendId": "295",
+      "slug": "find-median-from-data-stream",
+      "reason": "unsupported problem shape: design"
+    },
+    {
+      "frontendId": "206",
+      "slug": "reverse-linked-list",
+      "reason": "unsupported problem shape: linked-structure"
+    },
+    {
+      "frontendId": "990002",
+      "slug": "offline-source-only-problem",
+      "reason": "no matching complete CoJudge problem pack"
+    }
+  ],
+  "failed": [
+    {
+      "frontendId": "990001",
+      "slug": "valid-anagram",
+      "reason": "frontend ID 990001 maps to multiple slugs"
+    },
+    {
+      "frontendId": "990001",
+      "slug": "contains-duplicate",
+      "reason": "frontend ID 990001 maps to multiple slugs"
+    }
+  ]
+}

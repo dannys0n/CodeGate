@@ -1,0 +1,67 @@
+import { browser } from '$app/environment';
+import type { ProgrammingLanguage } from '$lib/utils/util';
+import { writable } from 'svelte/store';
+
+export type ThemeChoice = 'dark' | 'light';
+
+export type ActivePanel = 'explorer' | 'search' | null;
+
+export interface UserSettings {
+    preferredLanguage: ProgrammingLanguage;
+    playgroundPreferredLanguage: ProgrammingLanguage;
+    editorFontSize: number;
+    theme: ThemeChoice;
+    vimMode: 'off' | 'on';
+    isSidebarOpen: boolean;
+    activePanel: ActivePanel;
+}
+
+const STORAGE_KEY = 'user-settings';
+
+const defaultSettings: UserSettings = {
+    preferredLanguage: 'java',
+    playgroundPreferredLanguage: 'java',
+    editorFontSize: 14,
+    theme: 'light',
+    vimMode: 'off',
+    isSidebarOpen: true,
+    activePanel: 'explorer',
+};
+
+function normalizeSettings(input: any): UserSettings {
+    const preferredLanguage = (input?.preferredLanguage ?? defaultSettings.preferredLanguage) as ProgrammingLanguage;
+    const playgroundPreferredLanguage = (input?.playgroundPreferredLanguage ?? defaultSettings.playgroundPreferredLanguage) as ProgrammingLanguage;
+    const rawSize = input?.editorFontSize;
+    const size = typeof rawSize === 'number' ? rawSize : defaultSettings.editorFontSize;
+    const editorFontSize = Math.min(24, Math.max(12, size));
+    const rawTheme = (input?.theme ?? defaultSettings.theme) as ThemeChoice;
+    const theme: ThemeChoice = rawTheme === 'dark' ? 'dark' : 'light';
+    const vimMode = input?.vimMode === 'on' ? 'on' : 'off';
+    const isSidebarOpen = typeof input?.isSidebarOpen === 'boolean' ? input.isSidebarOpen : defaultSettings.isSidebarOpen;
+    const validPanels: ActivePanel[] = ['explorer', 'search', null];
+    const activePanel = validPanels.includes(input?.activePanel as ActivePanel) ? input.activePanel as ActivePanel : defaultSettings.activePanel;
+    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel };
+}
+
+// Load initial settings from localStorage if available
+const initialSettings: UserSettings = browser
+    ? normalizeSettings(JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'))
+    : defaultSettings;
+
+const userSettingsStorage = writable<UserSettings>(initialSettings);
+
+function applyTheme(theme: ThemeChoice) {
+    const root = document.documentElement;
+    root.dataset.theme = theme;
+}
+
+// Persist changes to localStorage in the browser
+if (browser) {
+    applyTheme(initialSettings.theme);
+    userSettingsStorage.subscribe((value) => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+        applyTheme(value.theme);
+    });
+}
+
+export default userSettingsStorage;

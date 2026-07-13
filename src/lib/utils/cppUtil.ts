@@ -1,0 +1,833 @@
+import type { Param } from './util';
+
+// Use official GCC image with g++ available
+export const cppImage = 'gcc:13';
+
+export const cppListNodeClass = `
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode(): val(0), next(nullptr) {}
+    ListNode(int x): val(x), next(nullptr) {}
+    ListNode(int x, ListNode* next): val(x), next(next) {}
+};
+`;
+
+export const cppTreeNodeClass = `
+struct TreeNode {
+    int val;
+    TreeNode *left;
+    TreeNode *right;
+    TreeNode(): val(0), left(nullptr), right(nullptr) {}
+    TreeNode(int x): val(x), left(nullptr), right(nullptr) {}
+    TreeNode(int x, TreeNode* left, TreeNode* right): val(x), left(left), right(right) {}
+};
+`;
+
+export const cppGraphNodeClass = `
+#include <vector>
+using namespace std;
+struct GraphNode {
+    int val;
+    vector<GraphNode*> neighbors;
+    GraphNode(): val(0) {}
+    GraphNode(int x): val(x) {}
+    GraphNode(int x, vector<GraphNode*> neighbors): val(x), neighbors(neighbors) {}
+};
+`;
+
+// Helper methods in C++ to normalize IO and parsing
+export const cppHelperMethods = `
+#include <bits/stdc++.h>
+#include "ListNode.cpp"
+#include "TreeNode.cpp"
+#include "GraphNode.cpp"
+using namespace std;
+#include "Solution.cpp"
+
+static string display_output(ListNode* head) {
+    string s;
+    ListNode* cur = head;
+    s += "[";
+    while (cur != nullptr) {
+        s += to_string(cur->val);
+        if (cur->next != nullptr) {
+            s += ", ";
+        }
+        cur = cur->next;
+    }
+    s += "]";
+    return s;
+}
+static string display_output(TreeNode* root) {
+    if (!root) return "[]";
+    vector<string> out;
+    deque<TreeNode*> q;
+    q.push_back(root);
+    while (!q.empty()) {
+        TreeNode* node = q.front(); q.pop_front();
+        if (!node) {
+            out.push_back("null");
+            continue;
+        }
+        out.push_back(to_string(node->val));
+        q.push_back(node->left);
+        q.push_back(node->right);
+    }
+    // trim trailing nulls
+    int i = (int)out.size() - 1;
+    while (i >= 0 && out[i] == "null") i--;
+    string s = "[";
+    for (int j = 0; j <= i; ++j) {
+        if (j) s += ", ";
+        s += out[j];
+    }
+    s += "]";
+    return s;
+}
+static string display_output(const string &s) { return s; }
+static string display_output(const char *s) { return string(s); }
+static string display_output(int val) { return to_string(val); }
+static string display_output(long long val) { return to_string(val); }
+static string display_output(bool val) { return val ? "true" : "false"; }
+static string display_output(const vector<int> &v) {
+    string s = "[";
+    for (size_t i = 0; i < v.size(); ++i) {
+        if (i) s += ", ";
+        s += to_string(v[i]);
+    }
+    s += "]";
+    return s;
+}
+
+static string display_output(const vector<vector<int>> &vv) {
+    string s = "[";
+    for (size_t i = 0; i < vv.size(); ++i) {
+        if (i) s += ", ";
+        s += display_output(vv[i]);
+    }
+    s += "]";
+    return s;
+}
+
+static string display_output(const vector<char> &v) {
+    string s = "[";
+    for (size_t i = 0; i < v.size(); ++i) {
+        if (i) s += ", ";
+        s += string(1, v[i]);
+    }
+    s += "]";
+    return s;
+}
+
+static string display_output(const vector<vector<char>> &vv) {
+    string s = "[";
+    for (size_t i = 0; i < vv.size(); ++i) {
+        if (i) s += ", ";
+        s += display_output(vv[i]);
+    }
+    s += "]";
+    return s;
+}
+
+static string display_output(const vector<string> &v) {
+    string s = "[";
+    for (size_t i = 0; i < v.size(); ++i) {
+        if (i) s += ", ";
+        s += '"' + v[i] + '"';
+    }
+    s += "]";
+    return s;
+}
+
+static string display_output(const vector<vector<string>> &vv) {
+    string s = "[";
+    for (size_t i = 0; i < vv.size(); ++i) {
+        if (i) s += ", ";
+        s += display_output(vv[i]);
+    }
+    s += "]";
+    return s;
+}
+
+static vector<int> to_int_array(const string &s) {
+    vector<int> res;
+    if (s.empty() || s == "[]") return res;
+    string inner = s;
+    if (inner.front() == '[' && inner.back() == ']') {
+        inner = inner.substr(1, inner.size() - 2);
+    }
+    string cur; 
+    stringstream ss(inner);
+    while (getline(ss, cur, ',')) {
+        // trim spaces
+        size_t b = cur.find_first_not_of(' ');
+        size_t e = cur.find_last_not_of(' ');
+        if (b == string::npos) continue;
+        string t = cur.substr(b, e - b + 1);
+        if (!t.empty()) res.push_back(stoi(t));
+    }
+    return res;
+}
+
+static vector<vector<int>> to_int_array_2d(const string &s) {
+    vector<vector<int>> res;
+    if (s.empty()) return res;
+    string t = s;
+    // Trim spaces
+    auto trim = [](const string &str) {
+        size_t b = str.find_first_not_of(" \\t\\n\\r");
+        if (b == string::npos) return string();
+        size_t e = str.find_last_not_of(" \\t\\n\\r");
+        return str.substr(b, e - b + 1);
+    };
+    t = trim(t);
+    if (t == "[]") return res;
+    if (t.front() == '[') t = t.substr(1);
+    if (!t.empty() && t.back() == ']') t = t.substr(0, t.size()-1);
+
+    int depth = 0; size_t start = 0;
+    for (size_t i = 0; i < t.size(); ++i) {
+        char c = t[i];
+        if (c == '[') depth++;
+        else if (c == ']') depth--;
+        else if (c == ',' && depth == 0) {
+            string part = trim(t.substr(start, i - start));
+            if (!part.empty()) res.push_back(to_int_array(part));
+            start = i + 1;
+        }
+    }
+    string last = trim(t.substr(start));
+    if (!last.empty()) res.push_back(to_int_array(last));
+    return res;
+}
+
+static string unquote(const string &x) {
+    if (x.size() >= 2) {
+        if ((x.front() == '"' && x.back() == '"') || (x.front() == '\\'' && x.back() == '\\'')) {
+            return x.substr(1, x.size() - 2);
+        }
+    }
+    return x;
+}
+
+static vector<string> to_string_array(const string &s) {
+    vector<string> res;
+    if (s.empty()) return res;
+    string t = s;
+    // Trim spaces
+    auto trim = [](const string &str) {
+        size_t b = str.find_first_not_of(" \\t\\n\\r");
+        if (b == string::npos) return string();
+        size_t e = str.find_last_not_of(" \\t\\n\\r");
+        return str.substr(b, e - b + 1);
+    };
+    t = trim(t);
+    if (t == "[]") return res;
+    if (t.front() == '[' && t.back() == ']') {
+        t = t.substr(1, t.size() - 2);
+    }
+    bool inDQ = false, inSQ = false;
+    string cur;
+    for (size_t i = 0; i < t.size(); ++i) {
+        char c = t[i];
+        if (c == '"' && !inSQ) { inDQ = !inDQ; continue; }
+        if (c == '\\'' && !inDQ) { inSQ = !inSQ; continue; }
+        if (c == ',' && !inDQ && !inSQ) {
+            string token = trim(cur);
+            res.push_back(unquote(token));
+            cur.clear();
+        } else {
+            cur.push_back(c);
+        }
+    }
+    string last = trim(cur);
+    res.push_back(unquote(last));
+    return res;
+}
+
+static vector<string> to_string_list(const string &s) {
+    return to_string_array(s);
+}
+
+static vector<vector<string>> to_string_list_2d(const string &s) {
+    vector<vector<string>> res;
+    if (s.empty()) return res;
+    string t = s;
+    // Trim spaces
+    auto trim = [](const string &str) {
+        size_t b = str.find_first_not_of(" \\t\\n\\r");
+        if (b == string::npos) return string();
+        size_t e = str.find_last_not_of(" \\t\\n\\r");
+        return str.substr(b, e - b + 1);
+    };
+    t = trim(t);
+    if (t == "[]") return res;
+    if (t.front() == '[') t = t.substr(1);
+    if (!t.empty() && t.back() == ']') t = t.substr(0, t.size()-1);
+
+    int depth = 0; size_t start = 0;
+    for (size_t i = 0; i < t.size(); ++i) {
+        char c = t[i];
+        if (c == '[') depth++;
+        else if (c == ']') depth--;
+        else if (c == ',' && depth == 0) {
+            string part = trim(t.substr(start, i - start));
+            if (!part.empty()) res.push_back(to_string_array(part));
+            start = i + 1;
+        }
+    }
+    string last = trim(t.substr(start));
+    if (!last.empty()) res.push_back(to_string_array(last));
+    return res;
+}
+
+static vector<char> to_char_array(const string &s) {
+    vector<char> res;
+    vector<string> tokens = to_string_array(s);
+    for (const auto &tok : tokens) {
+        if (!tok.empty()) res.push_back(tok[0]);
+    }
+    return res;
+}
+
+static vector<vector<char>> to_char_array_2d(const string &s) {
+    vector<vector<char>> res;
+    if (s.empty()) return res;
+    string t = s;
+    // Trim spaces
+    auto trim = [](const string &str) {
+        size_t b = str.find_first_not_of(" \\t\\n\\r");
+        if (b == string::npos) return string();
+        size_t e = str.find_last_not_of(" \\t\\n\\r");
+        return str.substr(b, e - b + 1);
+    };
+    t = trim(t);
+    if (t == "[]") return res;
+    if (t.front() == '[') t = t.substr(1);
+    if (!t.empty() && t.back() == ']') t = t.substr(0, t.size()-1);
+
+    int depth = 0; size_t start = 0;
+    for (size_t i = 0; i < t.size(); ++i) {
+        char c = t[i];
+        if (c == '[') depth++;
+        else if (c == ']') depth--;
+        else if (c == ',' && depth == 0) {
+            string part = trim(t.substr(start, i - start));
+            if (!part.empty()) res.push_back(to_char_array(part));
+            start = i + 1;
+        }
+    }
+    string last = trim(t.substr(start));
+    if (!last.empty()) res.push_back(to_char_array(last));
+    return res;
+}
+
+static ListNode* to_list_node(const string &s) {
+    vector<int> nums = to_int_array(s);
+    int n = nums.size();
+    if (n == 0) return nullptr;
+    ListNode* head = new ListNode(nums[0]);
+    ListNode* cur = head;
+    for (int i = 1; i < n; i++) {
+        cur->next = new ListNode(nums[i]);
+        cur = cur->next;
+    }
+    return head;
+}
+
+static vector<ListNode*> to_list_node_array(const string &s) {
+    vector<string> sarr = to_string_array(s);
+    vector<ListNode*> ans(sarr.size());
+    for (int i = 0; i < sarr.size(); i++) {
+        ans[i] = to_list_node(sarr[i]);
+    }
+    return ans;
+}
+
+static vector<string> split_tree_tokens(const string &s) {
+    vector<string> res;
+    if (s.empty()) return res;
+    string t = s;
+    // trim
+    auto trim = [](const string &str) {
+        size_t b = str.find_first_not_of(" \\t\\n\\r");
+        if (b == string::npos) return string();
+        size_t e = str.find_last_not_of(" \\t\\n\\r");
+        return str.substr(b, e - b + 1);
+    };
+    t = trim(t);
+    if (t.size() >= 2 && t.front() == '[' && t.back() == ']') {
+        t = t.substr(1, t.size() - 2);
+    }
+    string cur;
+    int depth = 0;
+    for (size_t i = 0; i < t.size(); ++i) {
+        char c = t[i];
+        if (c == ',' && depth == 0) {
+            string token = trim(cur);
+            if (!token.empty()) res.push_back(token);
+            cur.clear();
+        } else {
+            if (c == '[') depth++;
+            if (c == ']') depth--;
+            cur.push_back(c);
+        }
+    }
+    string last = trim(cur);
+    if (!last.empty()) res.push_back(last);
+    return res;
+}
+
+static TreeNode* to_tree_node(const string &s) {
+    vector<string> tok = split_tree_tokens(s);
+    if (tok.empty()) return nullptr;
+    auto parseVal = [](const string &x, bool &ok) -> int {
+        string t = x;
+        // remove quotes if any
+        if ((t.size() >= 2 && ((t.front() == '"' && t.back() == '"') || (t.front() == '\\'' && t.back() == '\\'')))) {
+            t = t.substr(1, t.size() - 2);
+        }
+        if (t == "null" || t == "None" || t == "NULL") { ok = false; return 0; }
+        ok = true; return stoi(t);
+    };
+    bool ok = false;
+    int v0 = 0;
+    v0 = parseVal(tok[0], ok);
+    if (!ok) return nullptr;
+    TreeNode* root = new TreeNode(v0);
+    deque<TreeNode*> q; q.push_back(root);
+    size_t i = 1;
+    while (!q.empty() && i < tok.size()) {
+        TreeNode* node = q.front(); q.pop_front();
+        // left
+        bool okL = false; int lv = 0;
+        lv = parseVal(tok[i++], okL);
+        if (okL) { node->left = new TreeNode(lv); q.push_back(node->left); }
+        if (i >= tok.size()) break;
+        // right
+        bool okR = false; int rv = 0;
+        rv = parseVal(tok[i++], okR);
+        if (okR) { node->right = new TreeNode(rv); q.push_back(node->right); }
+    }
+    return root;
+}
+
+static string display_output(GraphNode* node) {
+    if (!node) return "[]";
+    map<int, vector<int>> adj;
+    unordered_set<GraphNode*> visited;
+    deque<GraphNode*> q;
+    q.push_back(node);
+    visited.insert(node);
+    while (!q.empty()) {
+        GraphNode* cur = q.front(); q.pop_front();
+        vector<int> neighbors;
+        for (GraphNode* n : cur->neighbors) {
+            neighbors.push_back(n->val);
+            if (!visited.count(n)) {
+                visited.insert(n);
+                q.push_back(n);
+            }
+        }
+        adj[cur->val] = neighbors;
+    }
+    string s = "[";
+    bool first = true;
+    for (auto& p : adj) {
+        if (!first) s += ",";
+        first = false;
+        s += "[";
+        for (size_t j = 0; j < p.second.size(); j++) {
+            if (j > 0) s += ",";
+            s += to_string(p.second[j]);
+        }
+        s += "]";
+    }
+    s += "]";
+    return s;
+}
+
+static GraphNode* to_graph_node(const string &s) {
+    vector<vector<int>> adj = to_int_array_2d(s);
+    if (adj.empty()) return nullptr;
+    unordered_map<int, GraphNode*> map;
+    for (size_t i = 0; i < adj.size(); i++) {
+        map[i + 1] = new GraphNode(i + 1);
+    }
+    for (size_t i = 0; i < adj.size(); i++) {
+        GraphNode* node = map[i + 1];
+        for (int neighbor : adj[i]) {
+            node->neighbors.push_back(map[neighbor]);
+        }
+    }
+    return map[1];
+}
+
+// escape helper for static usage if needed
+`;
+
+function cppEscapeStringLiteral(str: string): string {
+    if (str === null || str === undefined) return '""';
+    const escaped = String(str).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return `"${escaped}"`;
+}
+
+export function cppGetFullParam(params: Param[], tc: any): string {
+    const parts: string[] = [];
+    for (const p of params) {
+        const val = tc[p.name];
+        if (p.type === 'string') {
+            parts.push(cppEscapeStringLiteral(val ?? ''));
+        } else if (p.type === 'string_list_2d') {
+            let strVal: string;
+            if (Array.isArray(val)) {
+                try { strVal = JSON.stringify(val); } catch { strVal = '[]'; }
+            } else {
+                strVal = String(val ?? '[]');
+            }
+            parts.push(`to_string_list_2d(${cppEscapeStringLiteral(strVal)})`);
+        } else if (p.type === 'string_list') {
+            let strVal: string;
+            if (Array.isArray(val)) {
+                try { strVal = JSON.stringify(val); } catch { strVal = '[]'; }
+            } else {
+                strVal = String(val ?? '[]');
+            }
+            parts.push(`to_string_list(${cppEscapeStringLiteral(strVal)})`);
+        } else if (p.type === 'string_array') {
+            let strVal: string;
+            if (Array.isArray(val)) {
+                try { strVal = JSON.stringify(val); } catch { strVal = '[]'; }
+            } else {
+                strVal = String(val ?? '[]');
+            }
+            parts.push(`to_string_array(${cppEscapeStringLiteral(strVal)})`);
+        } else if (p.type === 'int_array') {
+            parts.push(`to_int_array(${cppEscapeStringLiteral(val ?? '[]')})`);
+        } else if (p.type === 'int_array_2d' || p.type === 'int_matrix') {
+            let strVal: string;
+            if (Array.isArray(val)) {
+                try { strVal = JSON.stringify(val); } catch { strVal = '[]'; }
+            } else {
+                strVal = String(val ?? '[]');
+            }
+            parts.push(`to_int_array_2d(${cppEscapeStringLiteral(strVal)})`);
+        } else if (p.type === 'char_array_2d') {
+            let strVal: string;
+            if (Array.isArray(val)) {
+                try { strVal = JSON.stringify(val); } catch { strVal = '[]'; }
+            } else {
+                strVal = String(val ?? '[]');
+            }
+            parts.push(`to_char_array_2d(${cppEscapeStringLiteral(strVal)})`);
+        } else if (p.type === 'int') {
+            parts.push(`${val}`);
+        } else if (p.type === 'boolean') {
+            parts.push(String(val) === 'true' ? 'true' : 'false');
+        } else if (p.type === 'list_node') {
+            parts.push(`to_list_node(${cppEscapeStringLiteral(val ?? '[]')})`);
+        } else if (p.type === 'list_node_array') {
+            parts.push(`to_list_node_array(${cppEscapeStringLiteral(val ?? '[]')})`);
+        } else if (p.type === 'tree_node') {
+            parts.push(`to_tree_node(${cppEscapeStringLiteral(val ?? '[]')})`);
+        } else if (p.type === 'graph_node') {
+            parts.push(`to_graph_node(${cppEscapeStringLiteral(val ?? '[]')})`);
+        } else {
+            // default pass as string
+            parts.push(cppEscapeStringLiteral(String(val ?? '')));
+        }
+    }
+    return parts.join(', ');
+}
+
+const cppStringOpMap: Record<string, { void: boolean, code: string }> = {
+    addWord: { void: true, code: 'obj->addWord(values[i]);' },
+    insert: { void: true, code: 'obj->insert(values[i]);' },
+    search: { void: false, code: 'obj->search(values[i]) ? "true" : "false"' },
+    startsWith: { void: false, code: 'obj->startsWith(values[i]) ? "true" : "false"' },
+};
+
+function generateCppBranches(operations: string[], isInt: boolean): string {
+    return operations.map((op, i) => {
+        const cond = i === 0 ? 'if' : 'else if';
+        if (isInt) {
+            if (op === 'addNum') {
+                return `            } ${cond} (op == "addNum") {\n                obj->addNum(values[i][0]);\n                result.push_back("null");`;
+            } else if (op === 'findMedian') {
+                return `            } ${cond} (op == "findMedian") {\n                double med = obj->findMedian();\n                if (med == (long)med) {\n                    ostringstream ss;\n                    ss << (long)med << ".0";\n                    result.push_back(ss.str());\n                } else {\n                    ostringstream ss;\n                    ss << med;\n                    result.push_back(ss.str());\n                }`;
+            }
+            return '';
+        }
+        const entry = cppStringOpMap[op];
+        if (!entry) return '';
+        if (entry.void) {
+            return `            } ${cond} (op == "${op}") {\n                ${entry.code}\n                result.push_back("null");`;
+        } else {
+            return `            } ${cond} (op == "${op}") {\n                result.push_back(${entry.code});`;
+        }
+    }).join('\n');
+}
+
+export function generateCppClassSolution(className: string, params?: Param[], outputType?: string, operations?: string[]): string {
+    if (params && params.length > 0 && params[0]?.type === 'tree_node') {
+        return `#include <string>
+#include <sstream>
+#include <deque>
+using namespace std;
+#include "${className}.cpp"
+
+class Solution {
+public:
+    TreeNode* solve(TreeNode* root) {
+        ${className} ser;
+        ${className} deser;
+        return deser.deserialize(ser.serialize(root));
+    }
+};
+`;
+    }
+    if (params && params.length === 1 && params[0]?.type === 'string_array') {
+        return `#include <string>
+#include <vector>
+#include <sstream>
+#include "${className}.cpp"
+using namespace std;
+
+class Solution {
+public:
+    vector<string> solve(vector<string>& strs) {
+        ${className} codec;
+        string encoded = codec.encode(strs);
+        return codec.decode(encoded);
+    }
+};
+`;
+    }
+    if (params && params.length > 1 && params[1]?.type === 'string_array') {
+        const ops = operations || ['addWord', 'insert', 'search', 'startsWith'];
+        const branches = generateCppBranches(ops, false);
+        return `#include <vector>
+#include <string>
+#include <sstream>
+#include "${className}.cpp"
+using namespace std;
+
+class Solution {
+public:
+    vector<string> solve(vector<string>& operations, vector<string>& values) {
+        vector<string> result;
+        ${className}* obj = nullptr;
+        for (int i = 0; i < operations.size(); i++) {
+            string& op = operations[i];
+            if (op == "${className}") {
+                delete obj;
+                obj = new ${className}();
+                result.push_back("null");
+${branches}
+            }
+        }
+        delete obj;
+        return result;
+    }
+};
+`;
+    }
+    const ops = operations || ['addNum', 'findMedian'];
+    const branches = generateCppBranches(ops, true);
+    return `#include <vector>
+#include <string>
+#include <sstream>
+#include "${className}.cpp"
+using namespace std;
+
+class Solution {
+public:
+    vector<string> solve(vector<string>& operations, vector<vector<int>>& values) {
+        vector<string> result;
+        ${className}* obj = nullptr;
+        for (int i = 0; i < operations.size(); i++) {
+            string& op = operations[i];
+            if (op == "${className}") {
+                delete obj;
+                obj = new ${className}();
+                result.push_back("null");
+${branches}
+            }
+        }
+        delete obj;
+        return result;
+    }
+};
+`;
+}
+
+export function generateCppRunner(functionName: string, params: Param[], testCases: any[], checkGraphClone?: boolean): string {
+    const calls = testCases
+        .map((tc, caseIndex) => {
+            const decls: string[] = [];
+            const args: string[] = [];
+            params.forEach((p, i) => {
+                const vname = `p${i}`;
+                const raw = tc[p.name];
+                if (p.type === 'int_array') {
+                    decls.push(`vector<int> ${vname} = to_int_array(${cppEscapeStringLiteral(raw ?? '[]')});`);
+                    args.push(vname);
+                } else if (p.type === 'int_array_2d' || p.type === 'int_matrix') {
+                    let strVal: string;
+                    if (Array.isArray(raw)) {
+                        try { strVal = JSON.stringify(raw); } catch { strVal = '[]'; }
+                    } else {
+                        strVal = String(raw ?? '[]');
+                    }
+                    decls.push(`vector<vector<int>> ${vname} = to_int_array_2d(${cppEscapeStringLiteral(strVal)});`);
+                    args.push(vname);
+                } else if (p.type === 'char_array_2d') {
+                    let strVal: string;
+                    if (Array.isArray(raw)) {
+                        try { strVal = JSON.stringify(raw); } catch { strVal = '[]'; }
+                    } else {
+                        strVal = String(raw ?? '[]');
+                    }
+                    decls.push(`vector<vector<char>> ${vname} = to_char_array_2d(${cppEscapeStringLiteral(strVal)});`);
+                    args.push(vname);
+                } else if (p.type === 'string_array') {
+                    let strVal: string;
+                    if (Array.isArray(raw)) {
+                        try { strVal = JSON.stringify(raw); } catch { strVal = '[]'; }
+                    } else {
+                        strVal = String(raw ?? '[]');
+                    }
+                    decls.push(`vector<string> ${vname} = to_string_array(${cppEscapeStringLiteral(strVal)});`);
+                    args.push(vname);
+                } else if (p.type === 'string_list') {
+                    let strVal: string;
+                    if (Array.isArray(raw)) {
+                        try { strVal = JSON.stringify(raw); } catch { strVal = '[]'; }
+                    } else {
+                        strVal = String(raw ?? '[]');
+                    }
+                    decls.push(`vector<string> ${vname} = to_string_list(${cppEscapeStringLiteral(strVal)});`);
+                    args.push(vname);
+                } else if (p.type === 'string_list_2d') {
+                    let strVal: string;
+                    if (Array.isArray(raw)) {
+                        try { strVal = JSON.stringify(raw); } catch { strVal = '[]'; }
+                    } else {
+                        strVal = String(raw ?? '[]');
+                    }
+                    decls.push(`vector<vector<string>> ${vname} = to_string_list_2d(${cppEscapeStringLiteral(strVal)});`);
+                    args.push(vname);
+                } else if (p.type === 'string') {
+                    decls.push(`string ${vname} = ${cppEscapeStringLiteral(raw ?? '')};`);
+                    args.push(vname);
+                } else if (p.type === 'int') {
+                    decls.push(`int ${vname} = ${raw};`);
+                    args.push(vname);
+                } else if (p.type === 'boolean') {
+                    decls.push(`bool ${vname} = ${String(raw) === 'true' ? 'true' : 'false'};`);
+                    args.push(vname);
+                } else if (p.type === 'list_node') {
+                    let strVal: string;
+                    if (Array.isArray(raw)) {
+                        try { strVal = JSON.stringify(raw); } catch { strVal = '[]'; }
+                    } else {
+                        strVal = String(raw ?? '[]');
+                    }
+                    decls.push(`ListNode* ${vname} = to_list_node(${cppEscapeStringLiteral(strVal)});`);
+                    args.push(vname);
+                } else if (p.type === 'list_node_array') {
+                    let strVal: string;
+                    if (Array.isArray(raw)) {
+                        try { strVal = JSON.stringify(raw); } catch { strVal = '[]'; }
+                    } else {
+                        strVal = String(raw ?? '[]');
+                    }
+                    decls.push(`vector<ListNode*> ${vname} = to_list_node_array(${cppEscapeStringLiteral(strVal)});`);
+                    args.push(vname);
+                } else if (p.type === 'tree_node') {
+                    let strVal: string;
+                    if (Array.isArray(raw)) {
+                        try { strVal = JSON.stringify(raw); } catch { strVal = '[]'; }
+                    } else {
+                        strVal = String(raw ?? '[]');
+                    }
+                    decls.push(`TreeNode* ${vname} = to_tree_node(${cppEscapeStringLiteral(strVal)});`);
+                    args.push(vname);
+                } else if (p.type === 'graph_node') {
+                    let strVal: string;
+                    if (Array.isArray(raw)) {
+                        try { strVal = JSON.stringify(raw); } catch { strVal = '[]'; }
+                    } else {
+                        strVal = String(raw ?? '[]');
+                    }
+                    decls.push(`GraphNode* ${vname} = to_graph_node(${cppEscapeStringLiteral(strVal)});`);
+                    args.push(vname);
+                } else {
+                    // Default to string
+                    decls.push(`string ${vname} = ${cppEscapeStringLiteral(String(raw ?? ''))};`);
+                    args.push(vname);
+                }
+            });
+            const hasGraphNode = checkGraphClone && params.some(p => p.type === 'graph_node');
+            const graphNodeVar = hasGraphNode ? args.find((_, i) => params[i]?.type === 'graph_node') : null;
+            if (hasGraphNode && graphNodeVar) {
+                return `{
+        ${decls.join('\n        ')}
+        auto __res = sol.${functionName}(${args.join(', ')});
+        if (${graphNodeVar} != nullptr && __res == ${graphNodeVar}) {
+            cout << ":::ERROR:::invalid clone - same object" << "\\n";
+        } else {
+            cout << ":::RESULT:::" << display_output(__res) << "\\n";
+        }
+        cout << "---\\n";
+    }`;
+            }
+            return `{
+        ${decls.join('\n        ')}
+        // Capture final result in a variable to avoid mixing with user prints
+        auto __res = sol.${functionName}(${args.join(', ')});
+        cout << ":::RESULT:::" << display_output(__res) << "\\n";
+        cout << "---\\n";
+    }`;
+        })
+        .join('\n    ');
+
+    const crashHandlerCode = `
+#include <signal.h>
+#include <execinfo.h>
+#include <iostream>
+
+static void crash_handler(int sig) {
+    std::cerr << "Crash: signal " << sig;
+    if (sig == SIGSEGV) std::cerr << " (SIGSEGV - null pointer or invalid access)";
+    else if (sig == SIGFPE) std::cerr << " (SIGFPE - divide by zero or arithmetic error)";
+    else if (sig == SIGABRT) std::cerr << " (SIGABRT - abort)";
+    std::cerr << std::endl;
+    void* array[16];
+    size_t size = backtrace(array, 16);
+    std::cerr << "Backtrace:" << std::endl;
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+    _exit(1);
+}
+`;
+
+    return `${crashHandlerCode}
+${cppHelperMethods}
+int main() {
+    signal(SIGSEGV, crash_handler);
+    signal(SIGFPE, crash_handler);
+    signal(SIGABRT, crash_handler);
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    try {
+    Solution sol;
+    ${calls}
+    } catch (const std::exception &e) {
+        std::cerr << "Unhandled exception: " << e.what() << std::endl;
+        throw;
+    }
+    return 0;
+}
+`;
+}
