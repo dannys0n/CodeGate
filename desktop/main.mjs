@@ -167,14 +167,11 @@ async function runSmokeTest() {
 
 async function runDesktop() {
   uiReady = true;
-  const wsl = wakeWsl();
+  void wakeWsl();
   startServer();
   const server = await waitForServer(baseUrl, 60, 250, instanceToken);
-  const wslResult = await wsl;
-  const docker = await checkDocker();
-  const diagnostics = readinessDiagnostics(server, wslResult, docker);
-  if (diagnostics.length > 0) {
-    showRecovery(diagnostics);
+  if (!server.ok) {
+    showRecovery([server.error]);
     return;
   }
   try {
