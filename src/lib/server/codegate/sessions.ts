@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { selectChallenge } from '../../codegate/selection';
-import type { GateLanguage, PlayableManifest, PlayableVariant, ScaffoldLevel } from '../../codegate/types';
+import type { DifficultyLevel, GateLanguage, PlayableManifest, PlayableVariant } from '../../codegate/types';
 
 export type GateOutcome = 'accepted' | 'given-up' | 'infrastructure-failure' | 'abandoned';
 
@@ -29,22 +29,22 @@ const sessions = new Map<string, GateSession>();
 function choose(
     manifest: PlayableManifest,
     language: GateLanguage,
-    scaffold: ScaffoldLevel,
+    difficulty: DifficultyLevel,
     recentProblemIds: string[],
     random: () => number
 ) {
-    const variant = selectChallenge(manifest.variants, { language, scaffold, recentProblemIds }, random);
-    if (!variant) throw new Error(`No validated ${language}/${scaffold} challenge is available`);
+    const variant = selectChallenge(manifest.variants, { language, difficulty, recentProblemIds }, random);
+    if (!variant) throw new Error(`No validated ${language}/${difficulty}% challenge is available`);
     return variant;
 }
 
 export function createGateSession(
     manifest: PlayableManifest,
     language: GateLanguage,
-    scaffold: ScaffoldLevel,
+    difficulty: DifficultyLevel,
     random: () => number = Math.random
 ): GateSession {
-    const variant = choose(manifest, language, scaffold, [], random);
+    const variant = choose(manifest, language, difficulty, [], random);
     const session: GateSession = {
         id: randomUUID(),
         createdAt: new Date().toISOString(),
@@ -72,11 +72,11 @@ export function refreshGateChallenge(
     challengeId: string,
     manifest: PlayableManifest,
     language: GateLanguage,
-    scaffold: ScaffoldLevel,
+    difficulty: DifficultyLevel,
     random: () => number = Math.random
 ): GateSession {
     const session = requireActiveChallenge(sessionId, challengeId);
-    const variant = choose(manifest, language, scaffold, session.recentProblemIds, random);
+    const variant = choose(manifest, language, difficulty, session.recentProblemIds, random);
     session.activeSubmission = undefined;
     session.challenge = { id: randomUUID(), variant };
     session.recentProblemIds = [...session.recentProblemIds.slice(-9), variant.problemId];
@@ -88,16 +88,16 @@ export function switchGateVariant(
     challengeId: string,
     manifest: PlayableManifest,
     language: GateLanguage,
-    scaffold: ScaffoldLevel
+    difficulty: DifficultyLevel
 ): GateSession {
     const session = requireActiveChallenge(sessionId, challengeId);
     const problemId = session.challenge.variant.problemId;
     const variant = manifest.variants.find((candidate) =>
         candidate.problemId === problemId
         && candidate.language === language
-        && candidate.scaffold === scaffold
+        && candidate.difficulty === difficulty
     );
-    if (!variant) throw new Error(`No validated ${language}/${scaffold} variant is available for ${problemId}`);
+    if (!variant) throw new Error(`No validated ${language}/${difficulty}% variant is available for ${problemId}`);
     session.activeSubmission = undefined;
     session.challenge = { id: randomUUID(), variant };
     return session;

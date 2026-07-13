@@ -1,7 +1,7 @@
 import type { ProgrammingLanguage } from '$lib/utils/util';
 
-export const scaffoldLevels = ['very-easy', 'easy', 'medium', 'hard', 'original'] as const;
-export type ScaffoldLevel = (typeof scaffoldLevels)[number];
+export const difficultyLevels = ['0', '25', '50', '75', '100'] as const;
+export type DifficultyLevel = (typeof difficultyLevels)[number];
 export type GateLanguage = Extract<ProgrammingLanguage, 'python' | 'cpp'>;
 
 export type PlayableVariant = {
@@ -9,7 +9,7 @@ export type PlayableVariant = {
     title: string;
     leetcodeDifficulty: string;
     language: GateLanguage;
-    scaffold: ScaffoldLevel;
+    difficulty: DifficultyLevel;
     sourcePath: string;
     sourceSha256: string;
     judgeSha256: string;
@@ -26,6 +26,6 @@ export type PlayableManifest = {
 
 export type GateSelectionPreferences = {
     language: GateLanguage;
-    scaffold: ScaffoldLevel;
+    difficulty: DifficultyLevel;
     recentProblemIds?: string[];
 };

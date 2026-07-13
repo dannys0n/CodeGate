@@ -1,21 +1,21 @@
-import type { GateLanguage, GateSelectionPreferences, PlayableVariant, ScaffoldLevel } from './types';
+import type { DifficultyLevel, GateLanguage, GateSelectionPreferences, PlayableVariant } from './types';
 
-const scaffoldFallbacks: Record<ScaffoldLevel, ScaffoldLevel[]> = {
-    'very-easy': ['very-easy', 'easy', 'medium', 'hard', 'original'],
-    easy: ['easy', 'very-easy', 'medium', 'hard', 'original'],
-    medium: ['medium', 'easy', 'hard', 'very-easy', 'original'],
-    hard: ['hard', 'medium', 'original', 'easy', 'very-easy'],
-    original: ['original', 'hard', 'medium', 'easy', 'very-easy']
+const difficultyFallbacks: Record<DifficultyLevel, DifficultyLevel[]> = {
+    '0': ['0', '25', '50', '75', '100'],
+    '25': ['25', '0', '50', '75', '100'],
+    '50': ['50', '25', '75', '0', '100'],
+    '75': ['75', '50', '100', '25', '0'],
+    '100': ['100', '75', '50', '25', '0']
 };
 
 export function variantsForPreference(
     variants: PlayableVariant[],
     language: GateLanguage,
-    scaffold: ScaffoldLevel
+    difficulty: DifficultyLevel
 ): PlayableVariant[] {
     const sameLanguage = variants.filter((variant) => variant.language === language);
-    for (const candidateScaffold of scaffoldFallbacks[scaffold]) {
-        const matches = sameLanguage.filter((variant) => variant.scaffold === candidateScaffold);
+    for (const candidateDifficulty of difficultyFallbacks[difficulty]) {
+        const matches = sameLanguage.filter((variant) => variant.difficulty === candidateDifficulty);
         if (matches.length > 0) return matches;
     }
     return [];
@@ -26,7 +26,7 @@ export function selectChallenge(
     preferences: GateSelectionPreferences,
     random: () => number = Math.random
 ): PlayableVariant | null {
-    const preferred = variantsForPreference(variants, preferences.language, preferences.scaffold);
+    const preferred = variantsForPreference(variants, preferences.language, preferences.difficulty);
     if (preferred.length === 0) return null;
 
     const recent = new Set(preferences.recentProblemIds ?? []);

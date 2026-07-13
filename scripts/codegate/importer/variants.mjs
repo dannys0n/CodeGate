@@ -1,44 +1,54 @@
-const levels = ['very-easy', 'easy', 'medium', 'hard', 'original'];
+const levels = ['0', '25', '50', '75', '100'];
 
-function comment(language, lines) {
-  const prefix = language === 'python' ? '# ' : '// ';
-  return lines.filter(Boolean).map((line) => `${prefix}${line}`).join('\n');
-}
-
-function prependGuidance(source, language, lines) {
-  return `${comment(language, ['CodeGate scaffold guidance:', ...lines])}\n${source.trimEnd()}\n`;
-}
-
-function nearComplete(reference, language) {
-  const lines = reference.trimEnd().split(/\r?\n/);
-  const expression = language === 'python'
-    ? /^(\s*)return\s+.+$/
-    : /^(\s*)return\s+.+;\s*$/;
-  for (let index = lines.length - 1; index >= 0; index--) {
-    const match = lines[index].match(expression);
-    if (!match) continue;
-    lines.splice(index, 1,
-      `${match[1]}${language === 'python' ? '# ' : '// '}TODO: restore the result for this final step.`,
-      language === 'python' ? `${match[1]}pass` : `${match[1]}return {};`);
-    return `${lines.join('\n')}\n`;
+function isProtectedLine(line, language) {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.startsWith(language === 'python' ? '#' : '//')) return true;
+  if (language === 'python') {
+    return /^(from\s+\S+\s+import\s+|import\s+|@|class\s+|def\s+|async\s+def\s+)/.test(trimmed)
+      || trimmed.endsWith(':')
+      || /^[A-Za-z_][\w.\[\]]*\s*[+-]=\s*1$/.test(trimmed);
   }
-  return prependGuidance(reference, language, ['TODO: remove one remaining defect and return the correct result.']);
+  return /^(#|using\s+|namespace\s+|class\s+|struct\s+|public:|private:|protected:)/.test(trimmed)
+    || /^[{}]+;?$/.test(trimmed)
+    || /[{}]\s*;?$/.test(trimmed)
+    || /\+\+|--/.test(trimmed);
 }
 
-export function generateVariants({ metadata, language, reference, hints = [] }) {
+function replacement(line, language, suppliedPercent) {
+  const indent = line.match(/^\s*/)?.[0] ?? '';
+  const guidance = `TODO: restore implementation; ${suppliedPercent}% solution supplied.`;
+  if (language === 'python') return `${indent}pass  # ${guidance}`;
+  if (/^\s*return\b/.test(line)) return `${indent}return {}; // ${guidance}`;
+  return `${indent}// ${guidance}`;
+}
+
+function reduceReference(reference, language, suppliedPercent) {
+  const lines = reference.trimEnd().split(/\r?\n/);
+  const candidates = lines
+    .map((line, index) => ({ line, index }))
+    .filter(({ line }) => !isProtectedLine(line, language));
+  const removalCount = Math.max(1, Math.ceil(candidates.length * (100 - suppliedPercent) / 100));
+  const removalOrder = [...candidates].sort((left, right) => {
+    const leftReturn = /^\s*return\b/.test(left.line) ? 1 : 0;
+    const rightReturn = /^\s*return\b/.test(right.line) ? 1 : 0;
+    return rightReturn - leftReturn || right.index - left.index;
+  });
+  for (const candidate of removalOrder.slice(0, removalCount)) {
+    lines[candidate.index] = replacement(candidate.line, language, suppliedPercent);
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+export function generateVariants({ metadata, language, reference }) {
   const starter = metadata.starterCode?.[language];
   if (typeof starter !== 'string' || !starter.trim()) throw new Error(`missing ${language} starter code`);
-  const signature = `${metadata.functionName}(${metadata.params.map((param) => param.name).join(', ')})`;
-  const availableHints = [...hints, ...(metadata.hints ?? [])].filter((item) => typeof item === 'string' && item.trim());
-  const general = availableHints[0] ?? `Implement ${signature} using the stated constraints.`;
-  const detailed = availableHints.slice(0, 3);
   return {
-    'very-easy': nearComplete(reference, language),
-    easy: prependGuidance(starter, language, [general, ...detailed, 'Complete the existing method body; keep the signature unchanged.']),
-    medium: prependGuidance(starter, language, [general, 'Identify the key data structure and edge cases before coding.']),
-    hard: prependGuidance(starter, language, [`Implement ${signature}; preserve the provided interface.`]),
-    original: `${starter.trimEnd()}\n`
+    '0': `${starter.trimEnd()}\n`,
+    '25': reduceReference(reference, language, 25),
+    '50': reduceReference(reference, language, 50),
+    '75': reduceReference(reference, language, 75),
+    '100': `${reference.trimEnd()}\n`
   };
 }
 
-export { levels as scaffoldLevels };
+export { levels as difficultyLevels };

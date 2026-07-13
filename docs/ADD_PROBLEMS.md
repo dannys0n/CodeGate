@@ -523,7 +523,7 @@ cojudge submit <slug> /tmp/solution.java
 ## Enabling a problem for CodeGate
 
 Adding a normal CoJudge pack does not automatically enable it in CodeGate. Add Python/C++
-references, deliberately incorrect controls, and ordinary incomplete scaffold files, then declare
+references, deliberately incorrect controls, and ordinary percentage difficulty files, then declare
 their relative paths in `codegate.json`. Run the offline validator; only combinations written to
 `codegate/playable-manifest.json` by that command are selectable:
 

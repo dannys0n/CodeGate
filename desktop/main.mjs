@@ -100,7 +100,7 @@ function secureWindow(win) {
 }
 
 async function resolveGateUrl() {
-  const response = await localRequest(`${baseUrl}/gate?language=python&scaffold=medium`);
+  const response = await localRequest(`${baseUrl}/gate?language=python&difficulty=50`);
   if (response.status !== 303 || !response.headers.location) throw new Error(`Gate route returned ${response.status}`);
   const url = new URL(response.headers.location, baseUrl);
   activeDesktopSession = { sessionId: url.searchParams.get('sessionId'), challengeId: url.searchParams.get('challengeId'), startedAt: new Date().toISOString() };

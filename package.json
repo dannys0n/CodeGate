@@ -21,6 +21,7 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"codegate:catalog": "node scripts/codegate/catalog.mjs",
 		"codegate:validate": "node scripts/codegate/validate.mjs",
+		"codegate:regenerate-difficulties": "node scripts/codegate/regenerate-difficulties.mjs",
 		"codegate:import": "node scripts/codegate/import.mjs",
 		"codegate:failure-smoke": "node scripts/codegate/failure-smoke.mjs",
 		"importer:test": "node scripts/codegate/importer/test.mjs",

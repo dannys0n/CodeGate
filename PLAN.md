@@ -327,6 +327,74 @@ clean installed-app restart opened one responsive challenge window with health r
 playable variants; the installed readiness module contains the verified WSL command. No dependency
 was added.
 
+## Post-completion scaffold source persistence correction (2026-07-13)
+
+- [x] Keep the active problem and active draft identity unchanged while a scaffold/language switch
+  request is pending, then load the selected validated source after navigation.
+- [x] Add browser coverage proving the previous scaffold's editor contents are not copied into the
+  newly selected scaffold draft.
+- [x] Run focused type/browser validation, package the desktop update, and verify the installed app;
+  review the small diff for normal-mode regressions and stale-challenge mistakes.
+
+Focused validation: Svelte check passed with 0 errors/0 warnings and Playwright passed 5/5,
+including the regression that writes a recognizable old scaffold draft and verifies the selected
+hard scaffold loads its validated source for the same problem. The already-started unit run also
+passed 36/36; future small UI corrections use focused validation unless their risk warrants more.
+The NSIS package rebuilt and installed successfully; the restarted installed app opened one
+responsive challenge window and its health endpoint reported 40 playable variants.
+
+## Post-completion scaffold refresh simplification (2026-07-13)
+
+The earlier same-problem scaffold behavior is superseded by the user's requested simpler flow:
+changing scaffold difficulty refreshes to another problem with that scaffold, so the statement,
+LeetCode difficulty tag, and scaffold source reload together. Language switching remains on the
+current problem. This is a deliberate deviation from the original same-problem scaffold wording.
+
+- [x] Route scaffold changes through the existing refresh operation without adding selection or
+  persistence systems.
+- [x] Update the focused browser regression and install the resulting desktop package.
+
+Focused validation passed 1/1. The NSIS package rebuilt and installed; after the installer's
+transient first-launch recovery window was closed, a clean restart opened one responsive challenge
+window and health reported 40 playable variants.
+
+## Percentage difficulty model (2026-07-13)
+
+This supersedes both earlier scaffold interaction corrections. Per the user's revised product
+direction, difficulty changes stay on the active problem and only replace its source variant.
+Difficulty is the percentage of reference implementation supplied: `Original (0%)`, `25%`, `50%`,
+`75%`, and `Solution (100%)`. Imports/includes, class and function signatures, and structural
+headers are preserved at intermediate levels; small TODO comments may replace removed body lines.
+`Original (100%)` remains the canonical language starter. No dependency is required.
+
+- [x] Replace named scaffold levels with the five percentage difficulty levels across generation,
+  catalogs, sessions, bindings, persistence keys, UI, and documentation.
+- [x] Generate nested deterministic Python/C++ reductions from the passing reference and migrate
+  all active problem packs; allow only `Solution (100%)` to be an already-passing variant.
+- [x] Keep language and difficulty changes on the same problem, while Different Problem remains
+  the only toolbar action that refreshes problem identity.
+- [ ] Validate generator invariants, all migrated combinations, the focused UI flow, packaging,
+  and the installed application; update playable counts and quarantine results.
+
+Validation so far: focused generator/model/session/catalog tests passed 14/14; Svelte check passed
+with 0 errors/0 warnings; the corrected `Original (0%)` through `Solution (100%)` set passed the
+existing Docker judge with 40/40 playable and 0 quarantined. Final focused browser validation,
+packaging, and installed-app verification remain blocked because the host approval system reported
+the Codex usage limit exhausted until 2026-07-19 20:44. The installed app therefore still runs the
+previous difficulty UI and must not be treated as updated yet.
+
+Dropdown polish (2026-07-13): the percentage difficulty selector now uses the same CSS rendering
+as the programming-language selector. Per user request, this source-only polish was not compiled,
+packaged, installed, or given a broad validation run yet.
+
+Build/install automation (2026-07-13): `build-and-install.ps1` is intentionally small: it runs the
+existing desktop compile/package command, stops only CodeGate, and silently installs the newest
+generated package. It adds no dependency and leaves the pre-existing CoJudge CLI `install.ps1`
+unchanged. The script was executed successfully: the production build, NSIS package, and silent
+per-user installation all completed with exit code 0; functional testing was left to the user.
+`build-and-install.bat` is a double-clickable wrapper that applies PowerShell execution-policy
+bypass only to the child process and forwards failures without changing the user's policy.
+
 Validation:
 
 ```powershell

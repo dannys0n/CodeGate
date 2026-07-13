@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const scaffoldLevels = ['very-easy', 'easy', 'medium', 'hard', 'original'];
+export const difficultyLevels = ['0', '25', '50', '75', '100'];
 export const supportedLanguages = ['python', 'cpp'];
 
 function assertRelativeFile(root, candidate, label) {
@@ -48,17 +48,17 @@ export async function discoverCandidates(repositoryRoot = process.cwd()) {
         }
         await Promise.all([fs.access(referencePath), fs.access(incorrectPath)]);
 
-        for (const scaffold of scaffoldLevels) {
-          const configuredVariant = languageConfig.variants?.[scaffold];
+        for (const difficulty of difficultyLevels) {
+          const configuredVariant = languageConfig.variants?.[difficulty];
           if (!configuredVariant) continue;
-          const variantPath = assertRelativeFile(problemRoot, configuredVariant, `${language}/${scaffold} variant`);
+          const variantPath = assertRelativeFile(problemRoot, configuredVariant, `${language}/${difficulty}% variant`);
           await fs.access(variantPath);
           candidates.push({
             problemId: entry.name,
             title: metadata.title,
             leetcodeDifficulty: metadata.difficulty,
             language,
-            scaffold,
+            difficulty,
             sourcePath: path.relative(repositoryRoot, variantPath).replaceAll(path.sep, '/'),
             referencePath,
             incorrectPath,
@@ -83,8 +83,8 @@ export async function readPlayableManifest(repositoryRoot = process.cwd()) {
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) {
   const { candidates, quarantine } = await discoverCandidates();
   const manifest = await readPlayableManifest().catch(() => ({ variants: [] }));
-  const playableKeys = new Set(manifest.variants.map((variant) => `${variant.problemId}:${variant.language}:${variant.scaffold}`));
-  const missing = candidates.filter((candidate) => !playableKeys.has(`${candidate.problemId}:${candidate.language}:${candidate.scaffold}`));
+  const playableKeys = new Set(manifest.variants.map((variant) => `${variant.problemId}:${variant.language}:${variant.difficulty}`));
+  const missing = candidates.filter((candidate) => !playableKeys.has(`${candidate.problemId}:${candidate.language}:${candidate.difficulty}`));
   console.log(JSON.stringify({ candidates: candidates.length, playable: manifest.variants.length, quarantinedProblems: quarantine.length, unvalidatedCandidates: missing.length }, null, 2));
   if (quarantine.length > 0 || missing.length > 0) process.exitCode = 1;
 }

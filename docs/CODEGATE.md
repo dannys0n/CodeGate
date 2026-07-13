@@ -5,16 +5,16 @@
 CodeGate is a mode around CoJudge, not a second judge:
 
 1. The offline importer augments complete existing `problems/<slug>` packs with pinned references,
-   ordinary source scaffolds, and `codegate.json`.
+   ordinary source difficulty variants, and `codegate.json`.
 2. `scripts/codegate/validate.mjs` submits references, deliberately wrong sources, and every
-   scaffold through `bin/cojudge`, the existing Docker runners, `official-tests.json`, and
+   difficulty variant through `bin/cojudge`, the existing Docker runners, `official-tests.json`, and
    `Marker.java` custom validator.
 3. Only successful combinations enter `codegate/playable-manifest.json`. Each entry binds the
    source and judge assets to SHA-256 digests; post-validation edits fail readiness until the
    validator is rerun.
 4. `/gate` creates an in-memory session and challenge. The existing problem page, Monaco editor,
    submission API, runner classes, and sequential official-test batching remain in use.
-5. The server authoritatively binds each submit to session, challenge, problem, language, scaffold,
+5. The server authoritatively binds each submit to session, challenge, problem, language, difficulty,
    submission ID, and expected test offset. A refreshed/stale result cannot release the session.
 6. Electron starts the packaged Node adapter server, validates server/catalog/Docker/image
    readiness, and then opens one fullscreen window per active display. The preload exposes only
@@ -57,6 +57,19 @@ npm.cmd run desktop:build
 Start-Process -Wait .\dist-desktop\CodeGate-Setup-0.1.0.exe
 Start-Process .\dist-desktop\win-unpacked\CodeGate.exe
 ```
+
+To compile, package, and replace the per-user installation in one command:
+
+```powershell
+.\build-and-install.ps1
+```
+
+Alternatively, double-click `build-and-install.bat`; it invokes the same script with PowerShell's
+execution-policy bypass for that process only.
+
+The script runs `desktop:build`, stops only processes named `CodeGate`, and silently installs the
+newest generated `CodeGate-Setup-*.exe`. It does not change the existing CoJudge CLI-oriented
+`install.ps1`.
 
 The installed application is also available through Start > CodeGate. Set `CODEGATE_PORT` before
 launch to use a local port other than 5375. CodeGate refuses to treat another process on that port
@@ -107,14 +120,22 @@ timestamp, and report location. The bundled fixture demonstrates Easy/Medium/Har
 ```powershell
 npm.cmd run importer:test -- --offline
 npm.cmd run codegate:import -- --config .\fixtures\import\config.json --offline
+npm.cmd run codegate:regenerate-difficulties
 npm.cmd run codegate:validate -- --offline
 npm.cmd run codegate:catalog
 ```
 
 The `local-json` adapter normalizes `frontendId`, canonical `slug`, `shape`, language references,
-incorrect solutions, validator kind, and optional scaffold hints. Matching uses frontend ID first
+incorrect solutions and validator kind. Matching uses frontend ID first
 when repository metadata has it, then canonical slug; disagreement and duplicate identity mappings
 are rejected. Source real paths and generated outputs must stay inside the repository.
+
+Difficulty is the percentage of the validated reference implementation supplied. The selectable
+levels are `Original (0%)`, `25%`, `50%`, `75%`, and `Solution (100%)`. Intermediate Python/C++
+files are deterministic nested reductions of the reference: imports/includes, class and function
+signatures, structural control-flow headers, braces, and loop-progress mutations are preserved.
+Removed executable lines become small TODO comments or harmless placeholders. Changing difficulty
+or language stays on the active problem; only Different Problem refreshes problem identity.
 
 Import writes `codegate/import-report.json` with `accepted`, `skipped`, and `failed` records. An
 accepted record is only pending validation. The existing playable manifest remains the activation
@@ -129,11 +150,11 @@ require a network are rejected in this initial offline scope.
 
 Quarantined/deferred categories are linked lists, trees, design/class-operation problems,
 interactive problems, SQL, shell, concurrency, external APIs, randomized tests, unsupported
-libraries, incomplete packs, identity conflicts, and any language/scaffold whose reference,
-incorrect control, partial scaffold, or official test validation fails.
+libraries, incomplete packs, identity conflicts, and any language/difficulty whose reference,
+incorrect control, partial variant, or official test validation fails.
 
-To add a complete existing pack manually, add ordinary Python/C++ references and incomplete source
-files under its problem directory, declare their relative paths in `codegate.json`, and run
+To add a complete existing pack manually, add ordinary Python/C++ references and percentage source
+variants under its problem directory, declare their relative paths in `codegate.json`, and run
 `codegate:validate`. Never hand-edit the playable manifest. See `fixtures/import` for adapter input
 and `problems/two-sum/codegate.json` for the direct pack format.
 
@@ -167,7 +188,7 @@ If startup shows diagnostics:
   recover. This records infrastructure failure and exits without invoking the judge.
 
 Compiler errors, runtime errors, wrong answers, and timeouts remain visible in the existing result
-panel and do not unlock. Drafts are namespaced by problem/language/scaffold in Chromium local
+panel and do not unlock. Drafts are namespaced by problem/language/difficulty in Chromium local
 storage. A fresh challenge invalidates any in-flight result from the previous challenge.
 
 ## Uninstall and data recovery

@@ -17,22 +17,22 @@
       "reference": "reference/python.py",
       "incorrect": "reference/incorrect/python.py",
       "variants": {
-        "very-easy": "variants/python/very-easy.py",
-        "easy": "variants/python/easy.py",
-        "medium": "variants/python/medium.py",
-        "hard": "variants/python/hard.py",
-        "original": "variants/python/original.py"
+        "0": "variants/python/0.py",
+        "25": "variants/python/25.py",
+        "50": "variants/python/50.py",
+        "75": "variants/python/75.py",
+        "100": "variants/python/100.py"
       }
     },
     "cpp": {
       "reference": "reference/cpp.cpp",
       "incorrect": "reference/incorrect/cpp.cpp",
       "variants": {
-        "very-easy": "variants/cpp/very-easy.cpp",
-        "easy": "variants/cpp/easy.cpp",
-        "medium": "variants/cpp/medium.cpp",
-        "hard": "variants/cpp/hard.cpp",
-        "original": "variants/cpp/original.cpp"
+        "0": "variants/cpp/0.cpp",
+        "25": "variants/cpp/25.cpp",
+        "50": "variants/cpp/50.cpp",
+        "75": "variants/cpp/75.cpp",
+        "100": "variants/cpp/100.cpp"
       }
     }
   }

@@ -13,7 +13,7 @@
     export let language: ProgrammingLanguage = "java";
     export let gameMode = false;
     export let gameStartTime = 0;
-    export let gateBinding: { sessionId: string; challengeId: string; scaffold: string } | null = null;
+    export let gateBinding: { sessionId: string; challengeId: string; difficulty: string } | null = null;
     let gameRunCount = 0;
     let gameSubmitCount = 0;
     const dispatch = createEventDispatcher();

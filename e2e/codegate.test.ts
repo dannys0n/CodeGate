@@ -8,12 +8,18 @@ function reference(problemId: string, language: 'python' | 'cpp' = 'python') {
     return fs.readFileSync(path.join(problemRoot, config.languages[language].reference), 'utf8');
 }
 
+function variant(problemId: string, language: 'python' | 'cpp', difficulty: string) {
+    const problemRoot = path.join(process.cwd(), 'problems', problemId);
+    const config = JSON.parse(fs.readFileSync(path.join(problemRoot, 'codegate.json'), 'utf8'));
+    return fs.readFileSync(path.join(problemRoot, config.languages[language].variants[difficulty]), 'utf8').replace(/\r\n/g, '\n');
+}
+
 function bindingFrom(page: Page) {
     const url = new URL(page.url());
     return {
         sessionId: url.searchParams.get('sessionId')!,
         challengeId: url.searchParams.get('challengeId')!,
-        scaffold: url.searchParams.get('scaffold')!
+        difficulty: url.searchParams.get('difficulty')!
     };
 }
 
@@ -34,18 +40,18 @@ test('normal practice mode remains outside the gate flow', async ({ page }) => {
     await expect(page.getByText('Reference Solution')).toBeVisible();
 });
 
-test('gate toolbar keeps the problem while switching variants and Give Up releases without the judge', async ({ page }) => {
-    await page.goto('/gate?language=python&scaffold=medium');
+test('gate toolbar keeps language and difficulty switches on the problem and Give Up bypasses the judge', async ({ page }) => {
+    await page.goto('/gate?language=python&difficulty=50');
     await expect(page).toHaveURL(/codegate=1/);
     await expect(page.getByLabel('Language')).toHaveValue('python');
-    await expect(page.getByLabel('Scaffold')).toHaveValue('medium');
+    await expect(page.getByLabel('Difficulty')).toHaveValue('50');
     await expect(page.getByText('Reference Solution')).toHaveCount(0);
 
     await page.locator('.monaco-editor .view-lines').click();
     await page.keyboard.press('Control+A');
     await page.keyboard.insertText('# autosaved gate draft');
     const problemId = new URL(page.url()).pathname.split('/').pop()!;
-    await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), `codegate:draft:${problemId}:python:medium`)).toContain('autosaved gate draft');
+    await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), `codegate:draft:${problemId}:python:50`)).toContain('autosaved gate draft');
 
     const initialProblemId = new URL(page.url()).pathname.split('/').pop()!;
     const first = bindingFrom(page);
@@ -56,15 +62,23 @@ test('gate toolbar keeps the problem while switching variants and Give Up releas
     await expect(page.getByLabel('Language')).toHaveValue('cpp');
 
     const languageSwitch = bindingFrom(page);
-    await page.getByLabel('Scaffold').selectOption('hard');
+    await page.locator('.monaco-editor .view-lines').click();
+    await page.keyboard.press('Control+A');
+    await page.keyboard.insertText('// previous difficulty draft');
+    await page.getByLabel('Difficulty').selectOption('75');
     await expect.poll(() => bindingFrom(page).challengeId).not.toBe(languageSwitch.challengeId);
-    expect(new URL(page.url()).pathname.split('/').pop()).toBe(initialProblemId);
-    await expect(page.getByLabel('Scaffold')).toHaveValue('hard');
+    const difficultyProblemId = new URL(page.url()).pathname.split('/').pop()!;
+    expect(difficultyProblemId).toBe(initialProblemId);
+    await expect(page.getByLabel('Difficulty')).toHaveValue('75');
+    await expect.poll(() => page.evaluate(
+        (key) => localStorage.getItem(key)?.replace(/\r\n/g, '\n'),
+        `codegate:draft:${difficultyProblemId}:cpp:75`
+    )).toBe(variant(difficultyProblemId, 'cpp', '75'));
 
     const variantSwitch = bindingFrom(page);
     await page.getByRole('button', { name: 'Different Problem' }).click();
     await expect.poll(() => bindingFrom(page).challengeId).not.toBe(variantSwitch.challengeId);
-    expect(new URL(page.url()).pathname.split('/').pop()).not.toBe(initialProblemId);
+    expect(new URL(page.url()).pathname.split('/').pop()).not.toBe(difficultyProblemId);
 
     page.on('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: 'Give Up' }).click();
@@ -97,7 +111,7 @@ test('tooltips and editor settings stay inside narrow viewport bounds', async ({
 });
 
 test('stale challenges are rejected and full-suite acceptance releases exactly once', async ({ page }) => {
-    await page.goto('/gate?language=python&scaffold=medium');
+    await page.goto('/gate?language=python&difficulty=50');
     const stale = bindingFrom(page);
     const staleProblemId = new URL(page.url()).pathname.split('/').pop()!;
     const refresh = await page.request.post('/api/codegate/session', { data: { action: 'refresh', ...stale, language: 'python' } });
@@ -109,7 +123,7 @@ test('stale challenges are rejected and full-suite acceptance releases exactly o
     });
     expect(staleSubmit.status()).toBe(409);
 
-    const gate = { sessionId: refreshed.id, challengeId: refreshed.challenge.id, scaffold: refreshed.challenge.variant.scaffold };
+    const gate = { sessionId: refreshed.id, challengeId: refreshed.challenge.id, difficulty: refreshed.challenge.variant.difficulty };
     const activeProblemId = refreshed.challenge.variant.problemId;
     const correctPython = reference(activeProblemId);
     let startTcNo = 0;

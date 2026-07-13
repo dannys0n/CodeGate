@@ -72,12 +72,17 @@ for (const candidates of grouped.values()) {
   for (const candidate of candidates) {
     const partial = submit(candidate.problemId, candidate.sourcePath);
     const partialOutput = resultText(partial);
-    if (partial.status === 0 || !partialOutput.includes('FAILED')) {
+    const isSolution = candidate.difficulty === '100';
+    const validSolution = partial.status === 0 && partialOutput.includes('ACCEPTED');
+    const validIncomplete = partial.status !== 0 && partialOutput.includes('FAILED');
+    if (isSolution ? !validSolution : !validIncomplete) {
       quarantine.push({
         problemId: candidate.problemId,
         language: candidate.language,
-        scaffold: candidate.scaffold,
-        reason: partial.status === 0 ? 'scaffold is already a passing solution' : 'scaffold is not a runnable, failing ordinary source file',
+        difficulty: candidate.difficulty,
+        reason: isSolution
+          ? 'Solution (100%) did not pass all official tests'
+          : partial.status === 0 ? 'partial difficulty is already a passing solution' : 'partial difficulty is not a failing ordinary source file',
         output: partialOutput
       });
       continue;
@@ -87,7 +92,7 @@ for (const candidates of grouped.values()) {
       title: candidate.title,
       leetcodeDifficulty: candidate.leetcodeDifficulty,
       language: candidate.language,
-      scaffold: candidate.scaffold,
+      difficulty: candidate.difficulty,
       sourcePath: candidate.sourcePath,
       sourceSha256: await digestFiles([path.resolve(root, candidate.sourcePath)]),
       judgeSha256: await judgeDigest(candidate.problemId),

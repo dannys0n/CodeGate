@@ -25,8 +25,8 @@ describe('CodeGate playable manifest validation', () => {
                 title: 'Two Sum',
                 leetcodeDifficulty: 'Easy',
                 language: 'python',
-                scaffold: 'medium',
-                sourcePath: 'problems/two-sum/variants/python/medium.py',
+                difficulty: '50',
+                sourcePath: 'problems/two-sum/variants/python/50.py',
                 sourceSha256: 'a'.repeat(64),
                 judgeSha256: 'b'.repeat(64),
                 validatedAt: '2026-01-01T00:00:00.000Z',
@@ -41,9 +41,9 @@ describe('CodeGate playable manifest validation', () => {
             schemaVersion: 1,
             variants: [{
                 problemId: 'two-sum',
-                sourcePath: 'problems/two-sum/variants/python/medium.py',
+                sourcePath: 'problems/two-sum/variants/python/50.py',
                 language: 'python',
-                scaffold: 'medium',
+                difficulty: '50',
                 validationStatus: 'candidate'
             }]
         })).toThrow(/Invalid playable variant/);
@@ -51,7 +51,7 @@ describe('CodeGate playable manifest validation', () => {
 
     it('fails closed when validated source changes', async () => {
         temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'codegate-catalog-'));
-        const sourcePath = 'problems/example/variants/python/medium.py';
+        const sourcePath = 'problems/example/variants/python/50.py';
         const judgeFiles: Array<[string, Buffer]> = [
             ['metadata.json', Buffer.from('{}')],
             ['official-tests.json', Buffer.from('[]')],
@@ -71,8 +71,8 @@ describe('CodeGate playable manifest validation', () => {
             generatedAt: '2026-01-01T00:00:00.000Z',
             sourceRevision: 'fixture',
             variants: [{
-                problemId: 'example', title: 'Example', leetcodeDifficulty: 'Easy', language: 'python', scaffold: 'medium',
-                sourcePath, sourceSha256: digest([['medium.py', source]]), judgeSha256: digest(judgeFiles),
+                problemId: 'example', title: 'Example', leetcodeDifficulty: 'Easy', language: 'python', difficulty: '50',
+                sourcePath, sourceSha256: digest([['50.py', source]]), judgeSha256: digest(judgeFiles),
                 validatedAt: '2026-01-01T00:00:00.000Z', validationStatus: 'validated'
             }]
         };

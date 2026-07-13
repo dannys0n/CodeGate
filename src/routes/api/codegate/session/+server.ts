@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { loadPlayableManifest } from '$lib/server/codegate/catalog';
 import { getGateSession, refreshGateChallenge, releaseGateSession, switchGateVariant } from '$lib/server/codegate/sessions';
-import { scaffoldLevels, type GateLanguage, type ScaffoldLevel } from '$lib/codegate/types';
+import { difficultyLevels, type DifficultyLevel, type GateLanguage } from '$lib/codegate/types';
 
 export const GET: RequestHandler = async ({ url }) => {
     const session = getGateSession(url.searchParams.get('sessionId') ?? '');
@@ -20,11 +20,11 @@ export const POST: RequestHandler = async ({ request }) => {
         }
         if (body.action === 'refresh' || body.action === 'switch-variant') {
             const language: GateLanguage = body.language === 'cpp' ? 'cpp' : 'python';
-            const scaffold: ScaffoldLevel = scaffoldLevels.includes(body.scaffold) ? body.scaffold : 'medium';
+            const difficulty: DifficultyLevel = difficultyLevels.includes(body.difficulty) ? body.difficulty : '50';
             const manifest = await loadPlayableManifest();
             return json(body.action === 'refresh'
-                ? refreshGateChallenge(sessionId, challengeId, manifest, language, scaffold)
-                : switchGateVariant(sessionId, challengeId, manifest, language, scaffold));
+                ? refreshGateChallenge(sessionId, challengeId, manifest, language, difficulty)
+                : switchGateVariant(sessionId, challengeId, manifest, language, difficulty));
         }
         return json({ error: 'Unsupported session action' }, { status: 400 });
     } catch (error) {

@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { loadLocalJsonSource } from './adapters/local-json.mjs';
-import { generateVariants, scaffoldLevels } from './variants.mjs';
+import { difficultyLevels, generateVariants } from './variants.mjs';
 
 const adapters = new Map([['local-json', loadLocalJsonSource]]);
 const supportedTypes = new Set([
@@ -137,9 +137,9 @@ async function importRecord(problem, record, repositoryRoot) {
     const outputReference = path.join(problem.root, 'reference', `${language}.${extension}`);
     const outputIncorrect = path.join(problem.root, 'reference', 'incorrect', `${language}.${extension}`);
     await Promise.all([atomicText(outputReference, reference), atomicText(outputIncorrect, incorrect)]);
-    const variants = generateVariants({ metadata, language, reference, hints: record.scaffoldHints ?? [] });
+    const variants = generateVariants({ metadata, language, reference });
     const variantPaths = {};
-    for (const level of scaffoldLevels) {
+    for (const level of difficultyLevels) {
       const output = path.join(problem.root, 'variants', language, `${level}.${extension}`);
       await atomicText(output, variants[level]);
       variantPaths[level] = path.relative(problem.root, output).replaceAll(path.sep, '/');

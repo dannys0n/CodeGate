@@ -1,10 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { createHash } from 'crypto';
-import { scaffoldLevels, type PlayableManifest, type PlayableVariant } from '../../codegate/types';
+import { difficultyLevels, type PlayableManifest, type PlayableVariant } from '../../codegate/types';
 
 const supportedLanguages = new Set(['python', 'cpp']);
-const supportedScaffolds = new Set<string>(scaffoldLevels);
+const supportedDifficulties = new Set<string>(difficultyLevels);
 
 export function assertPlayableManifest(value: unknown): asserts value is PlayableManifest {
     if (!value || typeof value !== 'object') throw new Error('Playable manifest must be an object');
@@ -21,7 +21,7 @@ export function assertPlayableManifest(value: unknown): asserts value is Playabl
             !/^[a-f0-9]{64}$/.test(String(variant.sourceSha256)) ||
             !/^[a-f0-9]{64}$/.test(String(variant.judgeSha256)) ||
             !supportedLanguages.has(String(variant.language)) ||
-            !supportedScaffolds.has(String(variant.scaffold)) ||
+            !supportedDifficulties.has(String(variant.difficulty)) ||
             variant.validationStatus !== 'validated'
         ) {
             throw new Error(`Invalid playable variant for ${String(variant.problemId ?? 'unknown')}`);
@@ -37,7 +37,7 @@ export async function loadPlayableManifest(root = process.cwd()): Promise<Playab
     for (const variant of value.variants) {
         const source = await readSafeFile(variant.sourcePath, root);
         if (sha256([[path.basename(variant.sourcePath), source]]) !== variant.sourceSha256) {
-            throw new Error(`Playable source changed after validation: ${variant.problemId}/${variant.language}/${variant.scaffold}`);
+            throw new Error(`Playable source changed after validation: ${variant.problemId}/${variant.language}/${variant.difficulty}%`);
         }
         let judgeDigest = judgeDigests.get(variant.problemId);
         if (!judgeDigest) {

@@ -18,7 +18,7 @@ import { abandonGateSubmission, advanceGateSubmission, beginGateSubmissionChunk,
 type GateBinding = {
     sessionId: string;
     challengeId: string;
-    scaffold: string;
+    difficulty: string;
     submissionId: string;
 };
 
@@ -287,14 +287,14 @@ export const POST: RequestHandler = async ({ request }) => {
         if (gate) {
             const sessionId = String(gate.sessionId ?? '');
             const challengeId = String(gate.challengeId ?? '');
-            const scaffold = String(gate.scaffold ?? '');
+            const difficulty = String(gate.difficulty ?? '');
             const session = requireActiveChallenge(sessionId, challengeId);
             const selected = session.challenge.variant;
-            if (selected.problemId !== problemId || selected.language !== language || selected.scaffold !== scaffold) {
+            if (selected.problemId !== problemId || selected.language !== language || selected.difficulty !== difficulty) {
                 throw new Error('Submission does not match the active gate challenge');
             }
             const started = beginGateSubmissionChunk(sessionId, challengeId, normalizedStart, gate.submissionId ? String(gate.submissionId) : undefined);
-            gateBinding = { sessionId, challengeId, scaffold, submissionId: started.submissionId };
+            gateBinding = { sessionId, challengeId, difficulty, submissionId: started.submissionId };
         }
         const id = genId();
         const job: SubmitJob = { id, status: 'pending', createdAt: Date.now(), gate: gateBinding };

@@ -4,23 +4,29 @@ import { generateVariants } from './variants.mjs';
 const metadata = {
   functionName: 'answer',
   params: [{ name: 'value', type: 'int' }],
-  hints: ['Use the input.'],
   starterCode: {
-    python: 'class Solution:\n    def answer(self, value: int) -> int:\n        pass\n'
+    python: 'import math\n\nclass Solution:\n    def answer(self, value: int) -> int:\n        pass\n'
   }
 };
 
-describe('offline scaffold generation', () => {
-  it('is deterministic and emits ordinary incomplete source at every level', () => {
-    const input = { metadata, language: 'python', reference: 'class Solution:\n    def answer(self, value: int) -> int:\n        return value\n' };
-    const first = generateVariants(input);
-    expect(generateVariants(input)).toEqual(first);
-    expect(Object.keys(first)).toEqual(['very-easy', 'easy', 'medium', 'hard', 'original']);
-    for (const source of Object.values(first)) {
-      expect(source).toContain('class Solution');
-      expect(source).toContain('def answer');
-      expect(source).not.toBe(input.reference);
+describe('offline percentage difficulty generation', () => {
+  it('preserves headers and removes nested amounts of the reference implementation', () => {
+    const reference = 'import math\n\nclass Solution:\n    def answer(self, value: int) -> int:\n        doubled = value * 2\n        adjusted = doubled + 1\n        value += 1\n        return adjusted\n';
+    const input = { metadata, language: 'python', reference };
+    const variants = generateVariants(input);
+    expect(generateVariants(input)).toEqual(variants);
+    expect(Object.keys(variants)).toEqual(['0', '25', '50', '75', '100']);
+    expect(variants['0']).toBe(metadata.starterCode.python);
+    expect(variants['100']).toBe(reference);
+    for (const level of ['25', '50', '75'] as const) {
+      expect(variants[level]).toContain('import math');
+      expect(variants[level]).toContain('class Solution:');
+      expect(variants[level]).toContain('def answer(self, value: int) -> int:');
+      expect(variants[level]).toContain('value += 1');
+      expect(variants[level]).toContain(`${level}% solution supplied`);
     }
-    expect(first['very-easy']).toContain('TODO: restore');
+    const todoCount = (source: string) => source.match(/TODO: restore/g)?.length ?? 0;
+    expect(todoCount(variants['25'])).toBeGreaterThan(todoCount(variants['50']));
+    expect(todoCount(variants['50'])).toBeGreaterThan(todoCount(variants['75']));
   });
 });

@@ -20,7 +20,7 @@
     import { onMount, tick } from 'svelte';
     import { v4 as uuidv4 } from 'uuid';
     import gameResultsStore, { computeGameResult } from '$lib/stores/gameResultsStore';
-    import type { GateLanguage, ScaffoldLevel } from '$lib/codegate/types';
+    import type { DifficultyLevel, GateLanguage } from '$lib/codegate/types';
 
     export let data;
     const problemId = data.problem.id;
@@ -46,11 +46,11 @@
     })();
     let CodeEditor: any = null;
     let language: ProgrammingLanguage = data.codegate?.selected.language ?? $userSettingsStorage.preferredLanguage ?? 'java';
-    let scaffold: ScaffoldLevel = data.codegate?.selected.scaffold ?? 'medium';
+    let difficulty: DifficultyLevel = data.codegate?.selected.difficulty ?? '50';
     let gateSessionId = isCodeGate ? $page.url.searchParams.get('sessionId') ?? '' : '';
     let gateChallengeId = isCodeGate ? $page.url.searchParams.get('challengeId') ?? '' : '';
     let gateActionPending = false;
-    $: gateBinding = isCodeGate ? { sessionId: gateSessionId, challengeId: gateChallengeId, scaffold } : null;
+    $: gateBinding = isCodeGate ? { sessionId: gateSessionId, challengeId: gateChallengeId, difficulty } : null;
     const fileKey = () => `${problemId}`;
     const codeKey = () => `${problemId}:${language}`;
 
@@ -136,8 +136,8 @@
         if (isCodeGate) {
             const gateData = data.codegate;
             const selected = gateData?.selected;
-            if (!selected || selected.language !== lang || selected.scaffold !== scaffold) return;
-            const draftKey = `codegate:draft:${problemId}:${lang}:${scaffold}`;
+            if (!selected || selected.language !== lang || selected.difficulty !== difficulty) return;
+            const draftKey = `codegate:draft:${problemId}:${lang}:${difficulty}`;
             suppressSave = true;
             code = typeof localStorage !== 'undefined' ? localStorage.getItem(draftKey) ?? gateData.source : gateData.source;
             currentViewState = null;
@@ -313,7 +313,7 @@
     }
     $: if (!suppressSave && code !== undefined) {
         if (isCodeGate && typeof localStorage !== 'undefined') {
-            localStorage.setItem(`codegate:draft:${problemId}:${language}:${scaffold}`, code);
+            localStorage.setItem(`codegate:draft:${problemId}:${language}:${difficulty}`, code);
         } else {
         const fkey = fileKey();
         const latestViewState = editorComponent?.getViewState?.() || currentViewState;
@@ -584,7 +584,7 @@
         const confirmed = confirm('Are you sure you want to reset the code for this file? This action cannot be undone.');
         if (!confirmed) return;
         if (isCodeGate) {
-            localStorage.removeItem(`codegate:draft:${problemId}:${language}:${scaffold}`);
+            localStorage.removeItem(`codegate:draft:${problemId}:${language}:${difficulty}`);
             code = data.codegate?.source ?? '';
             return;
         }
@@ -667,14 +667,24 @@
         }
     }
 
-    async function updateGateChallenge(action: 'refresh' | 'switch-variant') {
+    async function updateGateChallenge(
+        action: 'refresh' | 'switch-variant',
+        requestedLanguage: GateLanguage = language as GateLanguage,
+        requestedDifficulty: DifficultyLevel = difficulty
+    ) {
         if (!isCodeGate || gateActionPending) return;
         gateActionPending = true;
         try {
             const response = await fetch('/api/codegate/session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action, sessionId: gateSessionId, challengeId: gateChallengeId, language, scaffold })
+                body: JSON.stringify({
+                    action,
+                    sessionId: gateSessionId,
+                    challengeId: gateChallengeId,
+                    language: requestedLanguage,
+                    difficulty: requestedDifficulty
+                })
             });
             const session = await response.json();
             if (!response.ok) throw new Error(session.error ?? (action === 'refresh' ? 'Unable to replace challenge' : 'Unable to switch variant'));
@@ -682,20 +692,34 @@
             const target = new URL(`/problems/${selected.problemId}`, window.location.origin);
             target.searchParams.set('codegate', '1');
             target.searchParams.set('language', selected.language);
-            target.searchParams.set('scaffold', selected.scaffold);
+            target.searchParams.set('difficulty', selected.difficulty);
             target.searchParams.set('sessionId', session.id);
             target.searchParams.set('challengeId', session.challenge.id);
             window.location.assign(`${target.pathname}${target.search}`);
         } catch (error) {
             language = data.codegate?.selected.language ?? language;
-            scaffold = data.codegate?.selected.scaffold ?? scaffold;
+            difficulty = data.codegate?.selected.difficulty ?? difficulty;
             alert(error instanceof Error ? error.message : String(error));
             gateActionPending = false;
         }
     }
 
     const replaceGateChallenge = () => updateGateChallenge('refresh');
-    const switchGateVariant = () => updateGateChallenge('switch-variant');
+    function handleLanguageChange(event: Event) {
+        const requestedLanguage = (event.currentTarget as HTMLSelectElement).value as ProgrammingLanguage;
+        saveCurrentViewState();
+        if (isCodeGate) {
+            void updateGateChallenge('switch-variant', requestedLanguage as GateLanguage, difficulty);
+            return;
+        }
+        language = requestedLanguage;
+        userSettingsStorage.update((settings) => ({ ...settings, preferredLanguage: language }));
+    }
+
+    function handleDifficultyChange(event: Event) {
+        const requestedDifficulty = (event.currentTarget as HTMLSelectElement).value as DifficultyLevel;
+        void updateGateChallenge('switch-variant', language as GateLanguage, requestedDifficulty);
+    }
 
     async function giveUpGate() {
         if (!isCodeGate || gateActionPending || !confirm('Give up this CodeGate session? You will be released immediately.')) return;
@@ -882,15 +906,12 @@
                     <label for="language-select" style="font-size:0.9rem;color:var(--color-text-secondary);">Language</label>
                     <select
                         id="language-select"
-                        bind:value={language}
+                        value={language}
+                        disabled={isCodeGate && gateActionPending}
                         on:focus={() => (suppressSave = true)}
                         on:mousedown={() => (suppressSave = true)}
                         on:keydown={() => (suppressSave = true)}
-                        on:change={() => {
-                            saveCurrentViewState();
-                            if (isCodeGate) switchGateVariant();
-                            else userSettingsStorage.update((s) => ({ ...s, preferredLanguage: language }));
-                        }}
+                        on:change={handleLanguageChange}
                         on:blur={() => (suppressSave = false)}
                     >
                         {#if isCodeGate}
@@ -907,13 +928,13 @@
                         {/if}
                     </select>
                     {#if isCodeGate}
-                        <label for="scaffold-select" style="font-size:0.9rem;color:var(--color-text-secondary);">Scaffold</label>
-                        <select id="scaffold-select" bind:value={scaffold} on:change={switchGateVariant} disabled={gateActionPending}>
-                            <option value="very-easy">Very Easy</option>
-                            <option value="easy">Easy</option>
-                            <option value="medium">Medium</option>
-                            <option value="hard">Hard</option>
-                            <option value="original">Original</option>
+                        <label for="difficulty-select" style="font-size:0.9rem;color:var(--color-text-secondary);">Difficulty</label>
+                        <select id="difficulty-select" value={difficulty} on:change={handleDifficultyChange} disabled={gateActionPending}>
+                            <option value="0">Original (0%)</option>
+                            <option value="25">25%</option>
+                            <option value="50">50%</option>
+                            <option value="75">75%</option>
+                            <option value="100">Solution (100%)</option>
                         </select>
                         <button class="btn gate-action" on:click={replaceGateChallenge} disabled={gateActionPending}>Different Problem</button>
                         <button class="btn gate-give-up" on:click={giveUpGate} disabled={gateActionPending}>Give Up</button>
@@ -1572,7 +1593,7 @@
         font-size: 0.85rem;
         color: var(--color-text-secondary);
     }
-    .settings-dropdown select, #language-select {
+    .settings-dropdown select, #language-select, #difficulty-select {
         background: var(--color-bg);
         color: var(--color-text);
         border: 1px solid var(--color-border);
