@@ -15,6 +15,24 @@ export function runCommand(command, args, options = {}) {
   });
 }
 
+export async function wakeWsl({
+  platform = process.platform,
+  command = 'wsl.exe',
+  run = runCommand
+} = {}) {
+  if (platform !== 'win32') return { ok: true, attempted: false };
+
+  const result = await run(command, ['--exec', '/bin/true'], { timeout: 10_000 });
+  if (result.ok) return { ok: true, attempted: true };
+
+  const detail = result.stderr?.trim() || result.stdout?.trim() || 'the WSL command did not complete successfully';
+  return {
+    ok: false,
+    attempted: true,
+    diagnostic: `WSL could not be started automatically: ${detail}`
+  };
+}
+
 export async function waitForServer(baseUrl, attempts = 60, delayMs = 250, expectedInstanceToken) {
   let lastError = 'Local server did not respond';
   for (let attempt = 0; attempt < attempts; attempt++) {

@@ -307,6 +307,26 @@ package was installed and opened one responding challenge window on port 5375. A
 test session kept `two-sum` while switching Python to C++, then changed to
 `minimum-window-substring` only through the refresh action; health reported 40 playable variants.
 
+## Post-completion WSL cold-start support (2026-07-13)
+
+- [x] On Windows, wake the default WSL instance quietly and best-effort as desktop startup begins.
+- [x] Keep Docker as the runtime authority: do not require WSL on other Docker backends, start a
+  second engine, or couple Give Up and recovery to the wake-up attempt.
+- [x] Add focused Windows/non-Windows/failure tests and document the behavior without adding a
+  dependency.
+- [x] Run desktop tests, unit tests, type checks, production build, and desktop readiness smoke;
+  review the diff for regressions and unnecessary runtime coupling.
+
+WSL validation: `wsl.exe --exec /bin/true` exited successfully on the target host; desktop tests
+passed 10/10, the full unit suite passed 36/36, Svelte check passed with 0 errors/0 warnings, and
+the production build passed with only the existing Monaco chunk-size advisory. Desktop smoke on
+port 5376 reported server, WSL, and Docker healthy with no diagnostics. The first smoke invocation
+was invalid because the IDE exported `ELECTRON_RUN_AS_NODE`; removing that Electron override made
+the documented smoke pass. The NSIS package rebuilt successfully, was installed per-user, and a
+clean installed-app restart opened one responsive challenge window with health reporting 40
+playable variants; the installed readiness module contains the verified WSL command. No dependency
+was added.
+
 Validation:
 
 ```powershell

@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { appendSessionHistory } from './lib/history.mjs';
-import { checkDocker, localRequest, waitForServer } from './lib/readiness.mjs';
+import { checkDocker, localRequest, waitForServer, wakeWsl } from './lib/readiness.mjs';
 import { recoveryHtml, serverExitDiagnostics } from './lib/recovery.mjs';
 import { isStartupEnabled } from './lib/startup.mjs';
 
@@ -28,6 +28,14 @@ function startupMode() {
 
 function loginItemOptions() {
   return { path: process.execPath, args: app.isPackaged ? [] : [appRoot] };
+}
+
+function readinessDiagnostics(server, wsl, docker) {
+  return [
+    ...(server.ok ? [] : [server.error]),
+    ...(!docker.ok && !wsl.ok ? [wsl.diagnostic] : []),
+    ...(docker.ok ? [] : docker.diagnostics)
+  ];
 }
 
 async function handleStartupCommand(mode) {
@@ -144,11 +152,13 @@ app.on('window-all-closed', () => { if (!released && !quitting) void release('ab
 const requestedStartupMode = startupMode();
 
 async function runSmokeTest() {
+  const wsl = wakeWsl();
   startServer();
   const server = await waitForServer(baseUrl, 60, 250, instanceToken);
+  const wslResult = await wsl;
   const docker = await checkDocker();
-  const diagnostics = [...(server.ok ? [] : [server.error]), ...(docker.ok ? [] : docker.diagnostics)];
-  process.stdout.write(`${JSON.stringify({ server: server.ok, docker: docker.ok, diagnostics })}\n`);
+  const diagnostics = readinessDiagnostics(server, wslResult, docker);
+  process.stdout.write(`${JSON.stringify({ server: server.ok, wsl: wslResult.ok, docker: docker.ok, diagnostics })}\n`);
   quitting = true;
   serverProcess?.kill();
   await new Promise((resolve) => serverProcess?.once('exit', resolve) ?? resolve());
@@ -157,10 +167,12 @@ async function runSmokeTest() {
 
 async function runDesktop() {
   uiReady = true;
+  const wsl = wakeWsl();
   startServer();
   const server = await waitForServer(baseUrl, 60, 250, instanceToken);
+  const wslResult = await wsl;
   const docker = await checkDocker();
-  const diagnostics = [...(server.ok ? [] : [server.error]), ...(docker.ok ? [] : docker.diagnostics)];
+  const diagnostics = readinessDiagnostics(server, wslResult, docker);
   if (diagnostics.length > 0) {
     showRecovery(diagnostics);
     return;

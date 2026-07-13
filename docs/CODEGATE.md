@@ -62,6 +62,12 @@ The installed application is also available through Start > CodeGate. Set `CODEG
 launch to use a local port other than 5375. CodeGate refuses to treat another process on that port
 as its server because health is bound to a per-launch instance token.
 
+On Windows, desktop startup also runs `wsl.exe --exec /bin/true` in the background to wake the
+default WSL instance before checking Docker. This is best-effort: Docker remains responsible for
+its own WSL 2 backend, and CodeGate still supports Docker configurations that do not use WSL. If
+WSL cannot start but Docker is healthy, the gate continues normally; if Docker is unavailable, the
+recovery page includes both diagnostics when relevant. CodeGate does not install or enable WSL.
+
 The local development installer is not Authenticode-signed (`Get-AuthenticodeSignature` reports
 `NotSigned`), so Windows SmartScreen may warn. A distributed release should be signed with the
 publisher's Windows code-signing certificate; do not bypass a warning for an artifact whose
@@ -150,6 +156,7 @@ npm.cmd run desktop:build
 
 If startup shows diagnostics:
 
+- Confirm `wsl.exe --status` succeeds if Docker Desktop is configured to use its WSL 2 backend.
 - Start Docker Desktop and wait for `docker info` to succeed.
 - Confirm `docker image inspect python:3.11-slim gcc:13 alpine/java:22-jdk` succeeds; pull a missing
   image while online.
