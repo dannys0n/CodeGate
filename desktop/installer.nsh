@@ -77,5 +77,20 @@ FunctionEnd
 !macro customUnInstall
   ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app\desktop\start-events.ps1" -Disable' $0
   DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "CodeGate"
-  DeleteRegKey HKCU "Software\CodeGate\StartEvents"
+  DeleteRegKey HKCU "Software\CodeGate"
+
+  ; Remove Electron state, CodeGate session history, caches, and updater downloads.
+  RMDir /r "$APPDATA\CodeGate"
+  RMDir /r "$APPDATA\codegate"
+  RMDir /r "$LOCALAPPDATA\CodeGate"
+  RMDir /r "$LOCALAPPDATA\codegate"
+  RMDir /r "$LOCALAPPDATA\codegate-updater"
+  Delete "$LOCALAPPDATA\CrashDumps\CodeGate.exe.*.dmp"
+!macroend
+
+!macro customUnInstallSection
+  Section /o "Remove cached judge images (WARNING: may affect other Docker projects)" RemoveJudgeImages
+    nsExec::ExecToLog 'docker.exe image rm "python:3.11-slim" "gcc:13" "alpine/java:22-jdk"'
+    Pop $0
+  SectionEnd
 !macroend
