@@ -6,7 +6,7 @@ function variant(problemId: string, language: 'python' | 'cpp', difficulty: Play
     return {
         problemId, title: problemId, leetcodeDifficulty: 'Easy', language, difficulty,
         sourceSha256: 'a'.repeat(64), judgeSha256: 'b'.repeat(64),
-        validatedAt: '2026-01-01T00:00:00.000Z', validationStatus: 'validated'
+        preparedAt: '2026-01-01T00:00:00.000Z'
     };
 }
 

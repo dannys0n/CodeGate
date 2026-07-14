@@ -42,8 +42,7 @@ export type PlayableVariant = {
     difficulty: DifficultyLevel;
     sourceSha256: string;
     judgeSha256: string;
-    validatedAt: string;
-    validationStatus: 'validated';
+    preparedAt: string;
 };
 
 export type PlayableManifest = {

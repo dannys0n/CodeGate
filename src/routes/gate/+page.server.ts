@@ -2,15 +2,15 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { createGateSession } from '$lib/server/codegate/sessions';
 import { difficultyLevels, gateLanguages, type DifficultyLevel, type GateLanguage } from '$lib/codegate/types';
-import { prepareChallenge } from '$lib/server/codegate/runtime-validation';
+import { prepareChallenge } from '$lib/server/codegate/runtime-challenge';
 
-export const load: PageServerLoad = async ({ url, fetch }) => {
+export const load: PageServerLoad = async ({ url }) => {
     const requestedLanguage = url.searchParams.get('language');
     const language: GateLanguage = gateLanguages.includes(requestedLanguage as GateLanguage) ? requestedLanguage as GateLanguage : 'python';
     const requested = url.searchParams.get('difficulty');
     const difficulty: DifficultyLevel = difficultyLevels.includes(requested as DifficultyLevel) ? requested as DifficultyLevel : '50';
-    const prepared = await prepareChallenge(language, difficulty, [], fetch);
-    const session = createGateSession({ schemaVersion: 1, generatedAt: prepared.validatedAt, sourceRevision: 'runtime', variants: [prepared] }, prepared.language, prepared.difficulty);
+    const prepared = await prepareChallenge(language, difficulty, []);
+    const session = createGateSession({ schemaVersion: 1, generatedAt: prepared.preparedAt, sourceRevision: 'runtime', variants: [prepared] }, prepared.language, prepared.difficulty);
     const target = new URL(`/problems/${session.challenge.variant.problemId}`, url);
     target.searchParams.set('codegate', '1');
     target.searchParams.set('language', session.challenge.variant.language);

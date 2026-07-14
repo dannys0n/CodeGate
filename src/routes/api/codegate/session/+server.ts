@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getGateSession, refreshGateChallenge, releaseGateSession, requireActiveChallenge, switchGateVariant } from '$lib/server/codegate/sessions';
 import { difficultyLevels, gateLanguages, type DifficultyLevel, type GateLanguage } from '$lib/codegate/types';
-import { prepareChallenge } from '$lib/server/codegate/runtime-validation';
+import { prepareChallenge } from '$lib/server/codegate/runtime-challenge';
 
 export const GET: RequestHandler = async ({ url }) => {
     const session = getGateSession(url.searchParams.get('sessionId') ?? '');
@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ url }) => {
     return json(session);
 };
 
-export const POST: RequestHandler = async ({ request, fetch }) => {
+export const POST: RequestHandler = async ({ request }) => {
     try {
         const body = await request.json();
         const sessionId = String(body.sessionId ?? '');
@@ -22,10 +22,10 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
             const language: GateLanguage = gateLanguages.includes(body.language) ? body.language : 'python';
             const difficulty: DifficultyLevel = difficultyLevels.includes(body.difficulty) ? body.difficulty : '50';
             const current = requireActiveChallenge(sessionId, challengeId);
-            const prepared = await prepareChallenge(language, difficulty, current.recentProblemIds, fetch, body.action === 'switch-variant'
+            const prepared = await prepareChallenge(language, difficulty, current.recentProblemIds, body.action === 'switch-variant'
                 ? { problemId: current.challenge.variant.problemId }
                 : undefined);
-            const manifest = { schemaVersion: 1 as const, generatedAt: prepared.validatedAt, sourceRevision: 'runtime', variants: [prepared] };
+            const manifest = { schemaVersion: 1 as const, generatedAt: prepared.preparedAt, sourceRevision: 'runtime', variants: [prepared] };
             return json(body.action === 'refresh'
                 ? refreshGateChallenge(sessionId, challengeId, manifest, prepared.language, prepared.difficulty)
                 : switchGateVariant(sessionId, challengeId, manifest, prepared.language, prepared.difficulty));

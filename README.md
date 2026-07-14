@@ -37,7 +37,7 @@ The installer is per-user by default. It includes the local SvelteKit server and
 Docker and the three runner images must already be installed/cached for judging.
 
 See [CodeGate operations and architecture](docs/CODEGATE.md) for exact startup controls, import
-and quarantine workflow, troubleshooting, recovery, offline operation, and uninstall steps.
+workflow, troubleshooting, recovery, offline operation, and uninstall steps.
 Problem-pack authoring remains documented in [Adding a Problem](docs/ADD_PROBLEMS.md).
 
 ## Offline LeetCode sources
@@ -51,13 +51,13 @@ into permanent problem packs. The selected problem alone is exposed as a tempora
 CoJudge pack and replaced when a different problem is selected.
 
 At runtime, `Original (0%)` loads the starter, `Solution (100%)` loads the baseline, and 25/50/75%
-are deterministic in-memory reductions of the baseline. Only the baseline is judged and cached on
-first use; intermediate reductions are intentionally not assumed to compile.
+are deterministic in-memory reductions of the baseline. Challenge selection does not submit or
+validate any solution; only an explicit user submission invokes the judge.
 
 ```powershell
 npm.cmd run codegate:import:audit -- --config .\codegate\import-leetcode.json --offline
 npm.cmd run codegate:candidates
 ```
 
-Use `codegate/import-leetcode.json` as the source-index configuration. Runtime validation is lazy:
-failed combinations are quarantined locally and the selector tries another indexed candidate.
+Use `codegate/import-leetcode.json` as the source-index configuration. The generated manifest is a
+source index, so a listed solution is not a claim that it passes the problem's official tests.

@@ -10,9 +10,9 @@ CodeGate is a mode around CoJudge, not a second judge:
    test-record byte ranges.
 3. The active challenge alone is loaded into memory. The editor, submission API, runner classes,
    official tests, and validators are the existing CoJudge implementations.
-4. On first selection, CodeGate submits only the selected language's baseline solution. Passing
-   results are cached by asset hashes; failed baselines are quarantined locally.
-5. The server binds each submission to its current session and challenge so stale results cannot
+4. Challenge selection loads indexed assets without submitting them to the judge. The judge runs
+   only after the user explicitly submits code.
+5. The server binds each user submission to its current session and challenge so stale results cannot
    release the gate. Give Up and recovery do not call Docker or the judge.
 
 CodeGate is a self-discipline gate, not a Windows security boundary.
@@ -75,9 +75,10 @@ Difficulty is global rather than stored per problem:
 Switching language or difficulty keeps the problem identity. Only Different Problem selects a new
 problem.
 
-The first use of each problem/language/hash submits the 100% baseline through the ordinary CoJudge
-API. Passing baselines are cached; failures are quarantined until indexed hashes change. The compact
-manifest itself is an index, not a claim that every baseline has passed.
+Challenge preparation does not submit the 100% solution or maintain a validation cache. The compact
+manifest is an index, not a claim that every solution has passed. An explicit user submission still
+runs all official tests through the ordinary CoJudge API, and only a passing user submission releases
+the gate.
 
 Useful development commands:
 

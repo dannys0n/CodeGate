@@ -3,7 +3,7 @@ import { advanceGateSubmission, beginGateSubmissionChunk, clearGateSessionsForTe
 import type { PlayableManifest, PlayableVariant } from '../../codegate/types';
 
 function variant(problemId: string, language: 'python' | 'cpp' = 'python', difficulty: PlayableVariant['difficulty'] = '50'): PlayableVariant {
-    return { problemId, title: problemId, leetcodeDifficulty: 'Easy', language, difficulty, sourceSha256: 'a'.repeat(64), judgeSha256: 'b'.repeat(64), validatedAt: 'now', validationStatus: 'validated' };
+    return { problemId, title: problemId, leetcodeDifficulty: 'Easy', language, difficulty, sourceSha256: 'a'.repeat(64), judgeSha256: 'b'.repeat(64), preparedAt: 'now' };
 }
 
 const manifest: PlayableManifest = {
@@ -39,7 +39,7 @@ describe('CodeGate server sessions', () => {
     it('rejects an unavailable variant instead of changing problems', () => {
         const session = createGateSession(manifest, 'python', '50', () => 0);
         const challengeId = session.challenge.id;
-        expect(() => switchGateVariant(session.id, challengeId, manifest, 'cpp', '75')).toThrow(/No validated/);
+        expect(() => switchGateVariant(session.id, challengeId, manifest, 'cpp', '75')).toThrow(/No cpp\/75%/);
         expect(session.challenge.id).toBe(challengeId);
     });
 

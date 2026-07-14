@@ -66,7 +66,6 @@ function startServer() {
       PORT: String(port),
       CODEGATE_DESKTOP: '1',
       CODEGATE_INSTANCE_TOKEN: instanceToken,
-      CODEGATE_VALIDATION_CACHE: path.join(app.getPath('userData'), 'runtime-validation-cache.json'),
       CODEGATE_RUNTIME_PACK_ROOT: path.join(app.getPath('userData'), 'runtime-problem'),
       BROWSER: 'none'
     }
@@ -113,7 +112,7 @@ async function resolveGateUrl() {
 }
 
 async function showPreparingWindows() {
-  const html = '<!doctype html><html><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#111827;color:#f9fafb;font:16px system-ui"><main style="text-align:center"><h1>Preparing challenge…</h1><p style="color:#9ca3af">CodeGate is checking this problem with the judge. First use may take a moment.</p></main></body></html>';
+  const html = '<!doctype html><html><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#111827;color:#f9fafb;font:16px system-ui"><main style="text-align:center"><h1>Preparing challenge…</h1><p style="color:#9ca3af">CodeGate is loading your problem.</p></main></body></html>';
   windows = screen.getAllDisplays().map((display) => {
     const win = new BrowserWindow(windowOptions(display));
     secureWindow(win);

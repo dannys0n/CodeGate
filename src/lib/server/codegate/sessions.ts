@@ -34,7 +34,7 @@ function choose(
     random: () => number
 ) {
     const variant = selectChallenge(manifest.variants, { language, difficulty, recentProblemIds }, random);
-    if (!variant) throw new Error(`No validated ${language}/${difficulty}% challenge is available`);
+    if (!variant) throw new Error(`No ${language}/${difficulty}% challenge is available`);
     return variant;
 }
 
@@ -97,7 +97,7 @@ export function switchGateVariant(
         && candidate.language === language
         && candidate.difficulty === difficulty
     );
-    if (!variant) throw new Error(`No validated ${language}/${difficulty}% variant is available for ${problemId}`);
+    if (!variant) throw new Error(`No ${language}/${difficulty}% variant is available for ${problemId}`);
     session.activeSubmission = undefined;
     session.challenge = { id: randomUUID(), variant };
     return session;

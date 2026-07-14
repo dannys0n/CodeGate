@@ -4,7 +4,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { loadChallengeSource } from '$lib/server/codegate/catalog';
 import { requireActiveChallenge } from '$lib/server/codegate/sessions';
-import { availableCandidates } from '$lib/server/codegate/runtime-validation';
+import { availableCandidates } from '$lib/server/codegate/runtime-challenge';
 import { resolveProblemFile } from '$lib/server/problem-files';
 
 export const load: PageServerLoad = async ({ params, url }) => {
@@ -56,7 +56,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
         const problemVariants = await availableCandidates(params.slug);
         const selected = session.challenge.variant;
         if (selected.problemId !== params.slug) throw error(409, 'Gate challenge does not match this problem');
-        if (!selected) throw error(404, 'No validated CodeGate variant for this problem and language');
+        if (!selected) throw error(404, 'No CodeGate variant for this problem and language');
 
         const source = selectedSource!;
         if (createHash('sha256').update(source).digest('hex') !== selected.sourceSha256) throw error(409, 'Gate source changed after challenge creation');

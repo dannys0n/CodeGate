@@ -12,8 +12,8 @@ instructions and current product behavior remain the working requirements.
   challenge. Packaged builds include the required source subtrees.
 - Difficulty is globally fixed at 0/25/50/75/100. The starter is 0, baseline is 100, and partials
   are deterministic in-memory reductions. Partials are not required to compile.
-- First use validates only the 100% baseline with the existing submission API, Docker runner,
-  official tests, and validator. Results are cached by hashes; failures are quarantined locally.
+- Challenge preparation loads indexed assets without submitting the 100% solution. Only explicit
+  user submissions invoke the existing judge and can release the gate.
 - Generated problems store compact judge data in the single JSON catalog. Runtime exposes only the
   selected problem as a temporary ordinary CoJudge pack and replaces it on problem changes.
 
@@ -22,7 +22,7 @@ instructions and current product behavior remain the working requirements.
 - [x] Group every problem's available judge languages into one slim metadata record.
 - [x] Load and hash-check starter, solution, and judge assets on demand.
 - [x] Generate fixed partial difficulties in memory without materialized variant files.
-- [x] Validate and cache only the baseline at first runtime use.
+- [x] Remove automatic baseline submission, runtime validation cache, and validation-only state.
 - [x] Delete old per-pack `codegate.json`, `reference/`, `variants/`, playable manifest, validation
   report, exhaustive validator, and difficulty-regeneration artifacts.
 - [x] Complete focused tests and production build after the refactor.
@@ -38,7 +38,9 @@ instructions and current product behavior remain the working requirements.
 - [x] Expanded JSON catalog — 1,956 problems, 10,269 problem/language baselines, 957 quarantined
   records, and no permanent generated packs.
 - [x] `npm.cmd run importer:test -- --offline` — 4 adapter tests passed.
-- [x] Focused Vitest run — 17 selection, session, transform, catalog, and runtime-validation tests
+- [x] Focused Vitest run — 17 selection, session, transform, catalog, and runtime-preparation tests
+  passed.
+- [x] Automatic solution-validation removal — 14 focused tests passed and `npx.cmd tsc --noEmit`
   passed.
 - [x] `npm.cmd run check` — 0 errors and 0 warnings.
 - [x] `npm.cmd run build` — production SvelteKit build passed.

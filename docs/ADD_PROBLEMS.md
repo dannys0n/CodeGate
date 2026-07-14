@@ -533,5 +533,5 @@ npm.cmd run codegate:catalog
 ```
 
 Do not edit `codegate/candidate-manifest.json` by hand. See
-[CodeGate operations and architecture](CODEGATE.md) for source precedence, runtime validation, and
-quarantine behavior.
+[CodeGate operations and architecture](CODEGATE.md) for source precedence, runtime loading, and
+candidate filtering behavior.
