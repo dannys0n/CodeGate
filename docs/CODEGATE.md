@@ -136,7 +136,7 @@ Relevant checks are:
 npm.cmd test -- --run
 npm.cmd run check
 npm.cmd run build
-npm.cmd run importer:test -- --offline
+npm.cmd run importer:test
 npm.cmd run codegate:candidates
 npm.cmd run codegate:failure-smoke
 npm.cmd run desktop:test

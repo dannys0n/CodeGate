@@ -23,7 +23,7 @@
 		"codegate:candidates": "node scripts/codegate/catalog.mjs --write",
 		"codegate:import:audit": "node scripts/codegate/importer/audit.mjs",
 		"codegate:failure-smoke": "node scripts/codegate/failure-smoke.mjs",
-		"importer:test": "node scripts/codegate/importer/test.mjs",
+		"importer:test": "vitest run scripts/codegate/importer",
 		"desktop": "electron .",
 		"desktop:test": "vitest run desktop",
 		"desktop:smoke": "electron . --smoke-test",

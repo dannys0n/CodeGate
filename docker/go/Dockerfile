@@ -17,11 +17,6 @@
 #      # CLI (env var is read at runtime by goUtil.ts)
 #      COJUDGE_GO_IMAGE=cojudge-go:latest cojudge
 #
-#      # Docker (pass -e to the cojudge server container)
-#      docker run -e COJUDGE_GO_IMAGE=cojudge-go:latest ... 
-#
-#      # docker.sh (add -e to the docker run inside the script, or set IMAGE)
-#      IMAGE=cojudge-go:latest COJUDGE_GO_IMAGE=cojudge-go:latest ./docker.sh
 #
 #   3) Or retag as golang:1.22-alpine (no env var needed, but masks the original):
 #      docker tag cojudge-go:latest golang:1.22-alpine

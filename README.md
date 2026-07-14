@@ -30,6 +30,17 @@ download the optional 3.5 GB LiveCodeBench dataset. To include optional sources,
 For normal CoJudge web development, use `npm.cmd run dev -- --host 127.0.0.1`. CodeGate mode is
 entered at `/gate`; ordinary problem routes and existing game mode retain their upstream behavior.
 
+## Repository scripts
+
+| Script | Purpose |
+|---|---|
+| `setup.bat` | Restore pinned sources, install dependencies, and generate the catalog. |
+| `quick-test.bat` | Regenerate, build, and launch a disposable development instance. |
+| `build-and-install.bat` | Compile, package, and silently replace the installed Windows app. |
+
+The `.ps1` files paired with BAT launchers are implementation files, not additional workflows.
+Normal web development and preview use `npm.cmd run dev` and `npm.cmd run preview` directly.
+
 ## Production package
 
 ```powershell
