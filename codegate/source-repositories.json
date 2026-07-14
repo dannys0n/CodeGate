@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "repositories": [
+    {
+      "name": "Neenza problems",
+      "path": "leetcode-problems",
+      "url": "https://github.com/neenza/leetcode-problems.git",
+      "commit": "16c26d1bcfdc17a0290f7083e86c4e9387b2e248",
+      "required": true
+    },
+    {
+      "name": "Kamyu solutions",
+      "path": "kamyu-solutions",
+      "url": "https://github.com/kamyu104/LeetCode-Solutions.git",
+      "commit": "4b89ed83de3143b5137647ca030d14a694bf263e",
+      "required": true
+    },
+    {
+      "name": "Doocs solutions",
+      "path": "doocs-solutions",
+      "url": "https://github.com/doocs/leetcode.git",
+      "commit": "a0ced3e3f70662c8fb89cce4dfd2dbcf6900a4b4",
+      "required": true
+    },
+    {
+      "name": "Newfacade test vectors",
+      "path": "leetcode-dataset",
+      "url": "https://huggingface.co/datasets/newfacade/LeetCodeDataset",
+      "commit": "215604aeed660029df7de2fea5a4d7b6ed476a08",
+      "required": true
+    },
+    {
+      "name": "NVIDIA LiveCodeBench C++",
+      "path": "livecodebench-cpp",
+      "url": "https://huggingface.co/datasets/nvidia/LiveCodeBench-CPP",
+      "commit": "6c21015d3095e5c45812950d683f5f3e65403c13",
+      "required": false
+    }
+  ]
+}

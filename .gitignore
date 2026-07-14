@@ -159,3 +159,7 @@ blob-report/
 .cojudge_progress.json
 
 /build/
+
+# Large, replaceable upstream datasets used by the offline CodeGate importer.
+/sources/
+/codegate/import-smoke-report.json

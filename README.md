@@ -14,14 +14,18 @@ Requirements: Windows 10/11, Node.js 18+ (validated with 24.18.0), npm, Docker D
 cached images `python:3.11-slim`, `gcc:13`, and `alpine/java:22-jdk`.
 
 ```powershell
-npm.cmd ci
+.\setup.bat
 docker pull python:3.11-slim
 docker pull gcc:13
 docker pull alpine/java:22-jdk
-npm.cmd run codegate:candidates
 npm.cmd run build
 npm.cmd run desktop
 ```
+
+`setup.bat` installs npm dependencies, clones the required ignored source repositories at the exact
+commits in `codegate/source-repositories.json`, and regenerates the candidate manifest. It does not
+download the optional 3.5 GB LiveCodeBench dataset. To include optional sources, run
+`.\setup.bat -IncludeOptionalSources`.
 
 For normal CoJudge web development, use `npm.cmd run dev -- --host 127.0.0.1`. CodeGate mode is
 entered at `/gate`; ordinary problem routes and existing game mode retain their upstream behavior.

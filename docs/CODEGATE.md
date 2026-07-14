@@ -22,11 +22,16 @@ CodeGate is a self-discipline gate, not a Windows security boundary.
 Install dependencies and cache the runner images while online:
 
 ```powershell
-npm.cmd ci
+.\setup.bat
 docker pull python:3.11-slim
 docker pull gcc:13
 docker pull alpine/java:22-jdk
 ```
+
+The setup script restores the ignored upstream repositories at the commits pinned in
+`codegate/source-repositories.json`, installs npm dependencies, and regenerates the candidate
+manifest. Pass `-IncludeOptionalSources` only when the multi-gigabyte LiveCodeBench dataset is
+needed for importer development.
 
 Run normal web development or the desktop production build:
 
@@ -54,7 +59,7 @@ responsible for its WSL backend and images. Set `CODEGATE_PORT` before launch to
 
 ## Compact source index and difficulty
 
-`npm run codegate:candidates` joins the locally cloned source repositories without compiling them.
+`npm run codegate:candidates` joins the setup-managed source repositories without compiling them.
 The generated `codegate/candidate-manifest.json` contains one entry per problem ID and nests every
 available Java, Python, C++, C#, Rust, Go, and TypeScript baseline beneath it. Entries contain only
 relative source locations, provenance, byte offsets, normalized signatures, and hashes. JSON is

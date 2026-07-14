@@ -30,6 +30,8 @@ instructions and current product behavior remain the working requirements.
   challenge loading cannot trigger an abandoned-session shutdown.
 - [x] Recreate the first three sample inputs when materializing a generated runtime pack so the
   existing editor can render compact-manifest problems without a server error.
+- [x] Keep upstream repositories ignored and restore them reproducibly from a pinned setup script;
+  leave the multi-gigabyte LiveCodeBench source optional.
 - [x] Delete old per-pack `codegate.json`, `reference/`, `variants/`, playable manifest, validation
   report, exhaustive validator, and difficulty-regeneration artifacts.
 - [x] Complete focused tests and production build after the refactor.
@@ -56,6 +58,8 @@ instructions and current product behavior remain the working requirements.
 - [x] 99% difficulty — 13 focused transform, selection, and session tests passed; TypeScript check
   passed.
 - [x] Default preference update — TypeScript check passed.
+- [x] Repository bootstrap — pinned-source verification completed successfully without downloads;
+  `git diff --check` passed.
 - [x] `npm.cmd run check` — 0 errors and 0 warnings.
 - [x] `npm.cmd run build` — production SvelteKit build passed.
 - [x] `git diff --check` and stale-artifact scan — passed; no per-pack `codegate.json`, `reference/`,
