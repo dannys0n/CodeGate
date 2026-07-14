@@ -44,15 +44,15 @@ npm.cmd run build
 npm.cmd run desktop
 ```
 
-Build the installer, install it, or launch its unpacked executable:
+Build the release, install it, or launch its unpacked executable:
 
 ```powershell
-npm.cmd run desktop:build
+.\build-release.bat
 Start-Process -Wait .\dist-desktop\CodeGate-Setup-0.1.0.exe
 Start-Process .\dist-desktop\win-unpacked\CodeGate.exe
 ```
 
-Double-click `build-and-install.bat` to compile, package, and replace the current per-user install.
+`build-release.bat` only produces release artifacts; it does not install or launch them.
 `quick-test.bat` regenerates the index and starts the development server and Electron wrapper.
 
 The application wakes the default WSL instance on a best-effort basis. Docker Desktop remains

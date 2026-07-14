@@ -5,7 +5,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$repositoryRoot = $PSScriptRoot
+$repositoryRoot = Split-Path -Parent $PSScriptRoot
 $sourcesRoot = Join-Path $repositoryRoot 'sources'
 $lockPath = Join-Path $repositoryRoot 'codegate\source-repositories.json'
 

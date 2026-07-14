@@ -102,15 +102,15 @@ outside it.
 
 ## Build the Windows installer
 
-For a normal installer build:
+Run the release script:
 
 ```powershell
-npm.cmd run desktop:build
-Start-Process -Wait .\dist-desktop\CodeGate-Setup-0.1.0.exe
+.\build-release.bat
 ```
 
-Or double-click `build-and-install.bat` to build, package, and silently replace the current
-per-user installation.
+It creates both the installer at `dist-desktop\CodeGate-Setup-0.1.0.exe` and the unpacked app at
+`dist-desktop\win-unpacked\CodeGate.exe`. It does not install or launch either artifact. Run the
+installer manually when you want to test its wizard and startup options.
 
 ![CodeGate installer preview](docs/assets/installer-placeholder.svg)
 
@@ -123,11 +123,13 @@ because those images may be used by other projects.
 
 | Script | Purpose |
 |---|---|
-| `setup.bat` | Install dependencies, restore pinned sources, and generate the catalog |
+| `setup.bat` | Prepare a fresh checkout for development |
 | `quick-test.bat` | Build and launch a disposable local desktop test |
-| `build-and-install.bat` | Compile, package, and install the Windows application |
+| `build-release.bat` | Produce the Windows installer and unpacked release app |
 
-The matching `.ps1` files contain the implementation behind these convenient BAT launchers.
+Run `setup.bat` once after cloning, `quick-test.bat` while developing, and `build-release.bat` when
+you need distributable artifacts. Setup's implementation lives under `scripts/` to keep the
+repository root focused on these three entry points.
 
 ## Problem catalog
 
