@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { parseKeywordArguments, parsePythonLiteral } from './python-literal.mjs';
+import { parseKeywordArguments, parsePythonLiteral } from '../../../../src/lib/codegate/python-literal.mjs';
 import { parsePythonSignature } from './neenza.mjs';
-import { generateExactMarker } from './exact-marker.mjs';
+import { generateExactMarker } from '../../../../src/lib/codegate/exact-marker.mjs';
 import { normalizeForRunner } from './solutions.mjs';
 
 describe('LeetCode source adapters', () => {

@@ -22,6 +22,10 @@ async function fileSha256(file) {
   return createHash('sha256').update(await fs.readFile(file)).digest('hex');
 }
 
+function valueSha256(value) {
+  return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
 export async function buildCandidateManifest(repositoryRoot = process.cwd(), configFile = 'codegate/import-leetcode.json') {
   const configPath = path.resolve(repositoryRoot, configFile);
   const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
@@ -31,7 +35,8 @@ export async function buildCandidateManifest(repositoryRoot = process.cwd(), con
   const roots = {
     neenza: `${source.paths.neenza.replaceAll('\\', '/')}/problems`,
     doocs: `${source.paths.doocs.replaceAll('\\', '/')}/solution`,
-    kamyu: source.paths.kamyu.replaceAll('\\', '/')
+    kamyu: source.paths.kamyu.replaceAll('\\', '/'),
+    newfacade: source.paths.newfacade.replaceAll('\\', '/')
   };
   const problems = {};
   const quarantine = [];
@@ -39,9 +44,12 @@ export async function buildCandidateManifest(repositoryRoot = process.cwd(), con
     const problemRoot = path.join(repositoryRoot, 'problems', record.slug);
     const required = ['metadata.json', 'official-tests.json', 'Marker.java'];
     const completePack = await Promise.all(required.map((name) => fs.access(path.join(problemRoot, name)).then(() => true).catch(() => false))).then((values) => values.every(Boolean));
-    if (!completePack) continue;
     if (record.adapterError) {
       quarantine.push({ problemId: record.slug, reason: record.adapterError });
+      continue;
+    }
+    if (!completePack && !record.pack) {
+      quarantine.push({ problemId: record.slug, reason: 'insufficient safe structured tests for a generated judge pack' });
       continue;
     }
     const recordPath = path.resolve(repositoryRoot, record.sourceRecord);
@@ -59,11 +67,30 @@ export async function buildCandidateManifest(repositoryRoot = process.cwd(), con
       };
     }
     if (!Object.keys(languages).length) continue;
+    let judge;
+    let judgeSha256;
+    if (completePack) {
+      judgeSha256 = await digestFiles(required.map((name) => path.join(problemRoot, name)));
+    } else {
+      const { starterCode: _starterCode, testCases: _testCases, ...metadata } = record.pack.metadata;
+      judge = {
+        kind: 'generated-exact',
+        metadata,
+        testRecord: {
+          file: path.relative(path.resolve(repositoryRoot, roots.newfacade), record.testLocator.file).replaceAll(path.sep, '/'),
+          offset: record.testLocator.offset,
+          length: record.testLocator.length,
+          sha256: record.testLocator.sha256
+        }
+      };
+      judgeSha256 = valueSha256(judge);
+    }
     problems[record.frontendId] = {
       slug: record.slug,
       record: path.relative(path.resolve(repositoryRoot, roots.neenza), recordPath).replaceAll(path.sep, '/'),
       recordSha256: await fileSha256(recordPath),
-      judgeSha256: await digestFiles(required.map((name) => path.join(problemRoot, name))),
+      judgeSha256,
+      ...(judge ? { judge } : {}),
       languages
     };
   }

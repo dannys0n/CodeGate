@@ -3,9 +3,9 @@ import path from 'node:path';
 import { loadNeenza, parsePythonSignature } from './neenza.mjs';
 import { loadNewfacade } from './newfacade.mjs';
 import { indexDoocs, normalizeForRunner, selectSolutions } from './solutions.mjs';
-import { parseKeywordArguments, parsePythonLiteral } from './python-literal.mjs';
-import { generateExactMarker } from './exact-marker.mjs';
+import { generateExactMarker } from '../../../../src/lib/codegate/exact-marker.mjs';
 import { starterField } from '../../../../src/lib/codegate/source-transform.mjs';
+import { extractExactCases, officialTests } from '../../../../src/lib/codegate/test-vectors.mjs';
 
 function inside(root, candidate) {
   const relative = path.relative(root, candidate);
@@ -17,18 +17,6 @@ async function sourceRoot(source, key, context) {
   const resolved = await fs.realpath(path.resolve(context.repositoryRoot, configured));
   if (!inside(context.repositoryRoot, resolved)) throw new Error(`${key} path escapes the repository`);
   return resolved;
-}
-function storedInput(value, type) {
-  return ['int_array', 'int_array_2d', 'string_array'].includes(type) ? JSON.stringify(value) : value;
-}
-function matchesType(value, type) {
-  if (type === 'int') return Number.isInteger(value) && value >= -2147483648 && value <= 2147483647;
-  if (type === 'boolean') return typeof value === 'boolean';
-  if (type === 'string') return typeof value === 'string' && !/[\x00-\x1f\x7f]/.test(value);
-  if (type === 'int_array') return Array.isArray(value) && value.every((item) => matchesType(item, 'int'));
-  if (type === 'string_array') return Array.isArray(value) && value.every((item) => matchesType(item, 'string'));
-  if (type === 'int_array_2d') return Array.isArray(value) && value.every((row) => matchesType(row, 'int_array'));
-  return false;
 }
 function ambiguousStatement(record) {
   return /\b(any order|any valid|multiple answers|arbitrary order|return the answer in any|order does not matter|regardless of order|any permutation|any arrangement|any topological)\b/i.test(`${record.description ?? ''}`);
@@ -68,22 +56,7 @@ export async function loadLeetcodeBundle(source, context) {
         if (!dataset?.starter_code) throw primaryError;
         signature = parsePythonSignature(dataset.starter_code);
       }
-      const exactCases = [];
-      if (dataset && !ambiguousStatement(problem)) {
-        for (const vector of dataset.input_output) {
-          try {
-            const input = parseKeywordArguments(vector.input);
-            if (!signature.params.every((param) => Object.hasOwn(input, param.name) && matchesType(input[param.name], param.type))) continue;
-            const output = parsePythonLiteral(vector.output);
-            if (!matchesType(output, signature.outputType)) continue;
-            exactCases.push({ input, output });
-          } catch {
-            // A few generated dataset rows contain malformed calls or error text.
-            // Individual bad vectors are discarded; the record still needs the
-            // configured minimum number of well-typed vectors to create a pack.
-          }
-        }
-      }
+      const exactCases = dataset && !ambiguousStatement(problem) ? extractExactCases(dataset, signature) : [];
       const solutions = await selectSolutions({ frontendId: problem.frontendId, slug: problem.slug, functionName: signature.functionName, doocs, kamyuRoot });
       const languages = {};
       const normalizedStarters = {};
@@ -109,7 +82,7 @@ export async function loadLeetcodeBundle(source, context) {
         };
       }
       if (!Object.keys(languages).length) continue;
-      const tests = exactCases.map(({ input }) => Object.fromEntries(signature.params.map((param) => [param.name, storedInput(input[param.name], param.type)])));
+      const tests = officialTests(exactCases, signature);
       const metadata = {
         id: problem.slug,
         frontendId: problem.frontendId,
@@ -135,12 +108,14 @@ export async function loadLeetcodeBundle(source, context) {
         languages,
         pack: exactCases.length >= (source.minimumTests ?? 3) ? {
           statement: markdown(problem), metadata, tests,
-          marker: generateExactMarker(metadata, exactCases)
+          marker: generateExactMarker(metadata, exactCases),
+          outputs: exactCases.map(({ output }) => output)
         } : undefined,
         source: { name: source.name, revision: source.revision },
         sourceDirectory: context.repositoryRoot,
         sourceRecord: `sources/leetcode-problems/problems/${String(problem.frontendId).padStart(4, '0')}-${problem.slug}.json`,
-        testSource: exactCases.length ? 'newfacade' : 'existing-cojudge'
+        testSource: exactCases.length ? 'newfacade' : 'existing-cojudge',
+        testLocator: exactCases.length >= (source.minimumTests ?? 3) ? dataset._locator : undefined
       });
     } catch (error) {
       records.push({ frontendId: problem.frontendId, slug: problem.slug, adapterError: error instanceof Error ? error.message : String(error) });

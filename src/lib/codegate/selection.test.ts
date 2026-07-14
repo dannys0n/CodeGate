@@ -5,7 +5,6 @@ import type { PlayableVariant } from './types';
 function variant(problemId: string, language: 'python' | 'cpp', difficulty: PlayableVariant['difficulty']): PlayableVariant {
     return {
         problemId, title: problemId, leetcodeDifficulty: 'Easy', language, difficulty,
-        sourcePath: `problems/${problemId}/variants/${language}/${difficulty}`,
         sourceSha256: 'a'.repeat(64), judgeSha256: 'b'.repeat(64),
         validatedAt: '2026-01-01T00:00:00.000Z', validationStatus: 'validated'
     };

@@ -1,3 +1,4 @@
+// @ts-nocheck
 function javaType(type) {
   return ({ int: 'int', boolean: 'boolean', string: 'String', int_array: 'int[]', int_array_2d: 'int[][]', string_array: 'String[]' })[type];
 }

@@ -5,8 +5,9 @@
 CodeGate is a mode around CoJudge, not a second judge:
 
 1. Complete `problems/<slug>` packs continue to own statements, tests, metadata, and validators.
-2. `npm run codegate:candidates` writes one compact manifest record per problem. Each record nests
-   all available languages and points to hashed Neenza starter data and Kamyu/Doocs solutions.
+2. `npm run codegate:candidates` writes one JSON manifest record per problem. Each record nests all
+   available languages and points to hashed Neenza starters, Kamyu/Doocs solutions, and Newfacade
+   test-record byte ranges.
 3. The active challenge alone is loaded into memory. The editor, submission API, runner classes,
    official tests, and validators are the existing CoJudge implementations.
 4. On first selection, CodeGate submits only the selected language's baseline solution. Passing
@@ -56,7 +57,8 @@ responsible for its WSL backend and images. Set `CODEGATE_PORT` before launch to
 `npm run codegate:candidates` joins the locally cloned source repositories without compiling them.
 The generated `codegate/candidate-manifest.json` contains one entry per problem ID and nests every
 available Java, Python, C++, C#, Rust, Go, and TypeScript baseline beneath it. Entries contain only
-relative source locations, provenance, and hashes.
+relative source locations, provenance, byte offsets, normalized signatures, and hashes. JSON is
+used because the records are hierarchical; CSV would duplicate problem fields across languages.
 
 Neenza supplies identity, statements, hints, and starter signatures. Kamyu is preferred for C++;
 Doocs is preferred for Python and supplies the other supported languages. Existing complete CoJudge
@@ -81,14 +83,15 @@ Useful development commands:
 
 ```powershell
 npm.cmd run codegate:import:audit -- --config .\codegate\import-leetcode.json --offline
-npm.cmd run codegate:import -- --config .\codegate\import-leetcode-smoke.json --offline
 npm.cmd run codegate:candidates
 npm.cmd run codegate:catalog
 ```
 
-Source clones are ignored during development, but the required subtrees are included in the
-Electron package. A release build therefore needs the configured clones present before
-`desktop:build`. Never hand-edit the candidate manifest.
+When a generated problem is selected, CodeGate reads only its indexed source/test records and
+creates one temporary ordinary pack under the Electron user-data directory. Selecting another
+problem replaces it. Source clones are ignored during development, but required subtrees are
+included in the Electron package, so a release build needs them present before `desktop:build`.
+Never hand-edit the candidate manifest.
 
 Deferred categories include linked lists, trees, design/class-operation problems, interactive
 problems, SQL, shell, concurrency, external APIs, unsupported libraries and signatures, incomplete

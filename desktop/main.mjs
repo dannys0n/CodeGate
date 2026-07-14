@@ -67,6 +67,7 @@ function startServer() {
       CODEGATE_DESKTOP: '1',
       CODEGATE_INSTANCE_TOKEN: instanceToken,
       CODEGATE_VALIDATION_CACHE: path.join(app.getPath('userData'), 'runtime-validation-cache.json'),
+      CODEGATE_RUNTIME_PACK_ROOT: path.join(app.getPath('userData'), 'runtime-problem'),
       BROWSER: 'none'
     }
   });

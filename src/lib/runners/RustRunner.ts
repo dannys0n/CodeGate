@@ -2,10 +2,10 @@ import { rustImage, generateRustRunner } from "$lib/utils/rustUtil";
 import { ensureImageAvailable, EXECUTION_TIMEOUT_SECONDS, LINUX_TIMEOUT_CODE, TIMEOUT_MESSAGE } from "$lib/utils/util";
 import Dockerode from "dockerode";
 import fs from 'fs/promises';
-import path from 'path';
 import tar from 'tar-stream';
 import { ProgramRunner } from "./ProgramRunner";
 import ContainerPool from "./ContainerPool";
+import { resolveProblemFile } from '$lib/server/problem-files';
 
 const docker = new Dockerode();
 
@@ -19,7 +19,7 @@ export class RustRunner extends ProgramRunner {
 
     async compile(): Promise<void> {
         try {
-            const problemPath = path.resolve('problems', this.problemId, 'metadata.json');
+            const problemPath = resolveProblemFile(this.problemId, 'metadata.json');
             const problemContent = await fs.readFile(problemPath, 'utf-8');
             const problemData = JSON.parse(problemContent);
             

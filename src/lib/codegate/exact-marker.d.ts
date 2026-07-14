@@ -1,0 +1,1 @@
+export function generateExactMarker(metadata: { functionName: string; params: Array<{ name: string; type: string }>; outputType: string }, cases: Array<{ input: Record<string, unknown>; output: unknown }>): string;

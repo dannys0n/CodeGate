@@ -16,6 +16,11 @@ export type CandidateProblem = {
     record: string;
     recordSha256: string;
     judgeSha256: string;
+    judge?: {
+        kind: 'generated-exact';
+        metadata: Record<string, unknown>;
+        testRecord: { file: string; offset: number; length: number; sha256: string };
+    };
     languages: Partial<Record<GateLanguage, CandidateLanguage>>;
 };
 
@@ -35,7 +40,6 @@ export type PlayableVariant = {
     leetcodeDifficulty: string;
     language: GateLanguage;
     difficulty: DifficultyLevel;
-    sourcePath?: string;
     sourceSha256: string;
     judgeSha256: string;
     validatedAt: string;

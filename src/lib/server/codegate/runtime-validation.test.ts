@@ -51,7 +51,7 @@ async function fixture(solutionBody = 'return [0]'): Promise<void> {
         generatorVersion: 1,
         generatedAt: 'now',
         sourceRevision: 'fixture',
-        sources: { neenza: 'sources/neenza/problems', doocs: 'sources/doocs/solution', kamyu: 'sources/kamyu' },
+        sources: { neenza: 'sources/neenza/problems', doocs: 'sources/doocs/solution', kamyu: 'sources/kamyu', newfacade: 'sources/newfacade' },
         problems: {
             '1': {
                 slug: 'example', record: '0001-example.json', recordSha256: rawDigest(record), judgeSha256: judgeDigest(judgeFiles),

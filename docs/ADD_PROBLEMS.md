@@ -522,15 +522,16 @@ cojudge submit <slug> /tmp/solution.java
 
 ## Enabling a problem for CodeGate
 
-Adding a normal CoJudge pack does not automatically enable it in CodeGate. Add Python/C++
-references, deliberately incorrect controls, and ordinary percentage difficulty files, then declare
-their relative paths in `codegate.json`. Run the offline validator; only combinations written to
-`codegate/playable-manifest.json` by that command are selectable:
+CodeGate indexes configured problem, solution, and structured-test repositories into one generated
+JSON catalog. A normal CoJudge pack is reused automatically when its canonical slug matches an
+indexed source record. Safely adaptable records without a permanent pack use the same runners via
+one temporary runtime pack. Regenerate the catalog after changing source data or an existing pack:
 
 ```powershell
-npm.cmd run codegate:validate -- --offline
+npm.cmd run codegate:candidates
 npm.cmd run codegate:catalog
 ```
 
-Do not edit the playable manifest by hand. See [CodeGate operations and architecture](CODEGATE.md)
-for the import schema, activation digests, supported scope, and quarantine behavior.
+Do not edit `codegate/candidate-manifest.json` by hand. See
+[CodeGate operations and architecture](CODEGATE.md) for source precedence, runtime validation, and
+quarantine behavior.

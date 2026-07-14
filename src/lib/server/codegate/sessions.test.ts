@@ -3,7 +3,7 @@ import { advanceGateSubmission, beginGateSubmissionChunk, clearGateSessionsForTe
 import type { PlayableManifest, PlayableVariant } from '../../codegate/types';
 
 function variant(problemId: string, language: 'python' | 'cpp' = 'python', difficulty: PlayableVariant['difficulty'] = '50'): PlayableVariant {
-    return { problemId, title: problemId, leetcodeDifficulty: 'Easy', language, difficulty, sourcePath: `${problemId}-${language}-${difficulty}`, sourceSha256: 'a'.repeat(64), judgeSha256: 'b'.repeat(64), validatedAt: 'now', validationStatus: 'validated' };
+    return { problemId, title: problemId, leetcodeDifficulty: 'Easy', language, difficulty, sourceSha256: 'a'.repeat(64), judgeSha256: 'b'.repeat(64), validatedAt: 'now', validationStatus: 'validated' };
 }
 
 const manifest: PlayableManifest = {

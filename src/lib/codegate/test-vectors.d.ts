@@ -1,0 +1,2 @@
+export function extractExactCases(dataset: { input_output?: Array<{ input: string; output: string }> }, metadata: { params: Array<{ name: string; type: string }>; outputType: string }): Array<{ input: Record<string, unknown>; output: unknown }>;
+export function officialTests(cases: Array<{ input: Record<string, unknown> }>, metadata: { params: Array<{ name: string; type: string }> }): Array<Record<string, unknown>>;

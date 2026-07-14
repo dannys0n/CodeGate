@@ -46,7 +46,9 @@ The repository includes an offline adapter pipeline for locally cloned Neenza pr
 Kamyu/Doocs solutions, and Newfacade test vectors. Raw upstream clones live under ignored
 `sources/`; generated judge data remains an ordinary CoJudge problem pack. The compact candidate
 manifest stores one record per problem, with all available languages nested beneath it. It points
-to the original starter and baseline solution sources instead of copying either into every pack.
+to the original starter, baseline solution, and structured test records instead of copying them
+into permanent problem packs. The selected problem alone is exposed as a temporary ordinary
+CoJudge pack and replaced when a different problem is selected.
 
 At runtime, `Original (0%)` loads the starter, `Solution (100%)` loads the baseline, and 25/50/75%
 are deterministic in-memory reductions of the baseline. Only the baseline is judged and cached on
@@ -54,9 +56,8 @@ first use; intermediate reductions are intentionally not assumed to compile.
 
 ```powershell
 npm.cmd run codegate:import:audit -- --config .\codegate\import-leetcode.json --offline
-npm.cmd run codegate:import -- --config .\codegate\import-leetcode-smoke.json --offline
 npm.cmd run codegate:candidates
 ```
 
-Use `codegate/import-leetcode.json` for the complete candidate import. Runtime validation is lazy:
+Use `codegate/import-leetcode.json` as the source-index configuration. Runtime validation is lazy:
 failed combinations are quarantined locally and the selector tries another indexed candidate.

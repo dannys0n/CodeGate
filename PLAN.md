@@ -14,6 +14,8 @@ instructions and current product behavior remain the working requirements.
   are deterministic in-memory reductions. Partials are not required to compile.
 - First use validates only the 100% baseline with the existing submission API, Docker runner,
   official tests, and validator. Results are cached by hashes; failures are quarantined locally.
+- Generated problems store compact judge data in the single JSON catalog. Runtime exposes only the
+  selected problem as a temporary ordinary CoJudge pack and replaces it on problem changes.
 
 ## Milestones
 
@@ -24,19 +26,26 @@ instructions and current product behavior remain the working requirements.
 - [x] Delete old per-pack `codegate.json`, `reference/`, `variants/`, playable manifest, validation
   report, exhaustive validator, and difficulty-regeneration artifacts.
 - [x] Complete focused tests and production build after the refactor.
+- [x] Index every safely adaptable record without permanently creating per-problem pack files.
+- [x] Add a temporary problem-pack overlay used by existing routes, runners, and validators.
+- [x] Remove the obsolete full pack-import implementation.
+- [x] Validate the expanded catalog and production build.
 
 ## Validation
 
 - [x] `npm.cmd run codegate:candidates` — 47 problems, 299 problem/language baselines, 27 quarantined
   problem records.
-- [x] `npm.cmd run codegate:import -- --config .\codegate\import-leetcode-smoke.json --offline` — 10
-  accepted, 0 skipped, 0 failed; no reference or variant files written.
+- [x] Expanded JSON catalog — 1,956 problems, 10,269 problem/language baselines, 957 quarantined
+  records, and no permanent generated packs.
 - [x] `npm.cmd run importer:test -- --offline` — 4 adapter tests passed.
-- [x] Focused Vitest run — 16 selection, session, transform, catalog, and runtime-validation tests
+- [x] Focused Vitest run — 17 selection, session, transform, catalog, and runtime-validation tests
   passed.
 - [x] `npm.cmd run check` — 0 errors and 0 warnings.
 - [x] `npm.cmd run build` — production SvelteKit build passed.
 - [x] `git diff --check` and stale-artifact scan — passed; no per-pack `codegate.json`, `reference/`,
   or `variants/` structures remain.
+- [x] Generated catalog size reduced from 56 MB of embedded validators to 6.3 MB of hierarchical
+  JSON with byte-range test references.
+- [x] Verified all 1,914 generated test-record byte ranges against their SHA-256 hashes.
 
 No new dependency was added.

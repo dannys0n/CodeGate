@@ -1,7 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import fs from 'fs/promises';
-import path from 'path';
 import { getMarkerResponses } from '../../../lib/markerRunner';
 import type { ProgramRunner } from '$lib/runners/ProgramRunner';
 import { JavaRunner } from '$lib/runners/JavaRunner';
@@ -12,6 +11,7 @@ import { RustRunner } from '$lib/runners/RustRunner';
 import { GoRunner } from '$lib/runners/GoRunner';
 import { TypeScriptRunner } from '$lib/runners/TypeScriptRunner';
 import { TIMEOUT_MESSAGE, type JobStatus } from '$lib/utils/util';
+import { resolveProblemFile } from '$lib/server/problem-files';
 
 type RunSuccess = Array<{
     output: string | null;
@@ -45,7 +45,7 @@ function isJavaLanguage(language: string): boolean {
 
 async function executeRun(problemId: string, language: string, code: string, testCases: any[], job: RunJob) {
     try {
-        const problemPath = path.resolve('problems', problemId, 'metadata.json');
+        const problemPath = resolveProblemFile(problemId, 'metadata.json');
         const problemContent = await fs.readFile(problemPath, 'utf-8');
         const problemData = JSON.parse(problemContent);
 

@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { splitTopLevel } from './python-literal.mjs';
+import { splitTopLevel } from '../../../../src/lib/codegate/python-literal.mjs';
 
 const typeMap = new Map([
   ['int', 'int'], ['str', 'string'], ['bool', 'boolean'],

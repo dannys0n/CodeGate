@@ -1,21 +1,28 @@
 import fs from 'fs/promises';
-import path from 'path';
 import { createHash } from 'node:crypto';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { loadChallengeSource } from '$lib/server/codegate/catalog';
 import { requireActiveChallenge } from '$lib/server/codegate/sessions';
 import { availableCandidates } from '$lib/server/codegate/runtime-validation';
+import { resolveProblemFile } from '$lib/server/problem-files';
 
 export const load: PageServerLoad = async ({ params, url }) => {
     try {
-        const baseDir = path.resolve('problems', params.slug);
-        const problemPath = path.join(baseDir, 'metadata.json');
+        let selectedSource: string | undefined;
+        let selectedSession: ReturnType<typeof requireActiveChallenge> | undefined;
+        if (url.searchParams.get('codegate') === '1') {
+            selectedSession = requireActiveChallenge(url.searchParams.get('sessionId') ?? '', url.searchParams.get('challengeId') ?? '');
+            const selected = selectedSession.challenge.variant;
+            if (selected.problemId !== params.slug) throw error(409, 'Gate challenge does not match this problem');
+            selectedSource = await loadChallengeSource(selected.problemId, selected.language, selected.difficulty);
+        }
+        const problemPath = resolveProblemFile(params.slug, 'metadata.json');
         const content = await fs.readFile(problemPath, 'utf-8');
         const problem = JSON.parse(content);
 
         // Load statement.md if present and attach as problem.statement
-        const statementPath = path.join(baseDir, 'statement.md');
+        const statementPath = resolveProblemFile(params.slug, 'statement.md');
         try {
             const statementMd = await fs.readFile(statementPath, 'utf-8');
             // Preserve compatibility with the Svelte page expecting problem.statement
@@ -26,7 +33,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
         }
 
         // Load solution.md if present and attach as problem.solution
-        const solutionPath = path.join(baseDir, 'solution.md');
+        const solutionPath = resolveProblemFile(params.slug, 'solution.md');
         try {
             const solutionMd = await fs.readFile(solutionPath, 'utf-8');
             problem.solution = solutionMd;
@@ -45,13 +52,13 @@ export const load: PageServerLoad = async ({ params, url }) => {
 
         if (url.searchParams.get('codegate') !== '1') return { problem, codegate: null };
 
-        const session = requireActiveChallenge(url.searchParams.get('sessionId') ?? '', url.searchParams.get('challengeId') ?? '');
+        const session = selectedSession!;
         const problemVariants = await availableCandidates(params.slug);
         const selected = session.challenge.variant;
         if (selected.problemId !== params.slug) throw error(409, 'Gate challenge does not match this problem');
         if (!selected) throw error(404, 'No validated CodeGate variant for this problem and language');
 
-        const source = await loadChallengeSource(selected.problemId, selected.language, selected.difficulty);
+        const source = selectedSource!;
         if (createHash('sha256').update(source).digest('hex') !== selected.sourceSha256) throw error(409, 'Gate source changed after challenge creation');
         return {
             problem,
