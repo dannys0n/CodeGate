@@ -4,9 +4,9 @@
 
 ### Earn your screen time by solving a coding challenge.
 
-CodeGate turns the existing [CoJudge](https://github.com/cojudge/cojudge) offline judge into a
-fullscreen Windows self-discipline app. Finish the selected problem, pass its official tests, and
-continue with your day.
+CodeGate is derived from the open-source [CoJudge](https://github.com/cojudge/cojudge) offline
+judge and adapts it into a fullscreen Windows self-discipline app. Finish the selected problem,
+pass its official tests, and continue with your day.
 
 ![CodeGate desktop preview](docs/assets/codegate-demo-placeholder.svg)
 
@@ -185,6 +185,32 @@ visuals above are placeholders for public screenshots and recordings.
 
 ## License and attribution
 
-CodeGate is available under the [MIT License](LICENSE). It is built from the open-source CoJudge
-codebase and relies on independently maintained problem and solution datasets. Review each
-upstream project's license before redistributing a packaged catalog or its source material.
+CodeGate-specific contributions are available under the [MIT License](LICENSE). CodeGate is
+derived from the MIT-licensed [CoJudge](https://github.com/cojudge/cojudge) codebase; it is not
+represented as an official GitHub fork because this repository has an independent Git history.
+CoJudge supplies the foundation for the web application, editor, problem-pack format, submission
+API, validators, and Docker runners.
+
+Problem statements, tests, reference solutions, and other imported material remain under their
+respective upstream terms:
+
+| Source | Declared license or status |
+|---|---|
+| CoJudge | MIT |
+| Kamyu104 LeetCode Solutions | MIT |
+| Doocs LeetCode | CC BY-SA 4.0 |
+| Newfacade LeetCodeDataset | Apache 2.0 |
+| NVIDIA LiveCodeBench-CPP | CC BY 4.0 |
+| Neenza LeetCode Problems | No explicit license at the pinned revision |
+
+CodeGate is an independent project and is not affiliated with or endorsed by CoJudge, LeetCode,
+NVIDIA, or any referenced dataset maintainer. Attribution does not itself grant redistribution
+rights. In particular, Neenza's repository contains LeetCode-derived material but does not provide
+an explicit license, so it must not be bundled into a public release unless appropriate permission
+or a suitably licensed replacement is obtained. Local setup downloads source repositories
+separately for development.
+
+Before distributing an installer or generated catalog, preserve all upstream notices, identify
+modified material, comply with applicable attribution and share-alike requirements, and review the
+terms of every included source. This project does not claim ownership of third-party problem
+statements, tests, or reference solutions.
