@@ -122,13 +122,14 @@ async function showPreparingWindows() {
 }
 
 async function openGateWindows(gateUrl) {
-  windows.forEach((win) => win.destroy());
+  const preparingWindows = windows;
   windows = screen.getAllDisplays().map((display) => {
     const win = new BrowserWindow(windowOptions(display));
     secureWindow(win);
     void win.loadURL(gateUrl);
     return win;
   });
+  preparingWindows.forEach((win) => { if (!win.isDestroyed()) win.destroy(); });
 }
 
 function showRecovery(diagnostics) {

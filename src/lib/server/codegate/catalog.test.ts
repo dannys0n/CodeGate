@@ -96,6 +96,8 @@ describe('CodeGate grouped candidate manifest', () => {
         await expect(loadCandidateAssets('1', 'python', temporaryRoot)).resolves.toMatchObject({ frontendId: '1' });
         const tests = JSON.parse(await fs.readFile(resolveProblemFile('example', 'official-tests.json'), 'utf8'));
         expect(tests).toEqual([{ value: 1 }, { value: 2 }, { value: 3 }]);
+        const metadata = JSON.parse(await fs.readFile(resolveProblemFile('example', 'metadata.json'), 'utf8'));
+        expect(metadata.testCases).toEqual(tests);
         expect(await fs.readFile(resolveProblemFile('example', 'Marker.java'), 'utf8')).toContain('if (value == 3) return 3;');
     });
 });

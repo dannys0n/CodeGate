@@ -42,8 +42,9 @@ export async function materializeGeneratedProblem(problem: CandidateProblem, rec
         const target = safeChild(runtimeRoot, problem.slug);
         await fs.mkdir(target, { recursive: true });
         const tests = officialTests(cases, problem.judge!.metadata as any);
+        const metadata = { ...problem.judge!.metadata, testCases: tests.slice(0, 3) };
         await Promise.all([
-            fs.writeFile(path.join(target, 'metadata.json'), `${JSON.stringify(problem.judge!.metadata)}\n`),
+            fs.writeFile(path.join(target, 'metadata.json'), `${JSON.stringify(metadata)}\n`),
             fs.writeFile(path.join(target, 'official-tests.json'), `${JSON.stringify(tests)}\n`),
             fs.writeFile(path.join(target, 'Marker.java'), generateExactMarker(problem.judge!.metadata as any, cases)),
             fs.writeFile(path.join(target, 'statement.md'), statement(record))

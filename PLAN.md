@@ -23,6 +23,10 @@ instructions and current product behavior remain the working requirements.
 - [x] Load and hash-check starter, solution, and judge assets on demand.
 - [x] Generate fixed partial difficulties in memory without materialized variant files.
 - [x] Remove automatic baseline submission, runtime validation cache, and validation-only state.
+- [x] Keep at least one Electron window alive while replacing the preparation screen so fast
+  challenge loading cannot trigger an abandoned-session shutdown.
+- [x] Recreate the first three sample inputs when materializing a generated runtime pack so the
+  existing editor can render compact-manifest problems without a server error.
 - [x] Delete old per-pack `codegate.json`, `reference/`, `variants/`, playable manifest, validation
   report, exhaustive validator, and difficulty-regeneration artifacts.
 - [x] Complete focused tests and production build after the refactor.
@@ -42,6 +46,10 @@ instructions and current product behavior remain the working requirements.
   passed.
 - [x] Automatic solution-validation removal — 14 focused tests passed and `npx.cmd tsc --noEmit`
   passed.
+- [x] Window-handoff regression — 10 desktop tests passed and `quick-test.bat` remained running
+  after the preparation-to-editor transition.
+- [x] Generated runtime-pack regression — 4 focused tests passed; rebuilt gate returned `303` and
+  its selected problem page returned `200`.
 - [x] `npm.cmd run check` — 0 errors and 0 warnings.
 - [x] `npm.cmd run build` — production SvelteKit build passed.
 - [x] `git diff --check` and stale-artifact scan — passed; no per-pack `codegate.json`, `reference/`,
