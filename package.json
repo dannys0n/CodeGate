@@ -38,14 +38,10 @@
 		"@sveltejs/kit": "^2.43.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.0",
 		"@types/dockerode": "^3.3.44",
-		"@types/marked": "^5.0.2",
-		"autoprefixer": "^10.4.21",
 		"electron": "^39.8.10",
 		"electron-builder": "^26.15.3",
-		"postcss": "^8.5.6",
 		"svelte": "^5.39.5",
 		"svelte-check": "^4.3.2",
-		"svelte-preprocess": "^6.0.3",
 		"typescript": "^5.9.2",
 		"vite": "^7.1.7",
 		"vitest": "^3.2.6"
@@ -54,19 +50,42 @@
 		"appId": "dev.codegate.desktop",
 		"productName": "CodeGate",
 		"asar": false,
-		"directories": { "output": "dist-desktop" },
-		"files": ["build/**/*", "codegate/**/*", "courses/**/*", "desktop/**/*", "problems/**/*", "sources/leetcode-problems/problems/**/*", "sources/leetcode-dataset/LeetCodeDataset-*.jsonl", "sources/kamyu-solutions/Python/**/*", "sources/kamyu-solutions/C++/**/*", "sources/doocs-solutions/solution/**/*", "src/lib/utils/**/*", "package.json", "node_modules/**/*"],
-		"win": { "target": "nsis", "artifactName": "CodeGate-Setup-${version}.${ext}" },
-		"nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "deleteAppDataOnUninstall": false, "include": "desktop/installer.nsh" }
+		"directories": {
+			"output": "dist-desktop"
+		},
+		"files": [
+			"build/**/*",
+			"codegate/**/*",
+			"courses/**/*",
+			"desktop/**/*",
+			"problems/**/*",
+			"sources/leetcode-problems/problems/**/*",
+			"sources/leetcode-dataset/LeetCodeDataset-*.jsonl",
+			"sources/kamyu-solutions/Python/**/*",
+			"sources/kamyu-solutions/C++/**/*",
+			"sources/doocs-solutions/solution/**/*",
+			"package.json",
+			"node_modules/**/*"
+		],
+		"win": {
+			"target": "nsis",
+			"artifactName": "CodeGate-Setup-${version}.${ext}"
+		},
+		"nsis": {
+			"oneClick": false,
+			"allowToChangeInstallationDirectory": true,
+			"createDesktopShortcut": true,
+			"deleteAppDataOnUninstall": false,
+			"include": "desktop/installer.nsh"
+		}
 	},
 	"dependencies": {
-		"daisyui": "^5.3.1",
 		"dockerode": "^5.0.1",
 		"firebase": "^12.6.0",
 		"marked": "^16.4.0",
+		"monaco-editor": "^0.55.1",
 		"monaco-vim": "^0.4.4",
 		"qrcode": "^1.5.4",
-		"svelte-monaco": "^1.0.4",
 		"tar-stream": "^3.1.7",
 		"uuid": "^13.0.0"
 	},

@@ -32,6 +32,9 @@ instructions and current product behavior remain the working requirements.
   existing editor can render compact-manifest problems without a server error.
 - [x] Keep upstream repositories ignored and restore them reproducibly from a pinned setup script;
   leave the multi-gigabyte LiveCodeBench source optional.
+- [x] Remove unreferenced upstream media, obsolete importer fixtures, a stale E2E suite, generated
+  catalog output, an empty scaffold module, and unused direct dependencies without removing active
+  CoJudge routes, runners, problem packs, or user features.
 - [x] Delete old per-pack `codegate.json`, `reference/`, `variants/`, playable manifest, validation
   report, exhaustive validator, and difficulty-regeneration artifacts.
 - [x] Complete focused tests and production build after the refactor.
@@ -60,6 +63,9 @@ instructions and current product behavior remain the working requirements.
 - [x] Default preference update — TypeScript check passed.
 - [x] Repository bootstrap — pinned-source verification completed successfully without downloads;
   `git diff --check` passed.
+- [x] Lean-repository cleanup — 42 unit tests passed, Svelte check reported 0 errors/warnings,
+  production build passed, npm audit reported 0 vulnerabilities, and 18 installed packages were
+  removed; ignored catalog regeneration restored 1,956 problems and 10,269 language entries.
 - [x] `npm.cmd run check` — 0 errors and 0 warnings.
 - [x] `npm.cmd run build` — production SvelteKit build passed.
 - [x] `git diff --check` and stale-artifact scan — passed; no per-pack `codegate.json`, `reference/`,

@@ -23,7 +23,7 @@ npm.cmd run desktop
 ```
 
 `setup.bat` installs npm dependencies, clones the required ignored source repositories at the exact
-commits in `codegate/source-repositories.json`, and regenerates the candidate manifest. It does not
+commits in `codegate/source-repositories.json`, and regenerates the ignored candidate manifest. It does not
 download the optional 3.5 GB LiveCodeBench dataset. To include optional sources, run
 `.\setup.bat -IncludeOptionalSources`.
 
@@ -48,7 +48,8 @@ Problem-pack authoring remains documented in [Adding a Problem](docs/ADD_PROBLEM
 
 The repository includes an offline adapter pipeline for locally cloned Neenza problem metadata,
 Kamyu/Doocs solutions, and Newfacade test vectors. Raw upstream clones live under ignored
-`sources/`; generated judge data remains an ordinary CoJudge problem pack. The compact candidate
+`sources/`; the generated candidate manifest is also ignored and recreated during setup/build.
+Generated judge data remains an ordinary CoJudge problem pack. The compact candidate
 manifest stores one record per problem, with all available languages nested beneath it. It points
 to the original starter, baseline solution, and structured test records instead of copying them
 into permanent problem packs. The selected problem alone is exposed as a temporary ordinary

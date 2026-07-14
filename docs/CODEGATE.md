@@ -30,7 +30,8 @@ docker pull alpine/java:22-jdk
 
 The setup script restores the ignored upstream repositories at the commits pinned in
 `codegate/source-repositories.json`, installs npm dependencies, and regenerates the candidate
-manifest. Pass `-IncludeOptionalSources` only when the multi-gigabyte LiveCodeBench dataset is
+manifest. Both the source repositories and generated manifest are ignored. Pass
+`-IncludeOptionalSources` only when the multi-gigabyte LiveCodeBench dataset is
 needed for importer development.
 
 Run normal web development or the desktop production build:
