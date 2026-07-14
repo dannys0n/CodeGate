@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+  <title id="title">CodeGate installer preview placeholder</title>
+  <desc id="desc">A mock installer page with sign-in, unlock, and resume startup options checked.</desc>
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#172554"/>
+      <stop offset="1" stop-color="#312e81"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="430" rx="24" fill="#0f172a"/>
+  <rect x="185" y="35" width="830" height="360" rx="18" fill="#f8fafc"/>
+  <rect x="185" y="35" width="235" height="360" rx="18" fill="url(#panel)"/>
+  <text x="302" y="112" fill="#fff" font-family="Segoe UI, sans-serif" font-size="30" font-weight="700" text-anchor="middle">CodeGate</text>
+  <text x="302" y="145" fill="#c7d2fe" font-family="Segoe UI, sans-serif" font-size="15" text-anchor="middle">Windows setup</text>
+  <path d="M302 200l42 18v34c0 33-18 58-42 70-24-12-42-37-42-70v-34z" fill="#4f46e5" stroke="#a5b4fc" stroke-width="3"/>
+  <path d="M282 254l14 14 28-34" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="464" y="92" fill="#0f172a" font-family="Segoe UI, sans-serif" font-size="24" font-weight="700">Choose automatic start events</text>
+  <text x="464" y="122" fill="#64748b" font-family="Segoe UI, sans-serif" font-size="15">You can change these options later or remove them by uninstalling.</text>
+  <g font-family="Segoe UI, sans-serif" font-size="17" fill="#1e293b">
+    <rect x="466" y="161" width="24" height="24" rx="4" fill="#4f46e5"/>
+    <path d="M472 173l5 5 9-11" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <text x="510" y="180">Open CodeGate when I sign in to Windows</text>
+    <rect x="466" y="211" width="24" height="24" rx="4" fill="#4f46e5"/>
+    <path d="M472 223l5 5 9-11" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <text x="510" y="230">Open CodeGate when I unlock Windows</text>
+    <rect x="466" y="261" width="24" height="24" rx="4" fill="#4f46e5"/>
+    <path d="M472 273l5 5 9-11" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <text x="510" y="280">Open CodeGate after the computer resumes from sleep</text>
+  </g>
+  <rect x="838" y="326" width="126" height="42" rx="8" fill="#4f46e5"/>
+  <text x="901" y="352" fill="#fff" font-family="Segoe UI, sans-serif" font-size="15" font-weight="700" text-anchor="middle">Install</text>
+  <text x="585" y="352" fill="#94a3b8" font-family="Segoe UI, sans-serif" font-size="14">Installer screenshot coming soon</text>
+</svg>
