@@ -14,6 +14,12 @@ class ContainerPool {
     private static pools: Map<string, PoolEntry[]> = new Map();
     private static MAX_IDLE = 2;
 
+    static containerLabels(): Record<string, string> {
+        const labels: Record<string, string> = { 'cojudge.created': 'true' };
+        if (process.env.CODEGATE_DESKTOP === '1') labels['codegate.created'] = 'true';
+        return labels;
+    }
+
     static async acquire(image: string): Promise<Dockerode.Container | null> {
         const entries = this.pools.get(image) || [];
         const idx = entries.findIndex(e => !e.inUse);

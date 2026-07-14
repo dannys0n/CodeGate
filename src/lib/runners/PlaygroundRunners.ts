@@ -35,7 +35,7 @@ export class PlaygroundJavaRunner extends PlaygroundRunner {
                 Cmd: ['sh', '-lc', 'tail -f /dev/null'],
                 WorkingDir: '/app',
                 Tty: false,
-                Labels: { 'cojudge.created': 'true' }
+                Labels: ContainerPool.containerLabels()
             });
             await this.container.start();
         }
@@ -116,7 +116,7 @@ export class PlaygroundPythonRunner extends PlaygroundRunner {
                 Cmd: ['sh', '-lc', 'tail -f /dev/null'],
                 WorkingDir: '/app',
                 Tty: false,
-                Labels: { 'cojudge.created': 'true' }
+                Labels: ContainerPool.containerLabels()
             });
             await this.container.start();
         }
@@ -174,7 +174,7 @@ export class PlaygroundCppRunner extends PlaygroundRunner {
                 Cmd: ['sh', '-lc', 'tail -f /dev/null'],
                 WorkingDir: '/app',
                 Tty: false,
-                Labels: { 'cojudge.created': 'true' }
+                Labels: ContainerPool.containerLabels()
             });
             await this.container.start();
         }
@@ -255,7 +255,7 @@ export class PlaygroundCSharpRunner extends PlaygroundRunner {
                 Cmd: ['sh', '-lc', 'tail -f /dev/null'],
                 WorkingDir: '/app',
                 Tty: false,
-                Labels: { 'cojudge.created': 'true' }
+                Labels: ContainerPool.containerLabels()
             });
             await this.container.start();
 
@@ -348,7 +348,7 @@ export class PlaygroundRustRunner extends PlaygroundRunner {
                 Cmd: ['sh', '-lc', 'tail -f /dev/null'],
                 WorkingDir: '/app',
                 Tty: false,
-                Labels: { 'cojudge.created': 'true' }
+                Labels: ContainerPool.containerLabels()
             });
             await this.container.start();
         }
@@ -429,7 +429,7 @@ export class PlaygroundGoRunner extends PlaygroundRunner {
                 Cmd: ['sh', '-lc', 'tail -f /dev/null'],
                 WorkingDir: '/app',
                 Tty: false,
-                Labels: { 'cojudge.created': 'true' }
+                Labels: ContainerPool.containerLabels()
             });
             await this.container.start();
 
@@ -522,7 +522,7 @@ export class PlaygroundTypeScriptRunner extends PlaygroundRunner {
                 Cmd: ['sh', '-lc', 'tail -f /dev/null'],
                 WorkingDir: '/app',
                 Tty: false,
-                Labels: { 'cojudge.created': 'true' }
+                Labels: ContainerPool.containerLabels()
             });
             await this.container.start();
 

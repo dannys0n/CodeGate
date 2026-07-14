@@ -125,8 +125,10 @@ Start-Process -FilePath $CodeGateExe -ArgumentList '--startup=enable' -Wait
 Start-Process -FilePath $CodeGateExe -ArgumentList '--startup=disable' -Wait
 ```
 
-This is the current user's `CodeGate` Windows Run value, not a service or machine-wide task. The
-uninstaller removes the value.
+These development commands manage the current user's logon-only Windows Run value. The installer
+instead creates a current-user `CodeGate Start Events` scheduled task for the selected sign-in,
+unlock, and resume triggers. CodeGate does not install a Windows service. The uninstaller removes
+both registration methods.
 
 ## Validation and recovery
 
@@ -149,16 +151,15 @@ images. A port collision can be resolved by stopping the conflicting process or 
 ## Uninstall and cleanup
 
 Use Settings > Apps > Installed apps > CodeGate > Uninstall, or run `Uninstall CodeGate.exe` beside
-the installed executable. The uninstaller removes application files and startup registration.
+the installed executable. The uninstaller removes application files, shortcuts, scheduled startup
+triggers, legacy Run registration, Electron state, local storage, caches, session history, temporary
+challenge packs, updater data, crash dumps, and Docker containers labeled as created by the CodeGate
+desktop app.
 
-To remove preserved per-user data after uninstall, close CodeGate and delete only its verified data
-directory:
+Docker Desktop must be available while uninstalling to remove a remaining CodeGate container. If it
+is unavailable, the uninstaller displays the exact label (`codegate.created=true`) that can be used
+to identify the container after Docker starts again.
 
-```powershell
-$CodeGateData = [System.IO.Path]::GetFullPath((Join-Path $env:APPDATA 'CodeGate'))
-if ($CodeGateData -ne [System.IO.Path]::GetFullPath((Join-Path $env:APPDATA 'CodeGate'))) { throw 'Unexpected data path' }
-Remove-Item -LiteralPath $CodeGateData -Recurse -Force -ErrorAction SilentlyContinue
-```
-
-Docker images are shared and are not removed by default. Remove them only if you know no other
-project uses them.
+Docker images are shared and are not removed by default. The optional uninstall checkbox removes
+the seven default Java, Python, C++, C#, Rust, Go, and TypeScript runner images and warns that doing
+so may affect other projects.

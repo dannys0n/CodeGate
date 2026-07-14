@@ -33,7 +33,7 @@ export class PythonRunner extends ProgramRunner {
                     Cmd: ['sh', '-lc', 'tail -f /dev/null'],
                     WorkingDir: '/app',
                     Tty: false,
-                    Labels: { 'cojudge.created': 'true' }
+                    Labels: ContainerPool.containerLabels()
                 });
                 await this.container.start();
             }

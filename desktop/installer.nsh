@@ -76,8 +76,22 @@ FunctionEnd
 
 !macro customUnInstall
   ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app\desktop\start-events.ps1" -Disable' $0
+  ; Fall back to the native scheduler command if PowerShell task cleanup failed.
+  ${If} $0 != 0
+    nsExec::ExecToLog '"$SYSDIR\schtasks.exe" /Delete /TN "CodeGate Start Events" /F'
+    Pop $1
+  ${EndIf}
+
   DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "CodeGate"
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run" "CodeGate"
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32" "CodeGate"
   DeleteRegKey HKCU "Software\CodeGate"
+
+  ; Remove only containers created by the installed CodeGate desktop app.
+  ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app\desktop\uninstall-containers.ps1"' $0
+  ${If} $0 != 0
+    MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker was unavailable or could not remove its remaining containers. Start Docker Desktop and remove containers labeled codegate.created=true to finish cleanup."
+  ${EndIf}
 
   ; Remove Electron state, CodeGate session history, caches, and updater downloads.
   RMDir /r "$APPDATA\CodeGate"
@@ -89,8 +103,8 @@ FunctionEnd
 !macroend
 
 !macro customUnInstallSection
-  Section /o "Remove cached judge images (WARNING: may affect other Docker projects)" RemoveJudgeImages
-    nsExec::ExecToLog 'docker.exe image rm "python:3.11-slim" "gcc:13" "alpine/java:22-jdk"'
+  Section /o "Remove all cached judge images for every language (WARNING: may affect other Docker projects)" RemoveJudgeImages
+    nsExec::ExecToLog 'docker.exe image rm "python:3.11-slim" "gcc:13" "alpine/java:22-jdk" "mcr.microsoft.com/dotnet/sdk:8.0-alpine" "rust:1.78-slim" "golang:1.22-alpine" "node:22-alpine"'
     Pop $0
   SectionEnd
 !macroend

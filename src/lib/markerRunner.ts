@@ -52,7 +52,7 @@ export async function getMarkerResponses(problemId: string, functionName: string
                 Cmd: ['sh', '-lc', 'tail -f /dev/null'],
                 WorkingDir: '/app',
                 Tty: false,
-                Labels: { 'cojudge.created': 'true' }
+                Labels: ContainerPool.containerLabels()
             });
             await container.start();
         }
