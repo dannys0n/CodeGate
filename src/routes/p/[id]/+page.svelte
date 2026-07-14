@@ -19,7 +19,7 @@
     let CodeEditor: any = null;
     let PlaygroundExecutionPanel: any = null;
     let fontSize = $userSettingsStorage.editorFontSize ?? 14;
-    let theme = $userSettingsStorage.theme ?? 'light';
+    let theme = $userSettingsStorage.theme ?? 'dark';
     let vimMode = $userSettingsStorage.vimMode ?? 'off';
 
     const id = $page.params.id || '';

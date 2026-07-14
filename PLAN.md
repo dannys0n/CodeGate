@@ -10,8 +10,9 @@ instructions and current product behavior remain the working requirements.
   language solutions nested under that record. It stores relative paths, provenance, and hashes.
 - Neenza starters and Kamyu/Doocs baselines stay in source shards and are loaded only for the active
   challenge. Packaged builds include the required source subtrees.
-- Difficulty is globally fixed at 0/25/50/75/100. The starter is 0, baseline is 100, and partials
-  are deterministic in-memory reductions. Partials are not required to compile.
+- Difficulty is globally fixed at 0/25/50/75/99/100. The starter is 0, baseline is 100, 99 removes
+  exactly one eligible implementation line, and other partials are deterministic in-memory
+  reductions. Partials are not required to compile.
 - Challenge preparation loads indexed assets without submitting the 100% solution. Only explicit
   user submissions invoke the existing judge and can release the gate.
 - Generated problems store compact judge data in the single JSON catalog. Runtime exposes only the
@@ -22,6 +23,8 @@ instructions and current product behavior remain the working requirements.
 - [x] Group every problem's available judge languages into one slim metadata record.
 - [x] Load and hash-check starter, solution, and judge assets on demand.
 - [x] Generate fixed partial difficulties in memory without materialized variant files.
+- [x] Add a 99% difficulty that removes exactly one implementation line.
+- [x] Make 99% difficulty and dark mode the defaults while preserving saved user preferences.
 - [x] Remove automatic baseline submission, runtime validation cache, and validation-only state.
 - [x] Keep at least one Electron window alive while replacing the preparation screen so fast
   challenge loading cannot trigger an abandoned-session shutdown.
@@ -50,6 +53,9 @@ instructions and current product behavior remain the working requirements.
   after the preparation-to-editor transition.
 - [x] Generated runtime-pack regression — 4 focused tests passed; rebuilt gate returned `303` and
   its selected problem page returned `200`.
+- [x] 99% difficulty — 13 focused transform, selection, and session tests passed; TypeScript check
+  passed.
+- [x] Default preference update — TypeScript check passed.
 - [x] `npm.cmd run check` — 0 errors and 0 warnings.
 - [x] `npm.cmd run build` — production SvelteKit build passed.
 - [x] `git diff --check` and stale-artifact scan — passed; no per-pack `codegate.json`, `reference/`,

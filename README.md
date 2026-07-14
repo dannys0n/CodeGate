@@ -50,9 +50,11 @@ to the original starter, baseline solution, and structured test records instead 
 into permanent problem packs. The selected problem alone is exposed as a temporary ordinary
 CoJudge pack and replaced when a different problem is selected.
 
-At runtime, `Original (0%)` loads the starter, `Solution (100%)` loads the baseline, and 25/50/75%
-are deterministic in-memory reductions of the baseline. Challenge selection does not submit or
+At runtime, `Original (0%)` loads the starter, `Solution (100%)` loads the baseline, 25/50/75%
+are deterministic in-memory reductions, and 99% removes exactly one implementation line. Challenge selection does not submit or
 validate any solution; only an explicit user submission invokes the judge.
+
+New sessions default to 99% difficulty and dark mode. A saved theme preference still takes precedence.
 
 ```powershell
 npm.cmd run codegate:import:audit -- --config .\codegate\import-leetcode.json --offline

@@ -5,7 +5,7 @@
     export let value = '';
     export let language = 'javascript';
     export let fontSize: number = 14;
-    export let theme: 'dark' | 'light' = 'light';
+    export let theme: 'dark' | 'light' = 'dark';
     export let vimMode: 'off' | 'on' = 'off';
     export let readOnly: boolean = false;
     export let viewState: string | null = null;

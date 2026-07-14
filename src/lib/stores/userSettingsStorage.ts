@@ -22,7 +22,7 @@ const defaultSettings: UserSettings = {
     preferredLanguage: 'java',
     playgroundPreferredLanguage: 'java',
     editorFontSize: 14,
-    theme: 'light',
+    theme: 'dark',
     vimMode: 'off',
     isSidebarOpen: true,
     activePanel: 'explorer',
@@ -35,7 +35,7 @@ function normalizeSettings(input: any): UserSettings {
     const size = typeof rawSize === 'number' ? rawSize : defaultSettings.editorFontSize;
     const editorFontSize = Math.min(24, Math.max(12, size));
     const rawTheme = (input?.theme ?? defaultSettings.theme) as ThemeChoice;
-    const theme: ThemeChoice = rawTheme === 'dark' ? 'dark' : 'light';
+    const theme: ThemeChoice = rawTheme === 'light' ? 'light' : 'dark';
     const vimMode = input?.vimMode === 'on' ? 'on' : 'off';
     const isSidebarOpen = typeof input?.isSidebarOpen === 'boolean' ? input.isSidebarOpen : defaultSettings.isSidebarOpen;
     const validPanels: ActivePanel[] = ['explorer', 'search', null];

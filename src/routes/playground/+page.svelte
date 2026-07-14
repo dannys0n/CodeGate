@@ -217,7 +217,7 @@ func main() {
     let settingsContainer: HTMLElement | null = null;
     const fontSizes: number[] = Array.from({ length: 24 }, (_, i) => 12 + i); // 12..35
     let fontSize: number = $userSettingsStorage.editorFontSize ?? 14;
-    let theme: ThemeChoice = $userSettingsStorage.theme ?? 'light';
+    let theme: ThemeChoice = $userSettingsStorage.theme ?? 'dark';
     let vimMode: 'off' | 'on' = $userSettingsStorage.vimMode ?? 'off';
 
     let tabs: TabMeta[] = getInitialTabs();

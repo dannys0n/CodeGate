@@ -20,7 +20,7 @@ export const POST: RequestHandler = async ({ request }) => {
         }
         if (body.action === 'refresh' || body.action === 'switch-variant') {
             const language: GateLanguage = gateLanguages.includes(body.language) ? body.language : 'python';
-            const difficulty: DifficultyLevel = difficultyLevels.includes(body.difficulty) ? body.difficulty : '50';
+            const difficulty: DifficultyLevel = difficultyLevels.includes(body.difficulty) ? body.difficulty : '99';
             const current = requireActiveChallenge(sessionId, challengeId);
             const prepared = await prepareChallenge(language, difficulty, current.recentProblemIds, body.action === 'switch-variant'
                 ? { problemId: current.challenge.variant.problemId }

@@ -31,4 +31,14 @@ describe('CodeGate in-memory source transforms', () => {
         expect(normalizeSource('go', 'func twoSum() []int { return nil }', 'twoSum')).toContain('func TwoSum(');
         expect(normalizeSource('typescript', 'function twoSum(): number[] { return []; }', 'twoSum')).toContain('export function twoSum(');
     });
+
+    it('removes exactly one implementation line at 99% regardless of solution length', () => {
+        const implementation = Array.from({ length: 120 }, (_, index) => `        value += ${index}`);
+        const source = ['class Solution:', '    def answer(self, value: int) -> int:', ...implementation, '        return value'].join('\n');
+        const transformed = stripSolution(source, 'python', 99, ['Finish the implementation.']);
+        const missing = [...implementation, '        return value'].filter((line) => !transformed.includes(line));
+
+        expect(missing).toHaveLength(1);
+        expect(transformed).toContain('Hint: Finish the implementation.');
+    });
 });

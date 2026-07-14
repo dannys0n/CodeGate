@@ -71,7 +71,9 @@ export function stripSolution(source, language, percent, hints = []) {
   if (percent >= 100) return source;
   const lines = source.trimEnd().split(/\r?\n/);
   const removable = lines.map((line, index) => ({ line, index })).filter(({ line }) => !protectedLine(line, language));
-  const keep = Math.floor(removable.length * Math.max(0, percent) / 100);
+  const keep = percent === 99
+    ? Math.max(0, removable.length - 1)
+    : Math.floor(removable.length * Math.max(0, percent) / 100);
   const removed = new Set(removable.slice(keep).map(({ index }) => index));
   const availableHints = hints.filter((hint) => typeof hint === 'string' && hint.trim());
   let region = 0;

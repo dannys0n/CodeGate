@@ -1,6 +1,6 @@
 import type { ProgrammingLanguage } from '$lib/utils/util';
 
-export const difficultyLevels = ['0', '25', '50', '75', '100'] as const;
+export const difficultyLevels = ['0', '25', '50', '75', '99', '100'] as const;
 export type DifficultyLevel = (typeof difficultyLevels)[number];
 export const gateLanguages = ['java', 'python', 'cpp', 'csharp', 'rust', 'go', 'typescript'] as const satisfies readonly ProgrammingLanguage[];
 export type GateLanguage = (typeof gateLanguages)[number];

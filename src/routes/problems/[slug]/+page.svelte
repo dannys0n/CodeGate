@@ -46,7 +46,7 @@
     })();
     let CodeEditor: any = null;
     let language: ProgrammingLanguage = data.codegate?.selected.language ?? $userSettingsStorage.preferredLanguage ?? 'java';
-    let difficulty: DifficultyLevel = data.codegate?.selected.difficulty ?? '50';
+    let difficulty: DifficultyLevel = data.codegate?.selected.difficulty ?? '99';
     let gateSessionId = isCodeGate ? $page.url.searchParams.get('sessionId') ?? '' : '';
     let gateChallengeId = isCodeGate ? $page.url.searchParams.get('challengeId') ?? '' : '';
     let gateActionPending = false;
@@ -185,7 +185,7 @@
     let settingsTop = 0;
     const fontSizes: number[] = Array.from({ length: 13 }, (_, i) => 12 + i); // 12..24
     let fontSize: number = $userSettingsStorage.editorFontSize ?? 14;
-    let theme: ThemeChoice = $userSettingsStorage.theme ?? 'light';
+    let theme: ThemeChoice = $userSettingsStorage.theme ?? 'dark';
     let vimMode: 'off' | 'on' = $userSettingsStorage.vimMode ?? 'off';
 
     let tabs: TabMeta[] = getInitialTabs();
@@ -941,6 +941,7 @@
                             <option value="25">25%</option>
                             <option value="50">50%</option>
                             <option value="75">75%</option>
+                            <option value="99">99% (One line missing)</option>
                             <option value="100">Solution (100%)</option>
                         </select>
                         <button class="btn gate-action" on:click={replaceGateChallenge} disabled={gateActionPending}>Different Problem</button>

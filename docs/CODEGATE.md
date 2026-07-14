@@ -69,8 +69,9 @@ Difficulty is global rather than stored per problem:
 
 - `Original (0%)` is the starter from the problem record.
 - `Solution (100%)` is the normalized baseline solution.
-- 25/50/75% are deterministic, nested reductions created in memory from the baseline. Headers and
-  structural lines remain, removed regions become hints, and partial results need not compile.
+- 25/50/75% are deterministic, nested reductions created in memory from the baseline. At 99%,
+  exactly one eligible implementation line is replaced by a hint. Headers and structural lines
+  remain, and partial results need not compile.
 
 Switching language or difficulty keeps the problem identity. Only Different Problem selects a new
 problem.
