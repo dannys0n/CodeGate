@@ -1,9 +1,11 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { createHash } from 'node:crypto';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { loadPlayableManifest, loadVariantSource } from '$lib/server/codegate/catalog';
+import { loadChallengeSource } from '$lib/server/codegate/catalog';
 import { requireActiveChallenge } from '$lib/server/codegate/sessions';
+import { availableCandidates } from '$lib/server/codegate/runtime-validation';
 
 export const load: PageServerLoad = async ({ params, url }) => {
     try {
@@ -44,18 +46,19 @@ export const load: PageServerLoad = async ({ params, url }) => {
         if (url.searchParams.get('codegate') !== '1') return { problem, codegate: null };
 
         const session = requireActiveChallenge(url.searchParams.get('sessionId') ?? '', url.searchParams.get('challengeId') ?? '');
-        const manifest = await loadPlayableManifest();
-        const problemVariants = manifest.variants.filter((variant) => variant.problemId === params.slug);
+        const problemVariants = await availableCandidates(params.slug);
         const selected = session.challenge.variant;
         if (selected.problemId !== params.slug) throw error(409, 'Gate challenge does not match this problem');
         if (!selected) throw error(404, 'No validated CodeGate variant for this problem and language');
 
+        const source = await loadChallengeSource(selected.problemId, selected.language, selected.difficulty);
+        if (createHash('sha256').update(source).digest('hex') !== selected.sourceSha256) throw error(409, 'Gate source changed after challenge creation');
         return {
             problem,
             codegate: {
                 selected,
-                source: await loadVariantSource(selected),
-                available: problemVariants
+                source,
+                available: problemVariants.map((language) => ({ language }))
             }
         };
     } catch (e) {

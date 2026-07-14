@@ -2,9 +2,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { loadNeenza, parsePythonSignature } from './neenza.mjs';
 import { loadNewfacade } from './newfacade.mjs';
-import { indexDoocs, selectSolutions } from './solutions.mjs';
+import { indexDoocs, normalizeForRunner, selectSolutions } from './solutions.mjs';
 import { parseKeywordArguments, parsePythonLiteral } from './python-literal.mjs';
 import { generateExactMarker } from './exact-marker.mjs';
+import { starterField } from '../../../../src/lib/codegate/source-transform.mjs';
 
 function inside(root, candidate) {
   const relative = path.relative(root, candidate);
@@ -83,17 +84,28 @@ export async function loadLeetcodeBundle(source, context) {
           }
         }
       }
-      const solutions = await selectSolutions({ frontendId: problem.frontendId, slug: problem.slug, doocs, kamyuRoot });
+      const solutions = await selectSolutions({ frontendId: problem.frontendId, slug: problem.slug, functionName: signature.functionName, doocs, kamyuRoot });
       const languages = {};
-      for (const language of ['python', 'cpp']) {
+      const normalizedStarters = {};
+      for (const language of ['python', 'cpp', 'java', 'csharp', 'rust', 'go', 'typescript']) {
         const referenceCode = solutions[language];
-        const starterCode = problem.starters[language];
-        if (!referenceCode || !starterCode || !referenceCode.includes('class Solution') || !referenceCode.includes(signature.functionName)) continue;
+        const starterCode = ['python', 'cpp'].includes(language)
+          ? problem.starters[language]
+          : normalizeForRunner(language, problem.starters[language], signature.functionName);
+        if (!referenceCode || !starterCode) continue;
+        normalizedStarters[language] = starterCode;
         languages[language] = {
           referenceCode,
           starterCode,
-          incorrectCode: language === 'python' ? incorrectPython(signature) : incorrectCpp(signature),
-          provenance: solutions.provenance[language]
+          incorrectCode: language === 'python' ? incorrectPython(signature) : language === 'cpp' ? incorrectCpp(signature) : starterCode,
+          provenance: solutions.provenance[language],
+          starterSource: {
+            path: `sources/leetcode-problems/problems/${String(problem.frontendId).padStart(4, '0')}-${problem.slug}.json`,
+            field: `code_snippets.${starterField(language)}`
+          },
+          solutionSource: {
+            path: path.relative(context.repositoryRoot, solutions.paths[language]).replaceAll(path.sep, '/')
+          }
         };
       }
       if (!Object.keys(languages).length) continue;
@@ -109,7 +121,7 @@ export async function loadLeetcodeBundle(source, context) {
           input: signature.params.map((param) => `${param.name} = ${JSON.stringify(input[param.name])}`).join(', '),
           output: JSON.stringify(output)
         })),
-        starterCode: { python: problem.starters.python, cpp: problem.starters.cpp },
+        starterCode: normalizedStarters,
         testCases: tests.slice(0, 3),
         ...signature,
         hints: problem.hints ?? []
@@ -119,6 +131,7 @@ export async function loadLeetcodeBundle(source, context) {
         slug: problem.slug,
         shape: 'function',
         endpointOnly: true,
+        slimSources: true,
         languages,
         pack: exactCases.length >= (source.minimumTests ?? 3) ? {
           statement: markdown(problem), metadata, tests,

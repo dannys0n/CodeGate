@@ -40,7 +40,8 @@ export async function waitForServer(baseUrl, attempts = 60, delayMs = 250, expec
       const response = await localRequest(`${baseUrl}/api/codegate/health`);
       const body = JSON.parse(response.body);
       const correctInstance = expectedInstanceToken === undefined || body.instanceToken === expectedInstanceToken;
-      if (response.status === 200 && body.ready && body.playableVariants > 0 && correctInstance) return { ok: true, body };
+      const availableVariants = body.candidateVariants ?? body.playableVariants ?? 0;
+      if (response.status === 200 && body.ready && availableVariants > 0 && correctInstance) return { ok: true, body };
       lastError = !correctInstance
         ? 'Port is occupied by a different local server instance'
         : body.error ?? `Health check returned ${response.status}`;
@@ -54,9 +55,9 @@ export async function waitForServer(baseUrl, attempts = 60, delayMs = 250, expec
   return { ok: false, error: lastError };
 }
 
-export function localRequest(url) {
+export function localRequest(url, timeoutMs = 5_000) {
   return new Promise((resolve, reject) => {
-    const request = http.get(url, { timeout: 5_000 }, (response) => {
+    const request = http.get(url, { timeout: timeoutMs }, (response) => {
       let body = '';
       response.setEncoding('utf8');
       response.on('data', (chunk) => { body += chunk; });

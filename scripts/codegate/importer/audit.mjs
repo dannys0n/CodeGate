@@ -12,6 +12,7 @@ const source = config.sources?.find((candidate) => candidate.adapter === 'leetco
 if (!source) throw new Error('config has no leetcode-bundle source');
 const records = await loadLeetcodeBundle(source, { repositoryRoot: process.cwd(), configDirectory: path.dirname(configPath) });
 const failures = new Map();
+const judgeLanguages = ['java', 'python', 'cpp', 'csharp', 'rust', 'go', 'typescript'];
 for (const record of records.filter((candidate) => candidate.adapterError)) {
   failures.set(record.adapterError, (failures.get(record.adapterError) ?? 0) + 1);
 }
@@ -22,11 +23,10 @@ const summary = {
   adapterErrors: records.filter((record) => record.adapterError).length,
   newPackReady: records.filter((record) => record.pack).length,
   existingPackOnly: records.filter((record) => !record.pack && !record.adapterError).length,
-  languageCandidates: {
-    python: records.filter((record) => record.languages?.python).length,
-    cpp: records.filter((record) => record.languages?.cpp).length,
-    both: records.filter((record) => record.languages?.python && record.languages?.cpp).length
-  },
+  languageCandidates: Object.fromEntries([
+    ...judgeLanguages.map((language) => [language, records.filter((record) => record.languages?.[language]).length]),
+    ['allJudgeLanguages', records.filter((record) => judgeLanguages.every((language) => record.languages?.[language])).length]
+  ]),
   topAdapterErrors: [...failures.entries()]
     .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
     .slice(0, 20)

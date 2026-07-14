@@ -1,8 +1,8 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { loadPlayableManifest } from '$lib/server/codegate/catalog';
-import { getGateSession, refreshGateChallenge, releaseGateSession, switchGateVariant } from '$lib/server/codegate/sessions';
-import { difficultyLevels, type DifficultyLevel, type GateLanguage } from '$lib/codegate/types';
+import { getGateSession, refreshGateChallenge, releaseGateSession, requireActiveChallenge, switchGateVariant } from '$lib/server/codegate/sessions';
+import { difficultyLevels, gateLanguages, type DifficultyLevel, type GateLanguage } from '$lib/codegate/types';
+import { prepareChallenge } from '$lib/server/codegate/runtime-validation';
 
 export const GET: RequestHandler = async ({ url }) => {
     const session = getGateSession(url.searchParams.get('sessionId') ?? '');
@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ url }) => {
     return json(session);
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, fetch }) => {
     try {
         const body = await request.json();
         const sessionId = String(body.sessionId ?? '');
@@ -19,12 +19,16 @@ export const POST: RequestHandler = async ({ request }) => {
             return json(releaseGateSession(sessionId, challengeId, 'given-up'));
         }
         if (body.action === 'refresh' || body.action === 'switch-variant') {
-            const language: GateLanguage = body.language === 'cpp' ? 'cpp' : 'python';
+            const language: GateLanguage = gateLanguages.includes(body.language) ? body.language : 'python';
             const difficulty: DifficultyLevel = difficultyLevels.includes(body.difficulty) ? body.difficulty : '50';
-            const manifest = await loadPlayableManifest();
+            const current = requireActiveChallenge(sessionId, challengeId);
+            const prepared = await prepareChallenge(language, difficulty, current.recentProblemIds, fetch, body.action === 'switch-variant'
+                ? { problemId: current.challenge.variant.problemId }
+                : undefined);
+            const manifest = { schemaVersion: 1 as const, generatedAt: prepared.validatedAt, sourceRevision: 'runtime', variants: [prepared] };
             return json(body.action === 'refresh'
-                ? refreshGateChallenge(sessionId, challengeId, manifest, language, difficulty)
-                : switchGateVariant(sessionId, challengeId, manifest, language, difficulty));
+                ? refreshGateChallenge(sessionId, challengeId, manifest, prepared.language, prepared.difficulty)
+                : switchGateVariant(sessionId, challengeId, manifest, prepared.language, prepared.difficulty));
         }
         return json({ error: 'Unsupported session action' }, { status: 400 });
     } catch (error) {

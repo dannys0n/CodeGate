@@ -21,7 +21,12 @@
   ],
   "starterCode": {
     "python": "class Solution:\n    def isPalindrome(self, x: int) -> bool:",
-    "cpp": "class Solution {\npublic:\n    bool isPalindrome(int x) {\n\n    }\n};"
+    "cpp": "class Solution {\npublic:\n    bool isPalindrome(int x) {\n\n    }\n};",
+    "java": "import java.util.*;\n\nclass Solution {\n    public boolean isPalindrome(int x) {\n\n    }\n}\n",
+    "csharp": "using System;\nusing System.Collections.Generic;\nusing System.Linq;\n\npublic class Solution {\n    public bool IsPalindrome(int x) {\n\n    }\n}\n",
+    "rust": "impl Solution {\n    pub fn is_palindrome(x: i32) -> bool {\n\n    }\n}\n",
+    "go": "package main\n\nfunc IsPalindrome(x int) bool {\n\n}\n",
+    "typescript": "export function isPalindrome(x: number): boolean {\n\n};\n"
   },
   "testCases": [
     {

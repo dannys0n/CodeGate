@@ -4,53 +4,40 @@
 
 CodeGate is a mode around CoJudge, not a second judge:
 
-1. The offline importer augments complete existing `problems/<slug>` packs with pinned references,
-   ordinary source difficulty variants, and `codegate.json`.
-2. `scripts/codegate/validate.mjs` submits references, deliberately wrong sources, and every
-   difficulty variant through `bin/cojudge`, the existing Docker runners, `official-tests.json`, and
-   `Marker.java` custom validator.
-3. Only successful combinations enter `codegate/playable-manifest.json`. Each entry binds the
-   source and judge assets to SHA-256 digests; post-validation edits fail readiness until the
-   validator is rerun.
-4. `/gate` creates an in-memory session and challenge. The existing problem page, Monaco editor,
-   submission API, runner classes, and sequential official-test batching remain in use.
-5. The server authoritatively binds each submit to session, challenge, problem, language, difficulty,
-   submission ID, and expected test offset. A refreshed/stale result cannot release the session.
-6. Electron starts the packaged Node adapter server, validates server/catalog/Docker/image
-   readiness, and then opens one fullscreen window per active display. The preload exposes only
-   release and startup-status IPC. Accepted, given-up, infrastructure-failure, and abandoned
-   outcomes are appended under Electron's per-user data directory (up to 500 entries).
+1. Complete `problems/<slug>` packs continue to own statements, tests, metadata, and validators.
+2. `npm run codegate:candidates` writes one compact manifest record per problem. Each record nests
+   all available languages and points to hashed Neenza starter data and Kamyu/Doocs solutions.
+3. The active challenge alone is loaded into memory. The editor, submission API, runner classes,
+   official tests, and validators are the existing CoJudge implementations.
+4. On first selection, CodeGate submits only the selected language's baseline solution. Passing
+   results are cached by asset hashes; failed baselines are quarantined locally.
+5. The server binds each submission to its current session and challenge so stale results cannot
+   release the gate. Give Up and recovery do not call Docker or the judge.
 
-Give Up and infrastructure recovery are main-process operations. They do not call Docker or the
-judge, and a server/renderer failure replaces the gate with a local recovery page containing Give
-Up. The desktop wrapper never opens an external browser.
+CodeGate is a self-discipline gate, not a Windows security boundary.
 
-## Development and production commands
+## Development and packaging
 
-Install/cache once while online:
+Install dependencies and cache the runner images while online:
 
 ```powershell
 npm.cmd ci
 docker pull python:3.11-slim
 docker pull gcc:13
 docker pull alpine/java:22-jdk
-npx.cmd playwright install chromium
 ```
 
-Normal CoJudge web development:
+Run normal web development or the desktop production build:
 
 ```powershell
 npm.cmd run dev -- --host 127.0.0.1
-```
 
-Desktop development (the wrapper runs the production Node build):
-
-```powershell
+npm.cmd run codegate:candidates
 npm.cmd run build
 npm.cmd run desktop
 ```
 
-Production installer and direct unpacked launch:
+Build the installer, install it, or launch its unpacked executable:
 
 ```powershell
 npm.cmd run desktop:build
@@ -58,37 +45,59 @@ Start-Process -Wait .\dist-desktop\CodeGate-Setup-0.1.0.exe
 Start-Process .\dist-desktop\win-unpacked\CodeGate.exe
 ```
 
-To compile, package, and replace the per-user installation in one command:
+Double-click `build-and-install.bat` to compile, package, and replace the current per-user install.
+`quick-test.bat` regenerates the index and starts the development server and Electron wrapper.
+
+The application wakes the default WSL instance on a best-effort basis. Docker Desktop remains
+responsible for its WSL backend and images. Set `CODEGATE_PORT` before launch to override port 5375.
+
+## Compact source index and difficulty
+
+`npm run codegate:candidates` joins the locally cloned source repositories without compiling them.
+The generated `codegate/candidate-manifest.json` contains one entry per problem ID and nests every
+available Java, Python, C++, C#, Rust, Go, and TypeScript baseline beneath it. Entries contain only
+relative source locations, provenance, and hashes.
+
+Neenza supplies identity, statements, hints, and starter signatures. Kamyu is preferred for C++;
+Doocs is preferred for Python and supplies the other supported languages. Existing complete CoJudge
+packs retain their official tests and custom `Marker.java`; Newfacade vectors are used only when
+creating a safe exact-output pack. Executable upstream test fields are never evaluated.
+
+Difficulty is global rather than stored per problem:
+
+- `Original (0%)` is the starter from the problem record.
+- `Solution (100%)` is the normalized baseline solution.
+- 25/50/75% are deterministic, nested reductions created in memory from the baseline. Headers and
+  structural lines remain, removed regions become hints, and partial results need not compile.
+
+Switching language or difficulty keeps the problem identity. Only Different Problem selects a new
+problem.
+
+The first use of each problem/language/hash submits the 100% baseline through the ordinary CoJudge
+API. Passing baselines are cached; failures are quarantined until indexed hashes change. The compact
+manifest itself is an index, not a claim that every baseline has passed.
+
+Useful development commands:
 
 ```powershell
-.\build-and-install.ps1
+npm.cmd run codegate:import:audit -- --config .\codegate\import-leetcode.json --offline
+npm.cmd run codegate:import -- --config .\codegate\import-leetcode-smoke.json --offline
+npm.cmd run codegate:candidates
+npm.cmd run codegate:catalog
 ```
 
-Alternatively, double-click `build-and-install.bat`; it invokes the same script with PowerShell's
-execution-policy bypass for that process only.
+Source clones are ignored during development, but the required subtrees are included in the
+Electron package. A release build therefore needs the configured clones present before
+`desktop:build`. Never hand-edit the candidate manifest.
 
-The script runs `desktop:build`, stops only processes named `CodeGate`, and silently installs the
-newest generated `CodeGate-Setup-*.exe`. It does not change the existing CoJudge CLI-oriented
-`install.ps1`.
-
-The installed application is also available through Start > CodeGate. Set `CODEGATE_PORT` before
-launch to use a local port other than 5375. CodeGate refuses to treat another process on that port
-as its server because health is bound to a per-launch instance token.
-
-On Windows, desktop startup also runs `wsl.exe --exec /bin/true` in the background to wake the
-default WSL instance before checking Docker. This is best-effort: Docker remains responsible for
-its own WSL 2 backend, and CodeGate still supports Docker configurations that do not use WSL. If
-WSL cannot start but Docker is healthy, the gate continues normally; if Docker is unavailable, the
-recovery page includes both diagnostics when relevant. CodeGate does not install or enable WSL.
-
-The local development installer is not Authenticode-signed (`Get-AuthenticodeSignature` reports
-`NotSigned`), so Windows SmartScreen may warn. A distributed release should be signed with the
-publisher's Windows code-signing certificate; do not bypass a warning for an artifact whose
-provenance you cannot verify.
+Deferred categories include linked lists, trees, design/class-operation problems, interactive
+problems, SQL, shell, concurrency, external APIs, unsupported libraries and signatures, incomplete
+packs, identity conflicts, and records without a trusted test/validator combination.
 
 ## Windows sign-in startup
 
-Development-tree commands (these were tested as an enabled/status/disabled/status round trip):
+The installer startup checkbox is enabled by default. No reboot is required after registration.
+Development-tree commands are:
 
 ```powershell
 npm.cmd run startup:enable
@@ -96,167 +105,49 @@ npm.cmd run startup:status
 npm.cmd run startup:disable
 ```
 
-For an installed copy, first resolve the executable, including a custom per-user install location,
-then issue the same command directly:
+For an installed copy:
 
 ```powershell
 $CodeGateExe = (Get-ChildItem "$env:LOCALAPPDATA\Programs" -Filter CodeGate.exe -File -Recurse | Select-Object -First 1).FullName
-if (-not $CodeGateExe) { throw 'CodeGate.exe was not found under the per-user Programs directory.' }
+if (-not $CodeGateExe) { throw 'CodeGate.exe was not found.' }
 Start-Process -FilePath $CodeGateExe -ArgumentList '--startup=enable' -Wait
-Start-Process -FilePath $CodeGateExe -ArgumentList '--startup=status' -Wait
 Start-Process -FilePath $CodeGateExe -ArgumentList '--startup=disable' -Wait
 ```
 
-The registration is the `CodeGate` value under the current user's Windows Run key; it is not a
-scheduled task or machine-wide service. It can also be disabled at Settings > Apps > Startup >
-CodeGate. The NSIS uninstaller removes this value even if startup was not disabled first.
-
-## Offline import, validation, and quarantine
-
-Importing is an explicit offline build operation; runtime never scrapes LeetCode or generates
-variants. A config pins adapter name, local path, source name, source revision, deterministic report
-timestamp, and report location. The bundled fixture demonstrates Easy/Medium/Hard records:
-
-```powershell
-npm.cmd run importer:test -- --offline
-npm.cmd run codegate:import -- --config .\fixtures\import\config.json --offline
-npm.cmd run codegate:regenerate-difficulties
-npm.cmd run codegate:validate -- --offline
-npm.cmd run codegate:catalog
-```
-
-The `local-json` adapter normalizes `frontendId`, canonical `slug`, `shape`, language references,
-incorrect solutions and validator kind. Matching uses frontend ID first
-when repository metadata has it, then canonical slug; disagreement and duplicate identity mappings
-are rejected. Source real paths and generated outputs must stay inside the repository.
-
-The `leetcode-bundle` adapter joins four local, pinned upstream sources without network access:
-
-- Neenza supplies problem identity, statement, hints, and original Python/C++ starters.
-- Kamyu is preferred for C++; Doocs is the fallback.
-- Doocs is preferred for Python 3; Python-3-compatible Kamyu is the fallback.
-- Newfacade supplies structured test vectors for newly generated packs.
-
-Newfacade's executable `test` field is never evaluated. The adapter parses only a restricted
-Python-literal subset from `input_output`, rejects type/range-invalid vectors, and stores neutral
-CoJudge test inputs. Existing complete CoJudge packs retain their official tests and custom
-`Marker.java`. New exact-output packs receive a deterministic Java marker generated from the
-normalized vectors. Statements that advertise multiple valid answers or unordered results do not
-receive an exact marker and remain dependent on an existing trusted custom validator.
-
-Raw clones are kept in ignored `sources/` directories. Generated packs contain a
-`.codegate-generated.json` ownership marker so later imports may refresh adapter-owned statement,
-metadata, test, and marker files without replacing upstream CoJudge packs.
-
-Audit all configured sources without writing packs:
-
-```powershell
-npm.cmd run codegate:import:audit -- --config .\codegate\import-leetcode.json --offline
-```
-
-Import the validated smoke cohort, or import the full candidate set:
-
-```powershell
-npm.cmd run codegate:import -- --config .\codegate\import-leetcode-smoke.json --offline
-npm.cmd run codegate:import -- --config .\codegate\import-leetcode.json --offline
-```
-
-The full import creates pending candidates; it does not activate them. For practical validation
-batches, copy the config and set `frontendIds` to the desired IDs, then import and run
-`codegate:validate`. The playable manifest remains the only runtime activation authority.
-
-Difficulty is the percentage of the validated reference implementation supplied. The selectable
-levels are `Original (0%)`, `25%`, `50%`, `75%`, and `Solution (100%)`. Intermediate Python/C++
-files are deterministic nested reductions of the reference: imports/includes, class and function
-signatures, structural control-flow headers, braces, and loop-progress mutations are preserved.
-Removed executable lines become small TODO comments or harmless placeholders. Changing difficulty
-or language stays on the active problem; only Different Problem refreshes problem identity.
-
-Records imported through `leetcode-bundle` intentionally contain only `0` and `100`: the exact
-Neenza starter and the selected complete reference. Intermediate percentages remain available for
-legacy/local-json packs but are deferred for the new corpus until their generation policy is
-revisited.
-
-Import writes `codegate/import-report.json` with `accepted`, `skipped`, and `failed` records. An
-accepted record is only pending validation. The existing playable manifest remains the activation
-authority. Validation writes `codegate/validation-report.json`; a failed combination is omitted and
-listed with its reason.
-
-Initial supported scope is ordinary function problems in Python 3/C++ with CoJudge scalar, string,
-boolean, array, and matrix types and a trusted existing `Marker.java`. Exact, order-insensitive,
-floating-point, mutation, and multiple-valid answers are accepted only through that trusted custom
-validator—not by importer assumptions. Dynamic test expressions and references that appear to
-require a network are rejected in this initial offline scope.
-
-Quarantined/deferred categories are linked lists, trees, design/class-operation problems,
-interactive problems, SQL, shell, concurrency, external APIs, randomized tests, unsupported
-libraries, incomplete packs, identity conflicts, and any language/difficulty whose reference,
-incorrect control, partial variant, or official test validation fails.
-
-To add a complete existing pack manually, add ordinary Python/C++ references and percentage source
-variants under its problem directory, declare their relative paths in `codegate.json`, and run
-`codegate:validate`. Never hand-edit the playable manifest. See `fixtures/import` for adapter input
-and `problems/two-sum/codegate.json` for the direct pack format.
+This is the current user's `CodeGate` Windows Run value, not a service or machine-wide task. The
+uninstaller removes the value.
 
 ## Validation and recovery
 
-Required checks:
+Relevant checks are:
 
 ```powershell
 npm.cmd test -- --run
 npm.cmd run check
 npm.cmd run build
-npm.cmd run test:e2e
 npm.cmd run importer:test -- --offline
-npm.cmd run codegate:validate -- --offline
+npm.cmd run codegate:candidates
 npm.cmd run codegate:failure-smoke
 npm.cmd run desktop:test
-npm.cmd run desktop:smoke
-npm.cmd run desktop:build
 ```
 
-If startup shows diagnostics:
+If startup shows diagnostics, wait for Docker Desktop, check `docker info`, and inspect the required
+images. A port collision can be resolved by stopping the conflicting process or setting
+`CODEGATE_PORT`. Give Up remains available from recovery without the judge.
 
-- Confirm `wsl.exe --status` succeeds if Docker Desktop is configured to use its WSL 2 backend.
-- Start Docker Desktop and wait for `docker info` to succeed.
-- Confirm `docker image inspect python:3.11-slim gcc:13 alpine/java:22-jdk` succeeds; pull a missing
-  image while online.
-- Stop the other local process or set a free `CODEGATE_PORT` if the port-collision diagnostic is
-  shown.
-- Rerun `npm.cmd run codegate:validate -- --offline` if catalog assets changed or are missing.
-- Use Give Up on the recovery page immediately if the server, Docker, renderer, or content cannot
-  recover. This records infrastructure failure and exits without invoking the judge.
+## Uninstall and cleanup
 
-Compiler errors, runtime errors, wrong answers, and timeouts remain visible in the existing result
-panel and do not unlock. Drafts are namespaced by problem/language/difficulty in Chromium local
-storage. A fresh challenge invalidates any in-flight result from the previous challenge.
+Use Settings > Apps > Installed apps > CodeGate > Uninstall, or run `Uninstall CodeGate.exe` beside
+the installed executable. The uninstaller removes application files and startup registration.
 
-## Uninstall and data recovery
-
-Before uninstall, optionally disable startup using the installed command above. Then open Settings
-> Apps > Installed apps > CodeGate > Uninstall, or run the `Uninstall CodeGate.exe` found beside the
-installed `CodeGate.exe`. Uninstall removes application files and the CodeGate sign-in Run value,
-but intentionally preserves per-user history/drafts.
-
-To remove preserved data after uninstall (irreversible), close CodeGate, verify the resolved path,
-then remove only that directory:
+To remove preserved per-user data after uninstall, close CodeGate and delete only its verified data
+directory:
 
 ```powershell
-$CodeGateData = Join-Path $env:APPDATA 'CodeGate'
-$CodeGateData = [System.IO.Path]::GetFullPath($CodeGateData)
+$CodeGateData = [System.IO.Path]::GetFullPath((Join-Path $env:APPDATA 'CodeGate'))
 if ($CodeGateData -ne [System.IO.Path]::GetFullPath((Join-Path $env:APPDATA 'CodeGate'))) { throw 'Unexpected data path' }
 Remove-Item -LiteralPath $CodeGateData -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
-Docker images are shared with CoJudge and other projects; do not remove them merely to uninstall
-CodeGate. If they are known to be unused, `docker image rm python:3.11-slim gcc:13
-alpine/java:22-jdk` removes them. Deleting the repository removes development artifacts; it does not
-remove an installed app.
-
-## Security limitations
-
-CodeGate is deliberately a self-discipline gate. Fullscreen is not kiosk mode. It does not block
-Alt+Tab, Task Manager, command shells, accessibility tools, Safe Mode, other accounts, shutdown, or
-Windows recovery. It does not intercept credentials, replace the lock screen, install a privileged
-service, or protect its local files from the user. Do not use it for parental control, exam
-proctoring, access control, or protection from a malicious local user.
+Docker images are shared and are not removed by default. Remove them only if you know no other
+project uses them.

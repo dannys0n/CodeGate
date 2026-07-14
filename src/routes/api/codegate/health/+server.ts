@@ -1,16 +1,17 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { loadPlayableManifest } from '$lib/server/codegate/catalog';
+import { loadCandidateManifest } from '$lib/server/codegate/catalog';
 
 export const GET: RequestHandler = async () => {
     try {
-        const manifest = await loadPlayableManifest();
+        const manifest = await loadCandidateManifest();
+        const problemLanguages = Object.values(manifest.problems).reduce((total, problem) => total + Object.keys(problem.languages).length, 0);
         return json({
-            ready: manifest.variants.length > 0,
-            playableVariants: manifest.variants.length,
+            ready: Object.keys(manifest.problems).length > 0,
+            candidateVariants: problemLanguages,
             instanceToken: process.env.CODEGATE_INSTANCE_TOKEN ?? null
         });
     } catch (error) {
-        return json({ ready: false, playableVariants: 0, error: error instanceof Error ? error.message : String(error) }, { status: 503 });
+        return json({ ready: false, candidateVariants: 0, error: error instanceof Error ? error.message : String(error) }, { status: 503 });
     }
 };

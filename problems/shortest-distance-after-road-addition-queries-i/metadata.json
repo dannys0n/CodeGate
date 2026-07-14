@@ -21,7 +21,10 @@
   ],
   "starterCode": {
     "python": "class Solution:\n    def shortestDistanceAfterQueries(self, n: int, queries: List[List[int]]) -> List[int]:",
-    "cpp": "class Solution {\npublic:\n    vector<int> shortestDistanceAfterQueries(int n, vector<vector<int>>& queries) {\n\n    }\n};"
+    "cpp": "class Solution {\npublic:\n    vector<int> shortestDistanceAfterQueries(int n, vector<vector<int>>& queries) {\n\n    }\n};",
+    "java": "import java.util.*;\n\nclass Solution {\n    public int[] shortestDistanceAfterQueries(int n, int[][] queries) {\n\n    }\n}\n",
+    "go": "package main\n\nfunc ShortestDistanceAfterQueries(n int, queries [][]int) []int {\n\n}\n",
+    "typescript": "export function shortestDistanceAfterQueries(n: number, queries: number[][]): number[] {\n\n};\n"
   },
   "testCases": [
     {

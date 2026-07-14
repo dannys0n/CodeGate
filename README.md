@@ -18,7 +18,7 @@ npm.cmd ci
 docker pull python:3.11-slim
 docker pull gcc:13
 docker pull alpine/java:22-jdk
-npm.cmd run codegate:validate -- --offline
+npm.cmd run codegate:candidates
 npm.cmd run build
 npm.cmd run desktop
 ```
@@ -44,15 +44,19 @@ Problem-pack authoring remains documented in [Adding a Problem](docs/ADD_PROBLEM
 
 The repository includes an offline adapter pipeline for locally cloned Neenza problem metadata,
 Kamyu/Doocs solutions, and Newfacade test vectors. Raw upstream clones live under ignored
-`sources/`; generated output remains an ordinary CoJudge problem pack. Imported records currently
-emit only `Original (0%)` and `Solution (100%)`. Nothing becomes playable until the existing Docker
-judge validates the reference, original starter, and incorrect control.
+`sources/`; generated judge data remains an ordinary CoJudge problem pack. The compact candidate
+manifest stores one record per problem, with all available languages nested beneath it. It points
+to the original starter and baseline solution sources instead of copying either into every pack.
+
+At runtime, `Original (0%)` loads the starter, `Solution (100%)` loads the baseline, and 25/50/75%
+are deterministic in-memory reductions of the baseline. Only the baseline is judged and cached on
+first use; intermediate reductions are intentionally not assumed to compile.
 
 ```powershell
 npm.cmd run codegate:import:audit -- --config .\codegate\import-leetcode.json --offline
 npm.cmd run codegate:import -- --config .\codegate\import-leetcode-smoke.json --offline
-npm.cmd run codegate:validate -- --offline
+npm.cmd run codegate:candidates
 ```
 
-Use `codegate/import-leetcode.json` for the complete candidate import. Because validation executes
-real submissions, use `frontendIds` in a copied config to import and validate manageable batches.
+Use `codegate/import-leetcode.json` for the complete candidate import. Runtime validation is lazy:
+failed combinations are quarantined locally and the selector tries another indexed candidate.

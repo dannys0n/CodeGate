@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseKeywordArguments, parsePythonLiteral } from './python-literal.mjs';
 import { parsePythonSignature } from './neenza.mjs';
 import { generateExactMarker } from './exact-marker.mjs';
+import { normalizeForRunner } from './solutions.mjs';
 
 describe('LeetCode source adapters', () => {
   it('parses restricted Python literals without evaluating code', () => {
@@ -27,5 +28,13 @@ describe('LeetCode source adapters', () => {
     expect(marker).toContain('public int answer(int value)');
     expect(marker).toContain('if (value == 2) return 4;');
     expect(marker).toContain('isCorrect');
+  });
+
+  it('adds only the wrappers required by existing judge runners', () => {
+    expect(normalizeForRunner('java', 'class Solution {}', 'twoSum')).toContain('import java.util.*;');
+    expect(normalizeForRunner('csharp', 'public class Solution {}', 'twoSum')).toContain('using System.Collections.Generic;');
+    expect(normalizeForRunner('go', 'func twoSum(nums []int) []int { return nums }', 'twoSum')).toContain('func TwoSum(');
+    expect(normalizeForRunner('typescript', 'function twoSum(): number[] { return []; }', 'twoSum')).toContain('export function twoSum(');
+    expect(normalizeForRunner('rust', 'impl Solution {}', 'twoSum')).toBe('impl Solution {}\n');
   });
 });

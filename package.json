@@ -20,8 +20,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"codegate:catalog": "node scripts/codegate/catalog.mjs",
-		"codegate:validate": "node scripts/codegate/validate.mjs",
-		"codegate:regenerate-difficulties": "node scripts/codegate/regenerate-difficulties.mjs",
+		"codegate:candidates": "node scripts/codegate/catalog.mjs --write",
 		"codegate:import": "node scripts/codegate/import.mjs",
 		"codegate:import:audit": "node scripts/codegate/importer/audit.mjs",
 		"codegate:failure-smoke": "node scripts/codegate/failure-smoke.mjs",
@@ -29,7 +28,7 @@
 		"desktop": "electron .",
 		"desktop:test": "vitest run desktop",
 		"desktop:smoke": "electron . --smoke-test",
-		"desktop:build": "npm run build && electron-builder --win nsis",
+		"desktop:build": "npm run codegate:candidates && npm run build && electron-builder --win nsis",
 		"startup:enable": "electron . --startup=enable",
 		"startup:disable": "electron . --startup=disable",
 		"startup:status": "electron . --startup=status"
@@ -57,7 +56,7 @@
 		"productName": "CodeGate",
 		"asar": false,
 		"directories": { "output": "dist-desktop" },
-		"files": ["build/**/*", "codegate/**/*", "courses/**/*", "desktop/**/*", "problems/**/*", "src/lib/utils/**/*", "package.json", "node_modules/**/*"],
+		"files": ["build/**/*", "codegate/**/*", "courses/**/*", "desktop/**/*", "problems/**/*", "sources/leetcode-problems/problems/**/*", "sources/kamyu-solutions/Python/**/*", "sources/kamyu-solutions/C++/**/*", "sources/doocs-solutions/solution/**/*", "src/lib/utils/**/*", "package.json", "node_modules/**/*"],
 		"win": { "target": "nsis", "artifactName": "CodeGate-Setup-${version}.${ext}" },
 		"nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "deleteAppDataOnUninstall": false, "include": "desktop/installer.nsh" }
 	},

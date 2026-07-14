@@ -21,7 +21,12 @@
   ],
   "starterCode": {
     "python": "class Solution:\n    def search(self, nums: List[int], target: int) -> int:",
-    "cpp": "class Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n\n    }\n};"
+    "cpp": "class Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n\n    }\n};",
+    "java": "import java.util.*;\n\nclass Solution {\n    public int search(int[] nums, int target) {\n\n    }\n}\n",
+    "csharp": "using System;\nusing System.Collections.Generic;\nusing System.Linq;\n\npublic class Solution {\n    public int Search(int[] nums, int target) {\n\n    }\n}\n",
+    "rust": "impl Solution {\n    pub fn search(nums: Vec<i32>, target: i32) -> i32 {\n\n    }\n}\n",
+    "go": "package main\n\nfunc Search(nums []int, target int) int {\n\n}\n",
+    "typescript": "export function search(nums: number[], target: number): number {\n\n};\n"
   },
   "testCases": [
     {

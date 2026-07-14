@@ -21,7 +21,12 @@
   ],
   "starterCode": {
     "python": "class Solution:\n    def lengthOfLastWord(self, s: str) -> int:",
-    "cpp": "class Solution {\npublic:\n    int lengthOfLastWord(string s) {\n\n    }\n};"
+    "cpp": "class Solution {\npublic:\n    int lengthOfLastWord(string s) {\n\n    }\n};",
+    "java": "import java.util.*;\n\nclass Solution {\n    public int lengthOfLastWord(String s) {\n\n    }\n}\n",
+    "csharp": "using System;\nusing System.Collections.Generic;\nusing System.Linq;\n\npublic class Solution {\n    public int LengthOfLastWord(string s) {\n\n    }\n}\n",
+    "rust": "impl Solution {\n    pub fn length_of_last_word(s: String) -> i32 {\n\n    }\n}\n",
+    "go": "package main\n\nfunc LengthOfLastWord(s string) int {\n\n}\n",
+    "typescript": "export function lengthOfLastWord(s: string): number {\n\n};\n"
   },
   "testCases": [
     {

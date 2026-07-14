@@ -36,6 +36,14 @@ export async function loadNeenza(root) {
     ...record,
     frontendId: String(record.frontend_id),
     slug: record.problem_slug,
-    starters: { python: clean(record.code_snippets?.python3), cpp: clean(record.code_snippets?.cpp) }
+    starters: {
+      python: clean(record.code_snippets?.python3),
+      cpp: clean(record.code_snippets?.cpp),
+      java: clean(record.code_snippets?.java),
+      csharp: clean(record.code_snippets?.csharp),
+      rust: clean(record.code_snippets?.rust),
+      go: clean(record.code_snippets?.golang),
+      typescript: clean(record.code_snippets?.typescript)
+    }
   }));
 }

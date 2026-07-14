@@ -50,6 +50,12 @@
     let gateSessionId = isCodeGate ? $page.url.searchParams.get('sessionId') ?? '' : '';
     let gateChallengeId = isCodeGate ? $page.url.searchParams.get('challengeId') ?? '' : '';
     let gateActionPending = false;
+    const gateLanguageLabels: Record<GateLanguage, string> = {
+        java: 'Java', python: 'Python 3', cpp: 'C++', csharp: 'C#', rust: 'Rust', go: 'Go', typescript: 'TypeScript'
+    };
+    const gateAvailableLanguages: GateLanguage[] = isCodeGate
+        ? Array.from(new Set((data.codegate?.available ?? []).map((variant: { language: GateLanguage }) => variant.language)))
+        : [];
     $: gateBinding = isCodeGate ? { sessionId: gateSessionId, challengeId: gateChallengeId, difficulty } : null;
     const fileKey = () => `${problemId}`;
     const codeKey = () => `${problemId}:${language}`;
@@ -915,8 +921,9 @@
                         on:blur={() => (suppressSave = false)}
                     >
                         {#if isCodeGate}
-                            <option value="python">Python 3</option>
-                            <option value="cpp">C++</option>
+                            {#each gateAvailableLanguages as gateLanguage}
+                                <option value={gateLanguage}>{gateLanguageLabels[gateLanguage]}</option>
+                            {/each}
                         {:else}
                             <option value="java">Java</option>
                             <option value="cpp">C++</option>

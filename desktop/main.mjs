@@ -66,6 +66,7 @@ function startServer() {
       PORT: String(port),
       CODEGATE_DESKTOP: '1',
       CODEGATE_INSTANCE_TOKEN: instanceToken,
+      CODEGATE_VALIDATION_CACHE: path.join(app.getPath('userData'), 'runtime-validation-cache.json'),
       BROWSER: 'none'
     }
   });
@@ -103,11 +104,21 @@ function secureWindow(win) {
 }
 
 async function resolveGateUrl() {
-  const response = await localRequest(`${baseUrl}/gate?language=python&difficulty=50`);
+  const response = await localRequest(`${baseUrl}/gate?language=python&difficulty=50`, 600_000);
   if (response.status !== 303 || !response.headers.location) throw new Error(`Gate route returned ${response.status}`);
   const url = new URL(response.headers.location, baseUrl);
   activeDesktopSession = { sessionId: url.searchParams.get('sessionId'), challengeId: url.searchParams.get('challengeId'), startedAt: new Date().toISOString() };
   return url.href;
+}
+
+async function showPreparingWindows() {
+  const html = '<!doctype html><html><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#111827;color:#f9fafb;font:16px system-ui"><main style="text-align:center"><h1>Preparing challenge…</h1><p style="color:#9ca3af">CodeGate is checking this problem with the judge. First use may take a moment.</p></main></body></html>';
+  windows = screen.getAllDisplays().map((display) => {
+    const win = new BrowserWindow(windowOptions(display));
+    secureWindow(win);
+    void win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+    return win;
+  });
 }
 
 async function openGateWindows(gateUrl) {
@@ -184,6 +195,7 @@ async function runDesktop() {
     return;
   }
   try {
+    await showPreparingWindows();
     await openGateWindows(await resolveGateUrl());
   } catch (error) {
     showRecovery([error instanceof Error ? error.message : String(error)]);

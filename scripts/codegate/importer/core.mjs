@@ -1,18 +1,30 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { loadLocalJsonSource } from './adapters/local-json.mjs';
 import { loadLeetcodeBundle } from './adapters/leetcode-bundle.mjs';
-import { difficultyLevels, generateVariants } from './variants.mjs';
 
 const adapters = new Map([
-  ['local-json', loadLocalJsonSource],
   ['leetcode-bundle', loadLeetcodeBundle]
 ]);
 const supportedTypes = new Set([
   'int', 'string', 'boolean', 'int_array', 'int_array_2d', 'string_array',
   'string_list', 'string_list_2d', 'int_list', 'int_list_2d', 'char_array_2d'
 ]);
-const extensions = { python: 'py', cpp: 'cpp' };
+const languages = new Set(['python', 'cpp', 'java', 'csharp', 'rust', 'go', 'typescript']);
+
+function sourceAgrees(language, source, functionName) {
+  const escaped = functionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const transformed = {
+    csharp: functionName.charAt(0).toUpperCase() + functionName.slice(1),
+    rust: functionName.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, ''),
+    go: functionName.charAt(0).toUpperCase() + functionName.slice(1)
+  }[language] ?? functionName;
+  const name = transformed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (!new RegExp(`\\b${name}\\b`).test(source)) return false;
+  if (language === 'rust') return /\bimpl\s+Solution\b/.test(source);
+  if (language === 'go') return new RegExp(`\\bfunc\\s+${name}\\s*\\(`).test(source);
+  if (language === 'typescript') return new RegExp(`\\bexport\\s+function\\s+${escaped}\\s*\\(`).test(source);
+  return /\bclass\s+Solution\b/.test(source);
+}
 
 function inside(root, candidate) {
   const relative = path.relative(root, candidate);
@@ -44,7 +56,7 @@ function normalizeRecord(record) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(record.slug ?? '')) throw new Error('slug is not canonical');
   if (!record.languages || typeof record.languages !== 'object') throw new Error('languages are required');
   for (const language of Object.keys(record.languages)) {
-    if (!(language in extensions)) throw new Error(`unsupported language: ${language}`);
+    if (!languages.has(language)) throw new Error(`unsupported language: ${language}`);
   }
   return record;
 }
@@ -161,53 +173,25 @@ async function inspectPack(problem, record) {
 
 async function importRecord(problem, record, repositoryRoot) {
   const { metadata } = await inspectPack(problem, record);
-  const languages = {};
+  if (record.slimSources !== true) throw new Error('only slim source-index records are supported');
+  const indexedLanguages = {};
   for (const [language, assets] of Object.entries(record.languages)) {
-    const [reference, incorrect] = await Promise.all([
-      sourceText(record, assets, 'reference', `${language} reference`, repositoryRoot),
-      sourceText(record, assets, 'incorrect', `${language} incorrect solution`, repositoryRoot)
+    const reference = await sourceText(record, assets, 'reference', `${language} reference`, repositoryRoot);
+    if (reference.length > 262_144) throw new Error(`${language} reference exceeds the import source limit`);
+    if (/https?:\/\/|\b(requests|socket|curl|wget)\b|\bfetch\s*\(/i.test(reference)) throw new Error(`${language} reference appears to require network access`);
+    if (!sourceAgrees(language, reference, metadata.functionName)) throw new Error(`${language} reference does not agree with the problem signature`);
+    await Promise.all([
+      resolveAsset(record, assets.starterSource?.path, `${language} starter source`, repositoryRoot),
+      resolveAsset(record, assets.solutionSource?.path, `${language} solution source`, repositoryRoot)
     ]);
-    for (const [label, source] of [['reference', reference], ['incorrect solution', incorrect]]) {
-      if (source.length > 262_144) throw new Error(`${language} ${label} exceeds the import source limit`);
-      if (/https?:\/\/|\b(requests|socket|curl|wget)\b|\bfetch\s*\(/i.test(source)) throw new Error(`${language} ${label} appears to require network access`);
-      if (!source.includes('class Solution') || !source.includes(metadata.functionName)) throw new Error(`${language} ${label} does not agree with the problem signature`);
-    }
-    const extension = extensions[language];
-    const outputReference = path.join(problem.root, 'reference', `${language}.${extension}`);
-    const outputIncorrect = path.join(problem.root, 'reference', 'incorrect', `${language}.${extension}`);
-    await Promise.all([atomicText(outputReference, reference), atomicText(outputIncorrect, incorrect)]);
-    const variants = generateVariants({
-      metadata,
-      language,
-      reference,
-      starter: assets.starterCode,
-      hints: record.difficultyHints ?? [],
-      endpointOnly: record.endpointOnly === true
-    });
-    const variantPaths = {};
-    for (const level of difficultyLevels.filter((candidate) => variants[candidate])) {
-      const output = path.join(problem.root, 'variants', language, `${level}.${extension}`);
-      await atomicText(output, variants[level]);
-      variantPaths[level] = path.relative(problem.root, output).replaceAll(path.sep, '/');
-    }
-    languages[language] = {
-      reference: path.relative(problem.root, outputReference).replaceAll(path.sep, '/'),
-      incorrect: path.relative(problem.root, outputIncorrect).replaceAll(path.sep, '/'),
-      variants: variantPaths,
+    indexedLanguages[language] = {
+      starter: assets.starterSource,
+      solution: assets.solutionSource,
       ...(assets.provenance ? { solutionSource: assets.provenance } : {})
     };
   }
-  if (!Object.keys(languages).length) throw new Error('record has no supported language assets');
-  const config = {
-    schemaVersion: 1,
-    problemId: problem.problemId,
-    frontendId: record.frontendId,
-    source: { ...record.source, record: record.sourceRecord },
-    validation: { status: 'pending', judge: 'existing-cojudge', limits: 'existing-runner-limits' },
-    languages
-  };
-  await atomicJson(path.join(problem.root, 'codegate.json'), config);
-  return { frontendId: record.frontendId, slug: record.slug, problemId: problem.problemId, difficulty: metadata.difficulty, languages: Object.keys(languages), status: 'pending-validation' };
+  if (!Object.keys(indexedLanguages).length) throw new Error('record has no supported language assets');
+  return { frontendId: record.frontendId, slug: record.slug, problemId: problem.problemId, difficulty: metadata.difficulty, languages: Object.keys(indexedLanguages), status: 'indexed-source' };
 }
 
 export async function runImport(configPath, repositoryRoot = process.cwd()) {

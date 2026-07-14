@@ -1,0 +1,1994 @@
+{
+  "schemaVersion": 2,
+  "generatorVersion": 1,
+  "generatedAt": "2026-07-14T11:09:05.634Z",
+  "sourceRevision": "neenza@16c26d1+kamyu@4b89ed8+doocs@a0ced3e+newfacade@215604a",
+  "sources": {
+    "neenza": "sources/leetcode-problems/problems",
+    "doocs": "sources/doocs-solutions/solution",
+    "kamyu": "sources/kamyu-solutions"
+  },
+  "problems": {
+    "1": {
+      "slug": "two-sum",
+      "record": "0001-two-sum.json",
+      "recordSha256": "50126f4953108d8e7411401109c8a7c6070045675396615ff21e5af23ab486c2",
+      "judgeSha256": "78c4ad6d54fd70896266670ef69138878d5b06591aaf9ac059993a05c0491301",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0001.Two Sum/Solution.py",
+          "solutionSha256": "5d556cec688baae19c7387c2c96d9f193b5c7a1a4865cf19cbd0679c65e19358"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/two-sum.cpp",
+          "solutionSha256": "47938b6db36cf7ab73db0a6783ed0765750246e843755b75621653ab7d57722f"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0001.Two Sum/Solution.java",
+          "solutionSha256": "ac2fbfdd6cac9843ba30e0de3f9f7784c2c0aecda4b05f9f5fdc99a67b3366c7"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0001.Two Sum/Solution.cs",
+          "solutionSha256": "a94bac70d0a0c9988b1fe82571ab11440830949cb5bb5f8c23415213f374e428"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0001.Two Sum/Solution.rs",
+          "solutionSha256": "d03da5b6aec311e612f897c05e3c502d38dda51ac0b6021c23d914098975d66a"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0001.Two Sum/Solution.go",
+          "solutionSha256": "ea25c486cbfa7c6427e907fe10ba96eb4ac0ea226476388f11f27dcf3c5f55ba"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0001.Two Sum/Solution.ts",
+          "solutionSha256": "6d2b3292c19d4fdbb66fa895adbc8472f84ad0b916704f47d44c6395fcda2b4d"
+        }
+      }
+    },
+    "3": {
+      "slug": "longest-substring-without-repeating-characters",
+      "record": "0003-longest-substring-without-repeating-characters.json",
+      "recordSha256": "e8678ef7b0636323735723b4c7fb944e74a346dbf23621a09f2a47f92581ac60",
+      "judgeSha256": "159b9c2a966e70e7c026fba22207c808a25c525504da92deaf2ea899989b00b9",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0003.Longest Substring Without Repeating Characters/Solution.py",
+          "solutionSha256": "dae5f027ff348ff280582414eeb83baed828d4b1d2a903111009ee9da66437f9"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/longest-substring-without-repeating-characters.cpp",
+          "solutionSha256": "8f8e632665b7d1104744894ca731d9ecef93beeeb9d587d8759b9a641d3e7eb1"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0003.Longest Substring Without Repeating Characters/Solution.java",
+          "solutionSha256": "ee8ce1802a42d70cadcf99b72a02031a21b53d6d97dfcf25025ae97e7cc36240"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0003.Longest Substring Without Repeating Characters/Solution.cs",
+          "solutionSha256": "9d396a820ae05558f398b2f3caab4115c6e534fbc6ece784f7e00c563217e14e"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0003.Longest Substring Without Repeating Characters/Solution.rs",
+          "solutionSha256": "11903f936e47513817fd85d983f2df7488c374bcd7975223ed19a7d1ef23b013"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0003.Longest Substring Without Repeating Characters/Solution.go",
+          "solutionSha256": "67c3307f63863ab4ca94d49e3cc6c20d5b777f3ffe4d4b59a3bfb780cad0446f"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0003.Longest Substring Without Repeating Characters/Solution.ts",
+          "solutionSha256": "d6ac032328b6caec8d6ce6846b9a99fd8fed7e74133ad59a7eaf76a1dead596b"
+        }
+      }
+    },
+    "5": {
+      "slug": "longest-palindromic-substring",
+      "record": "0005-longest-palindromic-substring.json",
+      "recordSha256": "ca2e29fd28a4d16b88d97c23fd5255111dc6bc27a0d960bed52d26904e38c283",
+      "judgeSha256": "877f21c8370a5d19c8cd0b5c1345300a5efcf4852fea3b014eee113c7298f23f",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0005.Longest Palindromic Substring/Solution.py",
+          "solutionSha256": "d76473d879c63cfa27f726923e654bfecc9d0375d0fe8029f45dd1aff8fae19c"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/longest-palindromic-substring.cpp",
+          "solutionSha256": "966dee9c0deaa1a4ee41e3a2aaa98d254ce084e52ab832e4d776287ef17c4527"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0005.Longest Palindromic Substring/Solution.java",
+          "solutionSha256": "2ef1630dca381e16c8c5617eaa05af2f88ae4012d691852eddfa768fee04f96c"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0005.Longest Palindromic Substring/Solution.cs",
+          "solutionSha256": "a6b9bdba5bd03835f8f8798cf0563d0b460dfcaf5edada86563b5b3637a4d4c3"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0005.Longest Palindromic Substring/Solution.rs",
+          "solutionSha256": "f49a899b9428b23ef4ef2da3529c3bb8ffd41394df8024b0d770ddae53bf170d"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0005.Longest Palindromic Substring/Solution.go",
+          "solutionSha256": "5aa74ecd510708ae42509663f2141d931f7cc7662c7786984903515236958c8a"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0005.Longest Palindromic Substring/Solution.ts",
+          "solutionSha256": "e1135dff0c4a1c6b0129b4325aae8899fe1a9b8afca05e6fceff59a42b9d47bf"
+        }
+      }
+    },
+    "9": {
+      "slug": "palindrome-number",
+      "record": "0009-palindrome-number.json",
+      "recordSha256": "4bebff28714f25b2eecc69a54b11fb8221a670f804b0761b3ba0f6465e2d53cf",
+      "judgeSha256": "33976e6993982b2289c0670219897c87aa785f745be29bee452fe579201a41bc",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0009.Palindrome Number/Solution.py",
+          "solutionSha256": "badfb3e9aee6dd88cad1fb9b37f99d5969e03c081ea10c7188ae2cb594af3cf3"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/palindrome-number.cpp",
+          "solutionSha256": "c958b771dc1612d5397710aad6e64a70adaa75f1c56a2c2ea93575d8e4b5edf2"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0009.Palindrome Number/Solution.java",
+          "solutionSha256": "dc0f8135277f21726234d63446e71323dee4893612e5b38181231baee2f6976f"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0009.Palindrome Number/Solution.cs",
+          "solutionSha256": "0e514dee8b111f701691978b669f5807f2d743d06a107d84dd1e8a7faa2e297e"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0009.Palindrome Number/Solution.rs",
+          "solutionSha256": "f010c28dee9e7e10a6b6b8453164c0c1446fd1e92f75c03dd74b460c24d3e7e0"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0009.Palindrome Number/Solution.go",
+          "solutionSha256": "6f63375a317e8daad086dda635345391ce4f46cf0aaa0ebc17a4e96cc66d07f4"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0009.Palindrome Number/Solution.ts",
+          "solutionSha256": "250e601778ee910b02d87b1e330048b3ea14817af86e340cdea94ccc2e3a3213"
+        }
+      }
+    },
+    "11": {
+      "slug": "container-with-most-water",
+      "record": "0011-container-with-most-water.json",
+      "recordSha256": "128bc74087fcb9a9935c8cb9e4101a914b8a2bf6366795ca73fc23f26dc040fb",
+      "judgeSha256": "a3c9103ab05e7d8e51c203f6660fa3cf7dc3d3d5c4c81a9d29a930257329a47b",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0011.Container With Most Water/Solution.py",
+          "solutionSha256": "046092bf66bf53b19533235b94828403bc6393fdb4d37a3efa5729394cf0b52c"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/container-with-most-water.cpp",
+          "solutionSha256": "f61f5dbce23ee2ea79e9092cf6926cce8920f67545497d2ee0ea46b3bce584c4"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0011.Container With Most Water/Solution.java",
+          "solutionSha256": "8b95206e08ac73be0e691455b43ee8a0066bf056bd72dd0f666a0502c717351c"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0011.Container With Most Water/Solution.cs",
+          "solutionSha256": "4b76338db4488ba1a804ca20d8726fa48532f315678b9b0a3ddb770a19d250ba"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0011.Container With Most Water/Solution.rs",
+          "solutionSha256": "1c660a3b0e31ac725c75592d70a0a0fea1b1d66a5d5f30f9190dca97f109e94f"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0011.Container With Most Water/Solution.go",
+          "solutionSha256": "8f6d2a08047dad475eddd08af2b46a7f683da3f25c7ec960215a2e55ba943ff6"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0011.Container With Most Water/Solution.ts",
+          "solutionSha256": "842109ed2db9d818a1ae9285f1cf21f01eb88edf295d49526208a796f6178824"
+        }
+      }
+    },
+    "15": {
+      "slug": "3sum",
+      "record": "0015-3sum.json",
+      "recordSha256": "b43b29d78530b84db51ab523bd86a19eb23457584f9ab1cc4e527c4f730465ba",
+      "judgeSha256": "7dbc15b8303d9f4353550e77c583e01b38c3273431dd8e72712dc6483b857a3e",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0015.3Sum/Solution.py",
+          "solutionSha256": "b109a582bf342db36567303c696f2eb608a39c20622de5561d22cb2821c14fc2"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/3sum.cpp",
+          "solutionSha256": "1828d9c0b97a1d18d086fda647a15081a68ec8aa631ac28b6ca74315ae7e73fe"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0015.3Sum/Solution.java",
+          "solutionSha256": "98b53c45e91a6c5b4e318fdee8923cee382f8b5c0a9e8b5fb0e04316cfe537d0"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0015.3Sum/Solution.cs",
+          "solutionSha256": "149f2ef7610847eab85082dbfe3db353bfbe7a42bbb1de4285f7e7a568f22825"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0015.3Sum/Solution.rs",
+          "solutionSha256": "36f241adf35da53c2004f49c5a5e064cc23b62e9480f403ed3bd665025ab15c7"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0015.3Sum/Solution.go",
+          "solutionSha256": "2ca841874044155f0f776579021305fc8a4fb34754997830a28e0ce6d1e17114"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0015.3Sum/Solution.ts",
+          "solutionSha256": "a0cf1ae9ac290c24203031909e171ea8ad44cefdb9cff9a017dea71a639f72d4"
+        }
+      }
+    },
+    "20": {
+      "slug": "valid-parentheses",
+      "record": "0020-valid-parentheses.json",
+      "recordSha256": "86eadbf8ab0bb3a0211fe70f5d36dc5e3a81110f55c4505761d4d2407fe40c97",
+      "judgeSha256": "9a17eaaaa3fd2d2af01dc1d50a143d1a93917dd38b09a84e8e57ac5f6b60ec38",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0020.Valid Parentheses/Solution.py",
+          "solutionSha256": "62efd82ebb4d07c43783b1a18ee4c9dc73d28607519b1954c6856a7a0aa94207"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/valid-parentheses.cpp",
+          "solutionSha256": "972af1c24196c99aa26cd5f6fd8d3d1b16fdd502bf5f1be3934b938f774077f9"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0020.Valid Parentheses/Solution.java",
+          "solutionSha256": "8fb83dcca5de44c9797cbe9fffa055354ea5204bea93899e67bcfec05f4e12e5"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0020.Valid Parentheses/Solution.cs",
+          "solutionSha256": "95fc3bb0fe955ac53e78a80da7ce52bd5a068f8d576070e30fe35c0643a16369"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0020.Valid Parentheses/Solution.rs",
+          "solutionSha256": "19b0d6b67284672b513c10a9afeb5d4452105286c5a0fee1a159ef2cfd556ec1"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0020.Valid Parentheses/Solution.go",
+          "solutionSha256": "66e38ef07cd52f2dbf88dccc14859d134a0bf0f1cef223a5dcdeb9b639307e7b"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0020.Valid Parentheses/Solution.ts",
+          "solutionSha256": "6d25cdb3ef19c126ad2501aca9d97393d90f63f6a1866156876ff1dc26529214"
+        }
+      }
+    },
+    "33": {
+      "slug": "search-in-rotated-sorted-array",
+      "record": "0033-search-in-rotated-sorted-array.json",
+      "recordSha256": "99cdbd810089f634ecb51224b18620a9d480f38f8a1b80e2f1f73f159a7b400a",
+      "judgeSha256": "36092ff2b3f1b2ea7bd8ab6df8ccd60191c9a35242a4261282e29e169586e659",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0033.Search in Rotated Sorted Array/Solution.py",
+          "solutionSha256": "db82306592dbc7ca201abb9b0079e34a230b26aba10c8aa314de1df717c0145a"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/search-in-rotated-sorted-array.cpp",
+          "solutionSha256": "57e7b9cac3cdf80f0a480f1b7f207402b89ca8ac749c00f1bca4ef6441cf700f"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0033.Search in Rotated Sorted Array/Solution.java",
+          "solutionSha256": "529dde668737badfc0b0a5322bb2f24334f3a7a9a5bd958717fb68fef85251c8"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0033.Search in Rotated Sorted Array/Solution.cs",
+          "solutionSha256": "480cda7c58bcf3fdc8c5efc599c4510767cdd283849f8f0933c8d01acd1c8eb9"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0033.Search in Rotated Sorted Array/Solution.rs",
+          "solutionSha256": "fdc08dc0170e52ed8914190e590fffc88a30ddc1a6bef2da8d4bb8f153a42960"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0033.Search in Rotated Sorted Array/Solution.go",
+          "solutionSha256": "1cb48aca3822fb7f80c9d9e25cb2d56d6645913f9c880f5ea3d5c9570cf92854"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0033.Search in Rotated Sorted Array/Solution.ts",
+          "solutionSha256": "aa26eb58d2da241a8cffc97f5ff065c1c7f4adca79ff79c47a7ae3218981a46b"
+        }
+      }
+    },
+    "53": {
+      "slug": "maximum-subarray",
+      "record": "0053-maximum-subarray.json",
+      "recordSha256": "c0756de5a7c7c980097a5b2ef20ae52c47c31c86f1d7b6e0ddef5bba3bf71f9b",
+      "judgeSha256": "b6aeb05b705392d8e6a7caf8600a3c1614aeb75795fcb38d990ca04e0ed0477b",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0053.Maximum Subarray/Solution.py",
+          "solutionSha256": "b9b4d82dc4f484604154bbd2a0abb338fe5c859f08de0eee49eef9b0be1e01b3"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/maximum-subarray.cpp",
+          "solutionSha256": "17f63e60dd0e4046b65c7d982dc1e822a3e036b1ee898932e14fbbdfb2e6be6e"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0053.Maximum Subarray/Solution.java",
+          "solutionSha256": "75ebd43540093fe534a2f5eda8a909c0bdb4eaf11611f34a7927e7ab82dba90b"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0053.Maximum Subarray/Solution.cs",
+          "solutionSha256": "08251c7252dd1667b53ce0cdf6d9738f90495d7555666626bdbc4feeec3bfcb1"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0053.Maximum Subarray/Solution.rs",
+          "solutionSha256": "338ebaae746cb9367474ca5f48d8488145660d1eefbb6ff89992f621b97e7f16"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0053.Maximum Subarray/Solution.go",
+          "solutionSha256": "265e28a2ff4ce56a02ef23195cfab40d86b2912a663268e065fc92844a997d20"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0053.Maximum Subarray/Solution.ts",
+          "solutionSha256": "f31b80813b38972f84b2dedb70a149b25626992a02caffb2e0adbc5abdb6eb18"
+        }
+      }
+    },
+    "54": {
+      "slug": "spiral-matrix",
+      "record": "0054-spiral-matrix.json",
+      "recordSha256": "b9d36444918f438ca247d2ddc0223ce8f5b32d6b38f0ea0dec9a5e020bc128d5",
+      "judgeSha256": "01e450d25521dd8d4a374a86723546d42783a3f0e4db81c7950ce4f85c4545c2",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0054.Spiral Matrix/Solution.py",
+          "solutionSha256": "9da81b4f2c975be620531e537429566729c801956bbd17b25533555d050c727c"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/spiral-matrix.cpp",
+          "solutionSha256": "2b0c63fca64f160c069f0c1b799c349d1a4fa06e18fe99089966c7adbdab8852"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0054.Spiral Matrix/Solution.java",
+          "solutionSha256": "f37c013855823cb70bf2841aa48b4df98b38aed1a5a5854d0401dc728f59f4c5"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0054.Spiral Matrix/Solution.cs",
+          "solutionSha256": "ecd3061380fe19a1cdbbcba098db9f21ec58b54b5751c0c10d939b23d2964426"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0054.Spiral Matrix/Solution.rs",
+          "solutionSha256": "f0c4a2f03cf6185a58de554c244b8c499deb3bab240f9175a98746853fe4e3e8"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0054.Spiral Matrix/Solution.go",
+          "solutionSha256": "33ee37b1fcc4d9ce044c7e62e5b52f57ed30a25d521a1d61fedbb80f91b33b09"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0054.Spiral Matrix/Solution.ts",
+          "solutionSha256": "640c48223246c001702edb96b6bff171ff1f2deedd132b4ddd464bd903eabdf4"
+        }
+      }
+    },
+    "55": {
+      "slug": "jump-game",
+      "record": "0055-jump-game.json",
+      "recordSha256": "f96b9eb5811d10e92faa3081e8ebe03111c6ebca98573816e206b85eca4a2762",
+      "judgeSha256": "d0e0b4a22ba87786b7d67e8186641f1023e79c872ee7b185aff576992f6a4a72",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0055.Jump Game/Solution.py",
+          "solutionSha256": "0cbac9c9d64a5a6e9f32eef5b23f665414af24ea9458537493d6a7323ac160f2"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/jump-game.cpp",
+          "solutionSha256": "f7fea9f479028c64cc34a8aee097edbe0a250affcbb2274c12f9f90118314fa8"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0055.Jump Game/Solution.java",
+          "solutionSha256": "16d9139d1122613754186fff734f4c3a8457ad41e9b7713164dec60bcd693fa1"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0055.Jump Game/Solution.cs",
+          "solutionSha256": "ceeadc0c011a8f7a06c5ba48c841bb421cd91c7417314978c3e3cad71d624b61"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0055.Jump Game/Solution.rs",
+          "solutionSha256": "58ec13bf9fa0e5dc3e0d5b10dbffda946929cf7bcafce11ce57a5afe867a8c42"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0055.Jump Game/Solution.go",
+          "solutionSha256": "a7399131f5b208dd3a305c2c44646dc1e44d41a744de3d5cefba34efea951b31"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0055.Jump Game/Solution.ts",
+          "solutionSha256": "1c4b709badb52eda22cd22cc753a7a125f1978d45ff1f6e280b7fc31c57d076a"
+        }
+      }
+    },
+    "56": {
+      "slug": "merge-intervals",
+      "record": "0056-merge-intervals.json",
+      "recordSha256": "499969e45974a02f8fa2dd1729df29d04b21e7796077b61e934b1fc41bd364c3",
+      "judgeSha256": "12c389530c8b18305e5ba83318a98fbc5d9e84893859fa2544fbc86d2eabfafc",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0056.Merge Intervals/Solution.py",
+          "solutionSha256": "f6b54039f21d7ef09396365cb54e5440c1ec87149ea2a2184334dd05ae847fba"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/merge-intervals.cpp",
+          "solutionSha256": "fcb76cf408c9d8b3e1af015c458d300fd2e6690942768cad9297ecfff4cc5990"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0056.Merge Intervals/Solution.java",
+          "solutionSha256": "d80e298126444523c8d649585462deb09612b5de19a46f48137d54805a45c8bb"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0056.Merge Intervals/Solution.cs",
+          "solutionSha256": "f5252bed29d6a4b7c64ccc7f7db33f6c01d5659a22aa6e44aee0b29f53ed4390"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0056.Merge Intervals/Solution.rs",
+          "solutionSha256": "d0dcd11637777445cfc562d7c5fcf1288453ea78740d1f3ee6ac3e7663494045"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0056.Merge Intervals/Solution.go",
+          "solutionSha256": "a59ecd91fe5ff8b00c18ccfd5d5e4b7c2cfe23f91312c6a8f5d7c8d06e6253be"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0056.Merge Intervals/Solution.ts",
+          "solutionSha256": "109ce26f1a1f889df444862d06aa54d40e49181588e9fb26621a2547810dc745"
+        }
+      }
+    },
+    "57": {
+      "slug": "insert-interval",
+      "record": "0057-insert-interval.json",
+      "recordSha256": "4d3f310bd955325b03ff21971d8ef1e7099156d3d18e519367b8f06eee35f37f",
+      "judgeSha256": "42705577ed2de6ad420bef4a43cebbb23522a3a33d4b7a8db8183e804e36a9d7",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0057.Insert Interval/Solution.py",
+          "solutionSha256": "f6f3efd728a096e672069ad5def52feb8a00e093b184fc9b65e9ed5315e3421a"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/insert-interval.cpp",
+          "solutionSha256": "421341a910e9454919c4d6afbf287d749cc6632382d764af9b5d1cf388801f18"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0057.Insert Interval/Solution.java",
+          "solutionSha256": "4e238f8147ccbf9d1d5fb2b76e85a350b69ca1f17dcbbd20bd390bca6712f044"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0057.Insert Interval/Solution.cs",
+          "solutionSha256": "aa94751618fe79fefd516ca7c6946025b585ae39347a50e530df1c611cae920b"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0057.Insert Interval/Solution.rs",
+          "solutionSha256": "e4fdd34934dd22cf41bf1fb442e4ce5a0d13574023b9c206a67729f775c64a62"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0057.Insert Interval/Solution.go",
+          "solutionSha256": "316edaac3d19907c78f4fed9e3559066c2d91f0c8ba7dc0c9bde51b3b06de049"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0057.Insert Interval/Solution.ts",
+          "solutionSha256": "22c5cb5a6668c74391589805624b6589833cd8d1cdb98d96191f6c3f68869323"
+        }
+      }
+    },
+    "58": {
+      "slug": "length-of-last-word",
+      "record": "0058-length-of-last-word.json",
+      "recordSha256": "78b9d2dd3244c1550e9295b9fb1a4aea574053b18fc75a198dc872f025d1369f",
+      "judgeSha256": "a88ac2a54a8db0bb7992572938cff385917d3bdae107b506153616b40cd93b3e",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0058.Length of Last Word/Solution.py",
+          "solutionSha256": "d6c5c73b510a2b876f5329d1ae12291362b7d3f291f5abe63a006d3f7196832e"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/length-of-last-word.cpp",
+          "solutionSha256": "11735695d7cdc1ff44d7bcb8c9c117d2c1978456c226e9b11050457a019e3bd3"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0058.Length of Last Word/Solution.java",
+          "solutionSha256": "cb88a05390f5bde43050052ffcae9357169cf7751c5c728fae950365513a2a23"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0058.Length of Last Word/Solution.cs",
+          "solutionSha256": "594cd5934c92f741418b54f537ddc0c3787aaa9c2b6bf1fe949fa1ea6e2efc86"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0058.Length of Last Word/Solution.rs",
+          "solutionSha256": "f0d47af25b619b982a87b759a384f3b920250020c82c632bf9b4148bdc55d678"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0058.Length of Last Word/Solution.go",
+          "solutionSha256": "e9a48a0721ee4f1b79280263fb5058aa8c2693afeac0f3b080574b0cf4464d28"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0058.Length of Last Word/Solution.ts",
+          "solutionSha256": "d87f1099770d3c28a68f734d25b997bc19b587e0f17131678bc45ffdf5df9487"
+        }
+      }
+    },
+    "62": {
+      "slug": "unique-paths",
+      "record": "0062-unique-paths.json",
+      "recordSha256": "6333a242ffba5bd4e491943e06d90acbb62514aa1810c08a9f46776a2803aec5",
+      "judgeSha256": "5cf26e5dcea536ed2caa52c83d47ecb9f24820ae3a33401a7e5a545a714cd733",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0062.Unique Paths/Solution.py",
+          "solutionSha256": "0f2e0f8f71c7f8e8fcecdd8975758ccbc85e193abc80d9b15550f7f3ec6f1bc0"
+        },
+        "cpp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0062.Unique Paths/Solution.cpp",
+          "solutionSha256": "c2f58b9e0a8ec49aa7eadb55c403422cbabd9df38442e54f92941ca698005615"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0062.Unique Paths/Solution.java",
+          "solutionSha256": "8f09b65ac6df1604e30407c48cdd0b59ecc6c28feb7252aa92f42a30ae20de4c"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0062.Unique Paths/Solution.rs",
+          "solutionSha256": "13b3c557fdce3c47651760bff76f4f88699d06900446e9b63da527dc625c8e0a"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0062.Unique Paths/Solution.go",
+          "solutionSha256": "8eb4d40bc9769277a7e44b05f97c0d275523e232f2ad554f79875daa9833bbf5"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0062.Unique Paths/Solution.ts",
+          "solutionSha256": "cd93536bba749c9d70ff9cbaa2b316d436dbbc2685a9f4ab5f7351ebc9b2a685"
+        }
+      }
+    },
+    "70": {
+      "slug": "climbing-stairs",
+      "record": "0070-climbing-stairs.json",
+      "recordSha256": "46326c8671f531c013b7f760dc9a9cb4202a94bc5def045a73f21fef06686464",
+      "judgeSha256": "4593fe0c7b33f098e034eca9223b8e97715452068f1624ee70bfdad828c103a0",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0070.Climbing Stairs/Solution.py",
+          "solutionSha256": "1df09a0aa4e0f1ef676adc04c643380ce5621f8b896a938c22d5dc58721c0a30"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/climbing-stairs.cpp",
+          "solutionSha256": "da4b3aaede78c4c2d1b75497a9aabf3ad70ffff75b62ee75aedb769058a7e490"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0070.Climbing Stairs/Solution.java",
+          "solutionSha256": "a048b10b8fd7f3ec1c826f02243cedd25dc76c1b7188306dfd709971c748ecd7"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0070.Climbing Stairs/Solution.rs",
+          "solutionSha256": "d25bcac12c0e5eed0da744e937da91a4292f42bf204dae8c470d87fa812e9233"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0070.Climbing Stairs/Solution.go",
+          "solutionSha256": "c97fe55356f3ec11ac551437ba62820744c60b01544dcd94e95658d769293742"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0070.Climbing Stairs/Solution.ts",
+          "solutionSha256": "ad7615a00b350a2e81a5152658e9e2aad2810fbc22e288adffc67884affadb58"
+        }
+      }
+    },
+    "76": {
+      "slug": "minimum-window-substring",
+      "record": "0076-minimum-window-substring.json",
+      "recordSha256": "eeef9f3112d8d04cbbf255aa064506f57fed8ab920a57bea6a36779ac9e1c68d",
+      "judgeSha256": "772c72e02a4df903f38a8ab8da086e2998e734a89652a9557b82e2aa2561aab5",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0076.Minimum Window Substring/Solution.py",
+          "solutionSha256": "1e713c934ca87c689bfc45e7b032e355f7fb13afa336c4d32d138fc98f8e0316"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/minimum-window-substring.cpp",
+          "solutionSha256": "1613368d4bc2b8b326bb1841238c682257d2f2648ea4cd4bfc92e4e1e47a5fe2"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0076.Minimum Window Substring/Solution.java",
+          "solutionSha256": "e1d16972a15d8acda7ca177275a736386392fa8ac1b76fcc88b4ac80e00f2802"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0076.Minimum Window Substring/Solution.cs",
+          "solutionSha256": "e1f381aa68448b5586fbdc697b19483c9cdfcf5562c94d82c7873f83e778b47d"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0076.Minimum Window Substring/Solution.rs",
+          "solutionSha256": "ab2604cc264f2159cc0818c605583242c0f8e97d9f30485dcaf7c3da8a263593"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0076.Minimum Window Substring/Solution.go",
+          "solutionSha256": "e16e71a76e8875c16200321529b9cf3b7733ca61656b4e14bae6f1b4512f24b1"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0076.Minimum Window Substring/Solution.ts",
+          "solutionSha256": "aef9573b36c3bfad75e270f652151564983ec7477248e9ab2792b64a6c9fdd26"
+        }
+      }
+    },
+    "91": {
+      "slug": "decode-ways",
+      "record": "0091-decode-ways.json",
+      "recordSha256": "9f2f0c5fddec0fae90e6369b21399022e4e29ca4172cd8dcad409af5b77150a3",
+      "judgeSha256": "1f14a3aa79a4802b70a13277adf380be6f0340fcacdc8583e661c9a430f5d450",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0091.Decode Ways/Solution.py",
+          "solutionSha256": "01fa2aa5801419cf7f8ad911e027c4c3fb5f4d6d8239e739e2690a8b0454feaa"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/decode-ways.cpp",
+          "solutionSha256": "d2be06654ab3b59469b01e4e3e2c608050fca4e1245e52b932ab2baeab9f02d2"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0091.Decode Ways/Solution.java",
+          "solutionSha256": "422bf7b7bc47f70e31ba20380be3b76e67784a0655df631cc55cdc7a7522b898"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0091.Decode Ways/Solution.cs",
+          "solutionSha256": "195d8c0bfbcd831e3dd271b0bb127a5e7af22586204393e6ddb1157780ce1b76"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0091.Decode Ways/Solution.go",
+          "solutionSha256": "d79c4e1ac6a40e87c6d8e724a5a13740a4adc2ddfa3791a089c482e5fdd9e015"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0000-0099/0091.Decode Ways/Solution.ts",
+          "solutionSha256": "c094aa6f73b1e919572d83ddaebd85488cf1e82cbd659c24e05fc4d4cb9a6e85"
+        }
+      }
+    },
+    "121": {
+      "slug": "best-time-to-buy-and-sell-stock",
+      "record": "0121-best-time-to-buy-and-sell-stock.json",
+      "recordSha256": "89bf4444a29fb123f68ab1d1cabdc3a746429f5d81aa11da8d17a83503596489",
+      "judgeSha256": "76103497c5582e1efba55cf9ad2e99119a1acc918a5cea0f13a938508d28b7db",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0121.Best Time to Buy and Sell Stock/Solution.py",
+          "solutionSha256": "cd642d2a4433707b60b3742d79c92b6fc2a0d0b2fd1b4458a8ffadb7d6d0f784"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/best-time-to-buy-and-sell-stock.cpp",
+          "solutionSha256": "ea1f78bf68af4074acf2d889b13aacc3cecf057eab5b5cca317e92a5121bb5f3"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0121.Best Time to Buy and Sell Stock/Solution.java",
+          "solutionSha256": "aec1d5fe4f96c16bb7987ea56bdd02c4f1b0164922f29cdae1193cf091c3266b"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0121.Best Time to Buy and Sell Stock/Solution.cs",
+          "solutionSha256": "59728aab9425699219e562493df5cc4c8bfc364ba7354045ded9d9120883e42b"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0121.Best Time to Buy and Sell Stock/Solution.rs",
+          "solutionSha256": "dc7e9e911c82a81217f1d41f8cc0b8e2d94806391869defb7a67944231be9d4f"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0121.Best Time to Buy and Sell Stock/Solution.go",
+          "solutionSha256": "a883464b04d24d69937f92555cb718ac618f57b464bd9d72c6d7b046a828c474"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0121.Best Time to Buy and Sell Stock/Solution.ts",
+          "solutionSha256": "cc3079bc6d2cceec0f6fce5421faf5cc501b1a32b890bee86da6294cd6a21f1c"
+        }
+      }
+    },
+    "125": {
+      "slug": "valid-palindrome",
+      "record": "0125-valid-palindrome.json",
+      "recordSha256": "0dbad5d52eca4dd0e36a31a46f52df88f3bb326de2ff4294fcd116470e8cccc2",
+      "judgeSha256": "12bf7ba7421860cf97f8a7350f6cbf451b920eb6c452e666423b69f15592c281",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0125.Valid Palindrome/Solution.py",
+          "solutionSha256": "0278f5857a56ae5659b052d121709f8e1beddb0139c2de668700c5d2de122146"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/valid-palindrome.cpp",
+          "solutionSha256": "b75e694f2c30a0dc1de8763fb6da3e2e0c855e5f92b0d56a8ab200aa6222576e"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0125.Valid Palindrome/Solution.java",
+          "solutionSha256": "3477a290a79bb2e91a6c3b04875e82220d6cc50351a640a5e3cd6d32f22d76ee"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0125.Valid Palindrome/Solution.cs",
+          "solutionSha256": "83004415f23cb41cf22514f25199bba9c22504c69d445170b07ba4c16e198c01"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0125.Valid Palindrome/Solution.rs",
+          "solutionSha256": "768a28469ed5767317122909b54ff2066831ddfff44f48da810cc5c3f177bf74"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0125.Valid Palindrome/Solution.go",
+          "solutionSha256": "350b10ad01dc393f396961f5a23a66c456de9841f3cf68401660da42a9dea960"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0125.Valid Palindrome/Solution.ts",
+          "solutionSha256": "0e158aed2866ce84c8238553e6c64b44f0a051869069c63a7056746d37bf2fa3"
+        }
+      }
+    },
+    "128": {
+      "slug": "longest-consecutive-sequence",
+      "record": "0128-longest-consecutive-sequence.json",
+      "recordSha256": "347bf1c0de17e5aa9ef789f9d5ad0c04492d09597027fbc9a9792de741e9a806",
+      "judgeSha256": "580ecfe7f38937a08aae98ddad57d1fb0a6407dba4775d141a1da10fa5f4bc74",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0128.Longest Consecutive Sequence/Solution.py",
+          "solutionSha256": "e8d4dcaa6a8901dd1ec8e59da47db5f32d28f7b69127cc8b2e0f52ed89bd00b7"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/longest-consecutive-sequence.cpp",
+          "solutionSha256": "51da336225b147932410a9a1f6b4f6289fe6b4b08c5b22bb20ac76c25ee3f2ee"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0128.Longest Consecutive Sequence/Solution.java",
+          "solutionSha256": "eb189b4b617e8eae3dc0512472b0864d317300fffc2b562cb21c60fb6c13d547"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0128.Longest Consecutive Sequence/Solution.rs",
+          "solutionSha256": "ee9a7843a8faa75d3826b279f1500c3a890e4bf33993af72fff10419f2f2a919"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0128.Longest Consecutive Sequence/Solution.go",
+          "solutionSha256": "3ab14f3a263602d0bf9e0c126354b2182c1d394932c4834e1ebc1fbf46bb1b7e"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0128.Longest Consecutive Sequence/Solution.ts",
+          "solutionSha256": "81bf4d29cbf7f229bcc9a14f65b95d24ce66a06bc117df50c4e2d06318a14dbd"
+        }
+      }
+    },
+    "139": {
+      "slug": "word-break",
+      "record": "0139-word-break.json",
+      "recordSha256": "de8f90fadc028d7c65a7a0b9c3050bd049d45093c87a79763046b8cf77e7d44a",
+      "judgeSha256": "d0dc229986e7178c6df063876cc41be49b1c67d981c3ae13ff8a4496f243db7a",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0139.Word Break/Solution.py",
+          "solutionSha256": "d4c00555f85e88c2334db1ce51b91eb677dad8cf0da3508164c62146091e8dc3"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/word-break.cpp",
+          "solutionSha256": "9b810c99782732d6e854aea183239850201fcf9236f62c5c63d57dbaded3f98a"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0139.Word Break/Solution.java",
+          "solutionSha256": "ac6e68353c1dbf8a6472a15fe74718d1bd5b9603022968cee283dc535d01f5c9"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0139.Word Break/Solution.cs",
+          "solutionSha256": "e2fcd5ee961eea67c9ed44e420ecdd4ecaf496f058d6934114e5a399b65849e1"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0139.Word Break/Solution.rs",
+          "solutionSha256": "e72c651003954ecde61ce7a1af4f9310540fd4f336f46fba0a733969c32883f3"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0139.Word Break/Solution.go",
+          "solutionSha256": "fac641424fb745c383e144fe72197aeb2055c256086df68e340599c2865afd69"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0139.Word Break/Solution.ts",
+          "solutionSha256": "f4853d4cb38d196c4325e2d7529238b22f99a0da6420a1ba190b6fc3d1c44845"
+        }
+      }
+    },
+    "152": {
+      "slug": "maximum-product-subarray",
+      "record": "0152-maximum-product-subarray.json",
+      "recordSha256": "1337cc7263598e3c0909eaad325735395c0f2c951e7ca40b4cea9601efcc7447",
+      "judgeSha256": "6688ac0632f57429aa58bc33fb57969bde3c8bfa009c53408788528e5d08c3fd",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0152.Maximum Product Subarray/Solution.py",
+          "solutionSha256": "ca68ddff6e49b12fd7f1c33b857469aae990a19b84f4e35ce081d24f61a34ed8"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/maximum-product-subarray.cpp",
+          "solutionSha256": "020431a0924ceaa6a9b0ae0484f67ef2a1a12f011ab2b94e76bfde68d057b6f9"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0152.Maximum Product Subarray/Solution.java",
+          "solutionSha256": "fe92fff89c0d74f884939c473bb411c9bb8eda198f5d0d1950773715f2e87c64"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0152.Maximum Product Subarray/Solution.cs",
+          "solutionSha256": "80d768b167f2fc226ce7135939635c584735706c085d5c162b20c048deb58d19"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0152.Maximum Product Subarray/Solution.rs",
+          "solutionSha256": "f6d8bf1cae4bbb9bc8d3e4f4357661cd207f574d53b41741bc261970fe2f2f29"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0152.Maximum Product Subarray/Solution.go",
+          "solutionSha256": "fd5fd5d309153f8f1e6ac9a743bc2409f57d99aa822a5f219f644baad0d00b32"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0152.Maximum Product Subarray/Solution.ts",
+          "solutionSha256": "1bcf60f3621a0b82193bd52268ca3fd013a5e54007fd7a5283b11f57fdca9de8"
+        }
+      }
+    },
+    "153": {
+      "slug": "find-minimum-in-rotated-sorted-array",
+      "record": "0153-find-minimum-in-rotated-sorted-array.json",
+      "recordSha256": "94f9a3813839cc83e2d012f198d5467b7b56d512992a432b863909a4f303e374",
+      "judgeSha256": "a11abce95c29cdaaa38c66f09bf78c090ea9a9bcaab101d95aa150595ae20e94",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0153.Find Minimum in Rotated Sorted Array/Solution.py",
+          "solutionSha256": "fdebd7f97d277e7cb410fbe105d8746cb157888c99b7deb1bc39cf378a30c2ab"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/find-minimum-in-rotated-sorted-array.cpp",
+          "solutionSha256": "47e7ef889a8080d8b50ec48abd29a2eb3d66c034d9713a53c06334ff262b864f"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0153.Find Minimum in Rotated Sorted Array/Solution.java",
+          "solutionSha256": "0b3f0348621be5f0bb8ad459a0546bc5ff29db838f75386fbe4d5b97b6829161"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0153.Find Minimum in Rotated Sorted Array/Solution.rs",
+          "solutionSha256": "344fb2672276d7bd30f87df7bdca48bdd5908f9d700b5ab14b8d448943dddcea"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0153.Find Minimum in Rotated Sorted Array/Solution.go",
+          "solutionSha256": "c605f37663935ac0da31a4bca7d4abca53e94c60688a74235c9aa94a70a6fa1b"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0153.Find Minimum in Rotated Sorted Array/Solution.ts",
+          "solutionSha256": "238c107cf76b297c4cdbdb9f650873dbdf1ad28048867c9ce45f44b590e81ddb"
+        }
+      }
+    },
+    "190": {
+      "slug": "reverse-bits",
+      "record": "0190-reverse-bits.json",
+      "recordSha256": "0bb3daf88ab35b200173b83fea48de49ff3219b1361b39cd00ff0f4d823211e9",
+      "judgeSha256": "b57de3b7f71328e49fed60f20a62d5ccec432e5ac4b0f0e1f46d765a3f2e6275",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0190.Reverse Bits/Solution.py",
+          "solutionSha256": "fed9dd5e9c443d4496da47acb17fb6c0aa2db82e89cb63da96c3d0335abce06b"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/reverse-bits.cpp",
+          "solutionSha256": "317b320bd204a5760c48bd3f0c3ba548bd8e6263297478a6c1764c0b18dca1f3"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0190.Reverse Bits/Solution.java",
+          "solutionSha256": "5be61eaf90e49dc4b24085f9314388c5ffdb679afc548d1d880c879b7d8e36ed"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0190.Reverse Bits/Solution.rs",
+          "solutionSha256": "b145bbbfe0cc6c2b43592aeb7740dc0c9bbe5ce2272d7a6c85850566de60badc"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0190.Reverse Bits/Solution.go",
+          "solutionSha256": "f2d2bf913d9497ceac80f1f6845705c9f204058222f956a77076540b27219c8a"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0190.Reverse Bits/Solution.ts",
+          "solutionSha256": "2b3856bd71f887ed2465ae7a3fb46529e0ce82644792e64e62b5294e68a2f0d0"
+        }
+      }
+    },
+    "191": {
+      "slug": "number-of-1-bits",
+      "record": "0191-number-of-1-bits.json",
+      "recordSha256": "2792758e3273a20b2a4026cbb77db4eece4e93e80ff1f1daa71eec1b4c173eb3",
+      "judgeSha256": "d2d13317863eef91d32e984088575fd21ea090d2f87a5613417b4c9a1122ba43",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0191.Number of 1 Bits/Solution.py",
+          "solutionSha256": "a14dc9cfa4a64fd7e75bf7915e95cd7ed5600d4ea5718ce635d608b8d9a41846"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/number-of-1-bits.cpp",
+          "solutionSha256": "07b688b5544df352fd77da126ba4cf8162d442bd3b471c3054e2732e6aa66c45"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0191.Number of 1 Bits/Solution.java",
+          "solutionSha256": "0c5380ffd0fe3112b4f9188d711e3e6c9ed5a6753fb0ecde1393811e99eb5249"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0191.Number of 1 Bits/Solution.rs",
+          "solutionSha256": "b948ae695863f3e2105e1117c4746836c868388d875da88d37cf7b5a31f48144"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0191.Number of 1 Bits/Solution.go",
+          "solutionSha256": "a658d3b185af1c9a5948e968435b6f3630a151e7ffae0156e8523cfd0c5e2c1c"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0191.Number of 1 Bits/Solution.ts",
+          "solutionSha256": "8caaa2df4f6fd6f8626aaf62dc6daa83a6b38b095674564203e9672ee5c1fd48"
+        }
+      }
+    },
+    "198": {
+      "slug": "house-robber",
+      "record": "0198-house-robber.json",
+      "recordSha256": "b32147ebc0906deb4340fa366630abe76419486be8ea38e821ec54fa8dbedb5e",
+      "judgeSha256": "3ee1b9913c1ffe5c20682e68c1200b30549445fdcc0695c32fa43eec0a8a0740",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0198.House Robber/Solution.py",
+          "solutionSha256": "c69327b78a4ea817f46f5f9fc259cf7a24d08b42309a98b3e030683693586537"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/house-robber.cpp",
+          "solutionSha256": "9c16d7f70ef0fb137f494097a35ce3d694c3411e09983ad4378b8eccc7e34d83"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0198.House Robber/Solution.java",
+          "solutionSha256": "b82ee8dca9e302f1d7d57fa9a87866d22d4d342b5dbc30a80c4033f9860ce34e"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0198.House Robber/Solution.rs",
+          "solutionSha256": "cc441144bea444a6593e3586a9819af4314e0d59dd1d8fd795735c7feeed622c"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0198.House Robber/Solution.go",
+          "solutionSha256": "85332f17688c42f1b4e2cbdb663156feb589c445fed9ff4ef81e963aefac734f"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0100-0199/0198.House Robber/Solution.ts",
+          "solutionSha256": "27008760cc9d98fc82baefe6412640d790d027cb28b91a59c0b5021b5523fe90"
+        }
+      }
+    },
+    "207": {
+      "slug": "course-schedule",
+      "record": "0207-course-schedule.json",
+      "recordSha256": "dd88a96be908c5b9c39662865f3fd40fd1ccef50ce222bfbd6c156edb1aa4b85",
+      "judgeSha256": "9a56d5f6cf99baea95d5901de36bf6991e71aa9f731091f86dce6570e231367f",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0207.Course Schedule/Solution.py",
+          "solutionSha256": "9f2dc8600adfe3d44f62294938d49d267dcef53e212a2da1bf0102376da8bcb7"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/course-schedule.cpp",
+          "solutionSha256": "e3acff005f9864030dac795d34f563a28f066688c784c8d3d37992bcebc152cf"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0207.Course Schedule/Solution.java",
+          "solutionSha256": "673c43fc6dd16e246cfd3a6354cfb18fec9151c621736ce61deaa17662c5cf2b"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0207.Course Schedule/Solution.cs",
+          "solutionSha256": "a7517861e9c1ea42d478e0ff368c13ef14ce2cb9321af1d98f2e0a8fe537042c"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0207.Course Schedule/Solution.rs",
+          "solutionSha256": "4f67f914dcb648a08af6743066c58a9361915f7931665ec1050884396411fe18"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0207.Course Schedule/Solution.go",
+          "solutionSha256": "3defee08a2a51c8f3bd9160485731bbd015fefdfed35535a675aae1f7ba14a16"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0207.Course Schedule/Solution.ts",
+          "solutionSha256": "2ea6db25923a29c70bcd2192b2707a1c9427968ba60a70cdae9a7d4bb7b5705d"
+        }
+      }
+    },
+    "213": {
+      "slug": "house-robber-ii",
+      "record": "0213-house-robber-ii.json",
+      "recordSha256": "be841a76a42cf031a77cb188a19bee4e4ceb2ea12d7b23237787c83d70f7b108",
+      "judgeSha256": "b1970a347ba1f671e544669f62094135feb7558a049239217e85a5715a4ec274",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0213.House Robber II/Solution.py",
+          "solutionSha256": "78652f6d2db71e7a8f67e7955c27e6e218d5e821d1e28aab73a610c50f7433b9"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/house-robber-ii.cpp",
+          "solutionSha256": "cc0a646fdf4a8fd465e02a26cb24c1e6167076ff789e86e66a0e7ce5cda63ea5"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0213.House Robber II/Solution.java",
+          "solutionSha256": "d092f5b8d3c1055c5f531144b5e4f95b85e7a24a5a364c8601ef5db9f0cc1ea8"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0213.House Robber II/Solution.rs",
+          "solutionSha256": "3ee360a9b818ba1bacf95cef95825f0361bc9979c2e3e56645a07f931572b0f0"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0213.House Robber II/Solution.go",
+          "solutionSha256": "18e1accb63f4661a1858c828ad2b90ffdb742b2517302e53f7211aba993152b2"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0213.House Robber II/Solution.ts",
+          "solutionSha256": "bbc0cf14fb8e1ffd16b3aa80d063b3ee70a22e303bad8210afd35b7f4d07bf84"
+        }
+      }
+    },
+    "217": {
+      "slug": "contains-duplicate",
+      "record": "0217-contains-duplicate.json",
+      "recordSha256": "01a5d0667f137545a04b37a5e0502abd8f93e9c805b0b21eecf35e1cda8c1289",
+      "judgeSha256": "954bab28ad25d9a68a6c5656c2541b68c10141e5c34333b32c46f1d7755efbd7",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0217.Contains Duplicate/Solution.py",
+          "solutionSha256": "1fbd4fcafa10e2cbe46449f0bd7e87bc8bfc191b15237ff80f0ee635f9510b95"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/contains-duplicate.cpp",
+          "solutionSha256": "601540ea2ec08702c29de08a9b7f210273f40861f9cacf444b1f8bac3016e8f2"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0217.Contains Duplicate/Solution.java",
+          "solutionSha256": "a23ac7f95db8b3603a22f09a4f2c91401b2fefa5b35ae9ec21ffd11ff19d1e8d"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0217.Contains Duplicate/Solution.cs",
+          "solutionSha256": "f6d2bafd37393c77090262da0a401c1d2d48e884acbb7b41e380d403097006f9"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0217.Contains Duplicate/Solution.rs",
+          "solutionSha256": "dcc35ef7577be86c6407cdc6bf4532b5db33deaec73ebf0208aa948c6321eb58"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0217.Contains Duplicate/Solution.go",
+          "solutionSha256": "6c90425a51808332786f1206f34118a9aff490598047afdfefa129f85fce9c62"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0217.Contains Duplicate/Solution.ts",
+          "solutionSha256": "be2d7419da0a2ae22a73c88728bd3ddef78082f207db339569fff9e945ebf80b"
+        }
+      }
+    },
+    "238": {
+      "slug": "product-of-array-except-self",
+      "record": "0238-product-of-array-except-self.json",
+      "recordSha256": "073b4dbb3af705cd466414d28adeb1b3cea088a2589c8183d689f28d014c71bc",
+      "judgeSha256": "539b1a2b67244fd715a6488ec2a1d234af6906877b20ba0f6a09cfa7fb4a5ea9",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0238.Product of Array Except Self/Solution.py",
+          "solutionSha256": "5db3be1113bf60621f4f15b3343367bbc1e4bc16fbf706e03be2e160d6d9ddf9"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/product-of-array-except-self.cpp",
+          "solutionSha256": "75f55ac615cd04a3c3e86b00eda805fe729577e46eb2155f2bec4584f3b0a3d6"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0238.Product of Array Except Self/Solution.java",
+          "solutionSha256": "5b320b9b4313777a5cd83110201e3e09423e3b28dfad17197162427d36e47434"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0238.Product of Array Except Self/Solution.cs",
+          "solutionSha256": "3279a44bd1c341fac5a1dcdd1c8f5ea0eaf643ce6e4796f62deeb2644376d1e2"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0238.Product of Array Except Self/Solution.rs",
+          "solutionSha256": "863c60d9597ba0b2c8a8985a2e3ab26b6928dfc88489c7fd077289570557c919"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0238.Product of Array Except Self/Solution.go",
+          "solutionSha256": "39d456381d992b71717916993c4eff12e0949e2bebba62c4b94bc7de00c679c5"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0238.Product of Array Except Self/Solution.ts",
+          "solutionSha256": "6f16210d10e1b61461c65273b5e2f45e707707bc8edcd37c75c0055d64a178a5"
+        }
+      }
+    },
+    "242": {
+      "slug": "valid-anagram",
+      "record": "0242-valid-anagram.json",
+      "recordSha256": "ab1bdd2fa51fd7c21493d82790ae74166322d86d79ae0e3535acb868e0bc289e",
+      "judgeSha256": "2b5eea3c22b7be744bf34e389d01e11ca149ab52019c73d8421a2e6a21b991e6",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0242.Valid Anagram/Solution.py",
+          "solutionSha256": "048d862659d5874daead535c283a14d7173b1e26bcc915195a61560ee2aa26c9"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/valid-anagram.cpp",
+          "solutionSha256": "3adc0b3fd067ffe758958e1b9e1213e1daf841916ace810d88bbd8edf9c72cef"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0242.Valid Anagram/Solution.java",
+          "solutionSha256": "2d6883ed79a5ec40c2c6ce0ec7329c334c33ef31d6a9a9d7a97ff1b53aae658c"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0242.Valid Anagram/Solution.cs",
+          "solutionSha256": "f3bf65240bf95d4cfe37f5d6d173b7c8d260f544f52c7c6e2724f43d102a1d48"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0242.Valid Anagram/Solution.rs",
+          "solutionSha256": "9f29d469ac3988be8b7348ef07685564ccca1ac1e5bde35275afbc3b020609ee"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0242.Valid Anagram/Solution.go",
+          "solutionSha256": "86e6f02708abc13c2a34253d82f077b777fbd6ce4c709a82fbf2408e63398230"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0242.Valid Anagram/Solution.ts",
+          "solutionSha256": "9ba7b055cc9ee2fdf2488b20622ece3898b4a130fad2d282b899034c89f7761b"
+        }
+      }
+    },
+    "268": {
+      "slug": "missing-number",
+      "record": "0268-missing-number.json",
+      "recordSha256": "281146ee2fbc188b500fc8cda56d1cdc42b2216bdd0855031ed82391175a8b58",
+      "judgeSha256": "7e9a102ef27ac97f14e66e3446943ff5461f1fe34cb82f176986d9a44e11698a",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0268.Missing Number/Solution.py",
+          "solutionSha256": "398482d389dba47804fe73ad8e4dbc038934474f95c41d61283f74308b2bf129"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/missing-number.cpp",
+          "solutionSha256": "5046440820552b8fcd93b7ab2ee413155ddad29767db09f9189b8106dcd8d1df"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0268.Missing Number/Solution.java",
+          "solutionSha256": "393a81af6ce919ae6858aff691bea963b0e68f25237c7444d4b137d6ce660a4c"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0268.Missing Number/Solution.rs",
+          "solutionSha256": "74b7a42787da6c6e8cc836de1f5dd9f8e16e89f1787d83f7a866a25a384ec4f5"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0268.Missing Number/Solution.go",
+          "solutionSha256": "f4ed81f37a22e98dff1d85c3b00b3b9d7506258432b41e8d68bf2ee0ce7c3c29"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0200-0299/0268.Missing Number/Solution.ts",
+          "solutionSha256": "9a63f6bb51f7d3d5d1dab0e0ba1c3b1b77ae869baa92444e99cd286286cc4a4c"
+        }
+      }
+    },
+    "300": {
+      "slug": "longest-increasing-subsequence",
+      "record": "0300-longest-increasing-subsequence.json",
+      "recordSha256": "7960cdc79a0aaf4f29859df48f3b469ef9caa557045e9ed8e750c6ea44c0a9ed",
+      "judgeSha256": "85840b12e0f0a1b741aac8aa48d1bbec3b18b8f360c1cb9f86ffcd944719e31e",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0300.Longest Increasing Subsequence/Solution.py",
+          "solutionSha256": "38d5b46defb993a11191a735d9a569d88f8c2a05c3808a97c1ab69a1e2c153ec"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/longest-increasing-subsequence.cpp",
+          "solutionSha256": "4adda56475679e87f97740c7ed9449ceca6beaeb9298f6d3579e90865e7aeec1"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0300.Longest Increasing Subsequence/Solution.java",
+          "solutionSha256": "64ea460ee58ab1fe5a1dc36e03bf69453a409ab4bd6e01d058bf1d58265f7dae"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0300.Longest Increasing Subsequence/Solution.rs",
+          "solutionSha256": "38e3c49b60a67ff6e7af514dc8d8fd5fbd6880b59b198b41cd918816f8f9b467"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0300.Longest Increasing Subsequence/Solution.go",
+          "solutionSha256": "e28bfaf4e484d3fa905d68082ace19b02f66a769429e1972da5aefbbbb78b9a6"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0300.Longest Increasing Subsequence/Solution.ts",
+          "solutionSha256": "16c8fb963aafea1b81b5d48ea40a070c10e7088c7f3f999f70523c645d6939ab"
+        }
+      }
+    },
+    "322": {
+      "slug": "coin-change",
+      "record": "0322-coin-change.json",
+      "recordSha256": "3d7942c6980ab75bde6ff8ea04bafda68015384c1863844056569c7aec1cc957",
+      "judgeSha256": "f62a31fb65d52d9d87c9cdacaf7b4d3abacd1debe685541c606592eb122235ab",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0322.Coin Change/Solution.py",
+          "solutionSha256": "7d9ff9fbc4701f656dbb99d3cbaf510ba684ca4ca25ba38cca37ab4f9a551339"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/coin-change.cpp",
+          "solutionSha256": "f489cfeb3fde6182774062b35a70f29a6244e3f864f5f4eb166bed2dfdf1c199"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0322.Coin Change/Solution.java",
+          "solutionSha256": "c59b110ba9adf43f83bb64319021d55f4e7b4ca578937c2b0ea1dfd494bdf55d"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0322.Coin Change/Solution.rs",
+          "solutionSha256": "0c41ba405b2753e641a8463933219a97d2332cdcf21711bc257363e420a9095e"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0322.Coin Change/Solution.go",
+          "solutionSha256": "4d97046f7f24f3e0e174291b3374302182e37e264ecff0ade5d7099507120af5"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0322.Coin Change/Solution.ts",
+          "solutionSha256": "6b8e49578af007912abfc2350bf281749cbd7fe09c150fc78abe4212a87c13bb"
+        }
+      }
+    },
+    "338": {
+      "slug": "counting-bits",
+      "record": "0338-counting-bits.json",
+      "recordSha256": "6dd0d1068d875a2a01c98df9de124db939ae9fe5cd889729fe7dbf6766435e85",
+      "judgeSha256": "df2b8fffc859713db806118b986d6d630e84c56b87df59647caf0cadc67409b0",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0338.Counting Bits/Solution.py",
+          "solutionSha256": "0c97aecfd3f7d38953f8041c06f03868c58651ef5c6c0c444ca78e00e33b1aa8"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/counting-bits.cpp",
+          "solutionSha256": "c3ee9ed68a0f85c4a63afa3718f92c49293e110c22cb17ad83660a85673f02b7"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0338.Counting Bits/Solution.java",
+          "solutionSha256": "7625d2d5a361b71b38762406b16a2f0b6a699cb75170598fe469f478e19689a8"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0338.Counting Bits/Solution.go",
+          "solutionSha256": "c4e481634d59540707780fedc484e64de44c893135decf7b82bc93de74013b00"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0338.Counting Bits/Solution.ts",
+          "solutionSha256": "76308549a0ad6fbca21fb99d06197acfefc854e165f92f6ec467cdd8a8e850f4"
+        }
+      }
+    },
+    "347": {
+      "slug": "top-k-frequent-elements",
+      "record": "0347-top-k-frequent-elements.json",
+      "recordSha256": "e6d6f04b26eb520087f07005a51e80282efc0135d99ff12b9abf4fa1db3de2ff",
+      "judgeSha256": "07aa8521e28f30c27309b93c3627c804b7f6fd26f03338fbae77d2b9edcd974e",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0347.Top K Frequent Elements/Solution.py",
+          "solutionSha256": "08b5955c1afc903d7388e99464103c6aaabec7c64a2843478677c3406d30734d"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/top-k-frequent-elements.cpp",
+          "solutionSha256": "bcb8d70d4f269796ca18de8bc8f0dae76ffaba7a75b796eeb681d5540c05a37e"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0347.Top K Frequent Elements/Solution.java",
+          "solutionSha256": "ef41987ca10e3c0ecdd9db0c889e87260cab5d78b3b6a3226f67227fafe43ee3"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0347.Top K Frequent Elements/Solution.rs",
+          "solutionSha256": "6573e85c2117afb5e6b8190e2c7bfe1e436fee2a288241e0937f50bf7796ecc9"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0347.Top K Frequent Elements/Solution.go",
+          "solutionSha256": "cafeaf8b826dbc882d0e03bdb64f23810de2d3b65970e29f49ab0886143fac1e"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0347.Top K Frequent Elements/Solution.ts",
+          "solutionSha256": "97a06ac60fa838f0d3f22b668962d8a1f4ac07840921d952667781f5111e885e"
+        }
+      }
+    },
+    "371": {
+      "slug": "sum-of-two-integers",
+      "record": "0371-sum-of-two-integers.json",
+      "recordSha256": "23f0a57af48c236c1649261954efa872e920e7242efa6531f80d2ba5c5ae0efd",
+      "judgeSha256": "8d1e7eb3b82a9d1b3e62e71f98e62a77af6ac3cb6d4cdeb7c34a2b48b608c495",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0371.Sum of Two Integers/Solution.py",
+          "solutionSha256": "a214b7babc195b6922e302cab30bf221d5a4e2829e61794211ad69541531dfd4"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/sum-of-two-integers.cpp",
+          "solutionSha256": "ceee42529abd2e36c9a1d56b1bc81afd7da19ca3be77f70a049ae4e7340f2837"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0371.Sum of Two Integers/Solution.java",
+          "solutionSha256": "4a1fb701870764e90d5f14fcaa3075f1572a9a9281de1ce54913b101f0b2f24f"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0371.Sum of Two Integers/Solution.go",
+          "solutionSha256": "2bd3bc995658e8695b34b7f4c0762f003dab26327a9ff371184857aa3b18259e"
+        }
+      }
+    },
+    "377": {
+      "slug": "combination-sum-iv",
+      "record": "0377-combination-sum-iv.json",
+      "recordSha256": "8b957980a8022516bac111de286de394b1cb90e76b740c44b676db68b2934f4d",
+      "judgeSha256": "8ca193bd29b4cb0b1e97baa2158bac4aa0e4fea3bff8941173218a8117c50901",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0377.Combination Sum IV/Solution.py",
+          "solutionSha256": "4dfee60f3a5ccae957cec85d5c37e894524d68e6c5a82524dc1deceb79b37dd1"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/combination-sum-iv.cpp",
+          "solutionSha256": "680740a0d835d45a1a32b7e5d7ef078d2ec58e03046a32474acaec715d2eb5e7"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0377.Combination Sum IV/Solution.java",
+          "solutionSha256": "5cf0735e1a7a595114ff3ff16cec14da8f9f86723b307b2f306672462a5839df"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0377.Combination Sum IV/Solution.cs",
+          "solutionSha256": "99d67f37637be1a9ca0c333247d060469e09b5c559cf59f78d3d37f0df839dd5"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0377.Combination Sum IV/Solution.go",
+          "solutionSha256": "94c02bb2299c2d7f04c5be56b85aebb78c3114fa83c98aa362f8d82a165af42c"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0300-0399/0377.Combination Sum IV/Solution.ts",
+          "solutionSha256": "049580c610c87eced9f2b3cbdf26351289e713a6350e9563f965d941337da14b"
+        }
+      }
+    },
+    "417": {
+      "slug": "pacific-atlantic-water-flow",
+      "record": "0417-pacific-atlantic-water-flow.json",
+      "recordSha256": "585e510529aba37c1aaeec3b1cad458c76e2fc6d52848d720f00e4449b6c5c35",
+      "judgeSha256": "ef15e97dad889415db8b6e5a52ea962e69e088c56832aef1ccd5073004530b6c",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0417.Pacific Atlantic Water Flow/Solution.py",
+          "solutionSha256": "eff83e8858ce5c1dc9a33385a9e26e9f3bcafdb69547151747545b5d67584d91"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/pacific-atlantic-water-flow.cpp",
+          "solutionSha256": "1f2948dc5b7d42818c5ce1ea8944b289f7812b52db84f7c38efcfed8a479b4cb"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0417.Pacific Atlantic Water Flow/Solution.java",
+          "solutionSha256": "1425ae5b7fe8a90721956ebe70cd88dd5d76d18cd10cfab84867f26933199e9c"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0417.Pacific Atlantic Water Flow/Solution.rs",
+          "solutionSha256": "10fcedeed41d21d66d234769ee97e471e624abd14217bb9fd66050df9dbe51dd"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0417.Pacific Atlantic Water Flow/Solution.go",
+          "solutionSha256": "e6eebe26cea39a38d59b14e3db63197dd06b711badbe14293dd5e07ea872a9b2"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0417.Pacific Atlantic Water Flow/Solution.ts",
+          "solutionSha256": "584877722c85d9e6b1e2ed38b9e426198564cda23406a5b11ef7902d7ffc29bc"
+        }
+      }
+    },
+    "424": {
+      "slug": "longest-repeating-character-replacement",
+      "record": "0424-longest-repeating-character-replacement.json",
+      "recordSha256": "aa2a0bb4c437007fac75d483d84e551eb305db813338810c7ccfb31f3ac59932",
+      "judgeSha256": "2f01485b13ccfcf16220a2791d0909a300cee5b2790a3b10f4037b95b2f33caf",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0424.Longest Repeating Character Replacement/Solution.py",
+          "solutionSha256": "23b409e7531844b548e0e9ecee92cc6166cd6be40e5cf356ef8574c6d0ab3c7a"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/longest-repeating-character-replacement.cpp",
+          "solutionSha256": "c92023a055f729283f15f81ef5c85e4071302e1426948a81a2cb1f7b6aec1913"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0424.Longest Repeating Character Replacement/Solution.java",
+          "solutionSha256": "ce8282731302aa24eba5be0d8ea37b7a03a2ee034332708a8a7379dcf9ef27f1"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0424.Longest Repeating Character Replacement/Solution.go",
+          "solutionSha256": "77b3d5dc264a73317a76d3ee31c1c29afbff0b6c8b5a651b07d1eb721e268fa7"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0424.Longest Repeating Character Replacement/Solution.ts",
+          "solutionSha256": "96f277bc4ebc00602c242040aeb69e252f56d567d580b735ac0e0416edcf50f2"
+        }
+      }
+    },
+    "435": {
+      "slug": "non-overlapping-intervals",
+      "record": "0435-non-overlapping-intervals.json",
+      "recordSha256": "957e09c7cdd95d2c0e94fc456196674b37aa4d1b77cf23334ad6d8c2c4294ef3",
+      "judgeSha256": "028a8d1636f4b27b5f3341de0ae7f924bb37a12b22e12042dc0e34580deed410",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0435.Non-overlapping Intervals/Solution.py",
+          "solutionSha256": "6a8a1b2d15a6890b81b18cc382f60688de125d44191e9c3c8721b55a4d9a405b"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/non-overlapping-intervals.cpp",
+          "solutionSha256": "692884f7a8da5bcbe345a0880a85d296543fea3fe771c998e92438c24cc519dc"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0435.Non-overlapping Intervals/Solution.java",
+          "solutionSha256": "4de7a5589c77cbb09993b0e084c89d0921668a1ad4cc8b4dad54fbf40fa2091a"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0435.Non-overlapping Intervals/Solution.go",
+          "solutionSha256": "2a3fb311bff9060bbf35223bb29eaaab88ad30166f1f5f516eb603233bfe3780"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0400-0499/0435.Non-overlapping Intervals/Solution.ts",
+          "solutionSha256": "0e8c88121cd5ee9853bf57353ad34daecfd7f72ac75ecef809087c34117f7906"
+        }
+      }
+    },
+    "647": {
+      "slug": "palindromic-substrings",
+      "record": "0647-palindromic-substrings.json",
+      "recordSha256": "1c5d6952deb4363bcda12b89cd23fa59ba7a5d80e368b50d9cd5e8b576bc2cef",
+      "judgeSha256": "84d7589d69aebf82b7527256b7d5ae774e8cea52969c75cc9526034c50489611",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0600-0699/0647.Palindromic Substrings/Solution.py",
+          "solutionSha256": "3d7f2ab195788081e40d1295e42877f54ad0e387181e81f4becc6023072cc0dc"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/palindromic-substrings.cpp",
+          "solutionSha256": "c735117aa03d7d92028d1a95a03537d566f08ef54c045b1b64733f4306da6361"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0600-0699/0647.Palindromic Substrings/Solution.java",
+          "solutionSha256": "227f46dd1eafd046956e87d2060fe5a17a5f56c1e5b6c9774383f4303e53961b"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0600-0699/0647.Palindromic Substrings/Solution.go",
+          "solutionSha256": "4b69c2bb2c43496c97f0c9907ebc0623a51cf7023f19ee800bc5566286e4c62f"
+        }
+      }
+    },
+    "704": {
+      "slug": "binary-search",
+      "record": "0704-binary-search.json",
+      "recordSha256": "2c079bd3c63063ca45e378962e9b24356129d40d86195c9c6fc3667e4c509b77",
+      "judgeSha256": "aeb933f68919c13584f99a5a4a2e9e6a6f290c0ceceaf7ce806b5bd964c99047",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "0700-0799/0704.Binary Search/Solution.py",
+          "solutionSha256": "4a47919d3f89d295f9c8027955e84f5e5181d6696e1171902629f66c8a7899f5"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/binary-search.cpp",
+          "solutionSha256": "88d2af5a4d28e87b1d16aca46cdebb0088d310a1455762cfb8d31f13ff924432"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "0700-0799/0704.Binary Search/Solution.java",
+          "solutionSha256": "6e1d1c70c313aab8f7ece2226acf30f23ae28261cbc4c1af04cd172b2e06b5b3"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "0700-0799/0704.Binary Search/Solution.cs",
+          "solutionSha256": "677d5c36161b194a3703ff599272782e3e9508ef413ff919c0dbbcd02b46bbcf"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "0700-0799/0704.Binary Search/Solution.rs",
+          "solutionSha256": "1a154832ec7ffb2ff292fd21a502782a09b5f0992b41ba9bad0d2945427b017f"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "0700-0799/0704.Binary Search/Solution.go",
+          "solutionSha256": "85ab26dce8e999bfc94d64fd4cf2861c51cbc3f4a12db823896591b35a4a6b46"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "0700-0799/0704.Binary Search/Solution.ts",
+          "solutionSha256": "96ee94fb7d42bac8252e0024961bfb15a24596a402ebc2ad42f03dfde6b3ba79"
+        }
+      }
+    },
+    "1143": {
+      "slug": "longest-common-subsequence",
+      "record": "1143-longest-common-subsequence.json",
+      "recordSha256": "1dff25010b522da7094cc71144afefead0685549a1bd9e54f04f39db0720f502",
+      "judgeSha256": "733ea32f3c9f62870c64220e1bb6b151d4bf25177421f29d9b330620ec6ed6f7",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "1100-1199/1143.Longest Common Subsequence/Solution.py",
+          "solutionSha256": "ed4d2f06effe9c1c636787d11bb816a762a63ec60fd08281aeb4217d6a36c39f"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/longest-common-subsequence.cpp",
+          "solutionSha256": "6c7bd0fa16c6432f4125425285e19178652e2c2d94c691e9ad2333bb51a6f3e0"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "1100-1199/1143.Longest Common Subsequence/Solution.java",
+          "solutionSha256": "3cb38434f58a1897647dfb1bc7a30adfd76361b188c748089cea1bd8d85ebd16"
+        },
+        "csharp": {
+          "solutionSource": "doocs",
+          "solution": "1100-1199/1143.Longest Common Subsequence/Solution.cs",
+          "solutionSha256": "e0bcf45e8035fd9b846bb851ece2f291de8ef2e3ed760426c0d300da43b4b95b"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "1100-1199/1143.Longest Common Subsequence/Solution.rs",
+          "solutionSha256": "3751ede781a57f7a1a8e46bd02b2c4a3145a8acf1a8daa79f5d788fd43f954e3"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "1100-1199/1143.Longest Common Subsequence/Solution.go",
+          "solutionSha256": "1f38c352c2b5d5fa83b73e6dd8677deae54c1fa534833b8d542c5231115b6d71"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "1100-1199/1143.Longest Common Subsequence/Solution.ts",
+          "solutionSha256": "584a3bc3920b2f24394c1dc18ecefcf4c6ed3917c883174a3eae0120f4b55978"
+        }
+      }
+    },
+    "1929": {
+      "slug": "concatenation-of-array",
+      "record": "1929-concatenation-of-array.json",
+      "recordSha256": "1140850712793fb011eefc9104e80a639a7fb198ffe05883135bb5d3eece418f",
+      "judgeSha256": "b300715986673141a3cd8fd9aea887343946617ea98cb5eba7f7d625db22609a",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "1900-1999/1929.Concatenation of Array/Solution.py",
+          "solutionSha256": "20528a1f286ca916e4d2835cbb185e96f9810a284e9c37b383c9f1d90ff93493"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/concatenation-of-array.cpp",
+          "solutionSha256": "9274905622e96ed1b9e39b7149e45cf1040db33456c675f97c629dd58edba891"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "1900-1999/1929.Concatenation of Array/Solution.java",
+          "solutionSha256": "296a97f581720683f8ed210a9186c95bf99fe1332509023d9d0dd9e0b33dde7e"
+        },
+        "rust": {
+          "solutionSource": "doocs",
+          "solution": "1900-1999/1929.Concatenation of Array/Solution.rs",
+          "solutionSha256": "63c237883c2089b594b90024ac5cf939801a4c6feaa1faa5fe05b5c62e46093e"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "1900-1999/1929.Concatenation of Array/Solution.go",
+          "solutionSha256": "c9a84f280fc888c8775438982ea3ee8a42d6ea74dc92d7a7d51801274a1332bd"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "1900-1999/1929.Concatenation of Array/Solution.ts",
+          "solutionSha256": "7cb5246732177d78a45cd20e5e0621d18619d2030778a0e8d35958a545a6d009"
+        }
+      }
+    },
+    "3243": {
+      "slug": "shortest-distance-after-road-addition-queries-i",
+      "record": "3243-shortest-distance-after-road-addition-queries-i.json",
+      "recordSha256": "0c2e7970bc18fca136e51e1add98e68b7f6b7ff5409f85340d51cf24ec8d41fd",
+      "judgeSha256": "1d998c4708d790caad0a0c8e97cda1efaab201311b6af02b950e889f6ceea453",
+      "languages": {
+        "python": {
+          "solutionSource": "doocs",
+          "solution": "3200-3299/3243.Shortest Distance After Road Addition Queries I/Solution.py",
+          "solutionSha256": "51090147d0c010e8c897086a1842f69521d4356f25223d5aef96bce60553b82d"
+        },
+        "cpp": {
+          "solutionSource": "kamyu",
+          "solution": "C++/shortest-distance-after-road-addition-queries-i.cpp",
+          "solutionSha256": "0ee8aa1325898da8b208ef218f181452aef38b4c066b1f620e518298cf53a3f3"
+        },
+        "java": {
+          "solutionSource": "doocs",
+          "solution": "3200-3299/3243.Shortest Distance After Road Addition Queries I/Solution.java",
+          "solutionSha256": "6ea9978c40f2aec31b718a20f607ff4512cbb588799c16393073e080dda6477b"
+        },
+        "go": {
+          "solutionSource": "doocs",
+          "solution": "3200-3299/3243.Shortest Distance After Road Addition Queries I/Solution.go",
+          "solutionSha256": "2d4c106983b4ed81c2a153718f3b5fbc7fb1b1bb9b73ca1d574397187ec2abe1"
+        },
+        "typescript": {
+          "solutionSource": "doocs",
+          "solution": "3200-3299/3243.Shortest Distance After Road Addition Queries I/Solution.ts",
+          "solutionSha256": "2b2825e6b381116b46d989a0abd53b7d7344b4641c031db741b63af35a47671a"
+        }
+      }
+    }
+  },
+  "quarantine": [
+    {
+      "problemId": "remove-nth-node-from-end-of-list",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "merge-two-sorted-lists",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "merge-k-sorted-lists",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "rotate-image",
+      "reason": "unsupported output type: None"
+    },
+    {
+      "problemId": "group-anagrams",
+      "reason": "unsupported output type: List[List[str]]"
+    },
+    {
+      "problemId": "set-matrix-zeroes",
+      "reason": "unsupported output type: None"
+    },
+    {
+      "problemId": "word-search",
+      "reason": "unsupported parameter type: List[List[str]]"
+    },
+    {
+      "problemId": "validate-binary-search-tree",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "same-tree",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "binary-tree-level-order-traversal",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "maximum-depth-of-binary-tree",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "construct-binary-tree-from-preorder-and-inorder-traversal",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "binary-tree-maximum-path-sum",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "clone-graph",
+      "reason": "untyped or unsupported parameter: val = 0"
+    },
+    {
+      "problemId": "linked-list-cycle",
+      "reason": "untyped or unsupported parameter: x"
+    },
+    {
+      "problemId": "reorder-list",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "number-of-islands",
+      "reason": "unsupported parameter type: List[List[str]]"
+    },
+    {
+      "problemId": "reverse-linked-list",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "implement-trie-prefix-tree",
+      "reason": "unsupported output type: "
+    },
+    {
+      "problemId": "design-add-and-search-words-data-structure",
+      "reason": "unsupported output type: "
+    },
+    {
+      "problemId": "word-search-ii",
+      "reason": "unsupported parameter type: List[List[str]]"
+    },
+    {
+      "problemId": "invert-binary-tree",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "kth-smallest-element-in-a-bst",
+      "reason": "untyped or unsupported parameter: val=0"
+    },
+    {
+      "problemId": "lowest-common-ancestor-of-a-binary-search-tree",
+      "reason": "untyped or unsupported parameter: x"
+    },
+    {
+      "problemId": "find-median-from-data-stream",
+      "reason": "unsupported output type: "
+    },
+    {
+      "problemId": "serialize-and-deserialize-binary-tree",
+      "reason": "untyped or unsupported parameter: x"
+    },
+    {
+      "problemId": "subtree-of-another-tree",
+      "reason": "untyped or unsupported parameter: val=0"
+    }
+  ]
+}
