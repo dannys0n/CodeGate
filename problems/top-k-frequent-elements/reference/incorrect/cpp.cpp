@@ -1,6 +1,3 @@
-#include <vector>
+#include <bits/stdc++.h>
 using namespace std;
-class Solution {
-public:
-    vector<int> topKFrequent(vector<int>& nums, int k) { return {}; }
-};
+class Solution { public: vector<int> topKFrequent(vector<int>& nums, int k) { return {}; } };

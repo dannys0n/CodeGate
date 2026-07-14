@@ -1,16 +1,18 @@
-#include <unordered_map>
-#include <vector>
+#include <bits/stdc++.h>
 using namespace std;
+
+// Time:  O(n)
+// Space: O(n)
 
 class Solution {
 public:
     vector<int> twoSum(vector<int>& nums, int target) {
-        unordered_map<int, int> seen;
-        for (int index = 0; index < static_cast<int>(nums.size()); ++index) {
-            const int complement = target - nums[index];
-            const auto match = seen.find(complement);
-            if (match != seen.end()) return {match->second, index};
-            seen[nums[index]] = index;
+        unordered_map<int, int> lookup;
+        for (int i = 0; i < nums.size(); ++i) {
+            if (lookup.count(target - nums[i])) {
+                return {lookup[target - nums[i]], i};
+            }
+            lookup[nums[i]] = i;
         }
         return {};
     }

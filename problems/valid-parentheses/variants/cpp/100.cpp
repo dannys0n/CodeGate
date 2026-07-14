@@ -1,20 +1,28 @@
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include <bits/stdc++.h>
 using namespace std;
+
+// Time:  O(n)
+// Space: O(n)
 
 class Solution {
 public:
     bool isValid(string s) {
-        const unordered_map<char, char> pairs{{')', '('}, {']', '['}, {'}', '{'}};
-        vector<char> stack;
-        for (char character : s) {
-            if (character == '(' || character == '[' || character == '{') stack.push_back(character);
-            else if (pairs.count(character)) {
-                if (stack.empty() || stack.back() != pairs.at(character)) return false;
-                stack.pop_back();
+        const  unordered_map<char, char> symbol_pair = {{')', '('},
+                                                        {']', '['},
+                                                        {'}', '{'}};
+        stack<char> parentheses;
+        for (const auto& c: s) {
+            const auto& it = symbol_pair.find(c);
+            if (it != symbol_pair.cend()) {
+                if (parentheses.empty() ||
+                    parentheses.top() != it->second) {
+                    return false;
+                }
+                parentheses.pop();
+            } else {
+                parentheses.emplace(c);
             }
         }
-        return stack.empty();
+        return parentheses.empty();
     }
 };

@@ -1,0 +1,31 @@
+import { describe, expect, it } from 'vitest';
+import { parseKeywordArguments, parsePythonLiteral } from './python-literal.mjs';
+import { parsePythonSignature } from './neenza.mjs';
+import { generateExactMarker } from './exact-marker.mjs';
+
+describe('LeetCode source adapters', () => {
+  it('parses restricted Python literals without evaluating code', () => {
+    expect(parseKeywordArguments('nums = [2, 7, -1], target = 6, enabled = True')).toEqual({
+      nums: [2, 7, -1], target: 6, enabled: true
+    });
+    expect(parsePythonLiteral("[['a'], ['b']]" )).toEqual([['a'], ['b']]);
+    expect(() => parsePythonLiteral('__import__("os")')).toThrow();
+  });
+
+  it('normalizes supported Neenza signatures and rejects object types', () => {
+    expect(parsePythonSignature('class Solution:\n    def solve(self, nums: List[int], labels: List[str]) -> bool:\n        ')).toEqual({
+      functionName: 'solve',
+      params: [{ name: 'nums', type: 'int_array' }, { name: 'labels', type: 'string_array' }],
+      outputType: 'boolean'
+    });
+    expect(() => parsePythonSignature('class Solution:\n    def solve(self, root: TreeNode) -> int:\n        ')).toThrow(/unsupported/);
+  });
+
+  it('generates a deterministic exact-output Marker.java', () => {
+    const metadata = { functionName: 'answer', params: [{ name: 'value', type: 'int' }], outputType: 'int' };
+    const marker = generateExactMarker(metadata, [{ input: { value: 2 }, output: 4 }]);
+    expect(marker).toContain('public int answer(int value)');
+    expect(marker).toContain('if (value == 2) return 4;');
+    expect(marker).toContain('isCorrect');
+  });
+});

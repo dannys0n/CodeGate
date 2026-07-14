@@ -1,11 +1,19 @@
+from typing import *
+from collections import *
+from functools import *
+from itertools import *
+from math import *
+from bisect import *
+from heapq import *
+import bisect, heapq, math
+
 class Solution:
     def isValid(self, s: str) -> bool:
-        pairs = {')': '(', ']': '[', '}': '{'}
-        stack = []
-        for character in s:
-            if character in pairs.values():
-                stack.append(character)
-            elif character in pairs:
-                if not stack or stack.pop() != pairs[character]:
-                    return False
-        return not stack
+        stk = []
+        d = {'()', '[]', '{}'}
+        for c in s:
+            if c in '({[':
+                stk.append(c)
+            elif not stk or stk.pop() + c not in d:
+                return False
+        return not stk

@@ -1,0 +1,56 @@
+{
+  "id": "shortest-distance-after-road-addition-queries-i",
+  "frontendId": "3243",
+  "title": "3243. Shortest Distance After Road Addition Queries I",
+  "difficulty": "Medium",
+  "link": "https://leetcode.com/problems/shortest-distance-after-road-addition-queries-i/",
+  "category": "array",
+  "examples": [
+    {
+      "input": "n = 7, queries = [[0,5],[1,6],[2,4]]",
+      "output": "[2,2,2]"
+    },
+    {
+      "input": "n = 8, queries = [[1,5],[2,6],[3,7],[0,4],[0,6],[0,7]]",
+      "output": "[4,4,4,4,2,1]"
+    },
+    {
+      "input": "n = 6, queries = [[1,3],[2,5],[0,3]]",
+      "output": "[4,3,3]"
+    }
+  ],
+  "starterCode": {
+    "python": "class Solution:\n    def shortestDistanceAfterQueries(self, n: int, queries: List[List[int]]) -> List[int]:",
+    "cpp": "class Solution {\npublic:\n    vector<int> shortestDistanceAfterQueries(int n, vector<vector<int>>& queries) {\n\n    }\n};"
+  },
+  "testCases": [
+    {
+      "n": 7,
+      "queries": "[[0,5],[1,6],[2,4]]"
+    },
+    {
+      "n": 8,
+      "queries": "[[1,5],[2,6],[3,7],[0,4],[0,6],[0,7]]"
+    },
+    {
+      "n": 6,
+      "queries": "[[1,3],[2,5],[0,3]]"
+    }
+  ],
+  "functionName": "shortestDistanceAfterQueries",
+  "params": [
+    {
+      "name": "n",
+      "type": "int"
+    },
+    {
+      "name": "queries",
+      "type": "int_array_2d"
+    }
+  ],
+  "outputType": "int_array",
+  "hints": [
+    "Maintain the graph and use an efficient shortest path algorithm after each update.",
+    "We use BFS/Dijkstra for each query."
+  ]
+}

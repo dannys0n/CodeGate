@@ -1,9 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { loadLocalJsonSource } from './adapters/local-json.mjs';
+import { loadLeetcodeBundle } from './adapters/leetcode-bundle.mjs';
 import { difficultyLevels, generateVariants } from './variants.mjs';
 
-const adapters = new Map([['local-json', loadLocalJsonSource]]);
+const adapters = new Map([
+  ['local-json', loadLocalJsonSource],
+  ['leetcode-bundle', loadLeetcodeBundle]
+]);
 const supportedTypes = new Set([
   'int', 'string', 'boolean', 'int_array', 'int_array_2d', 'string_array',
   'string_list', 'string_list_2d', 'int_list', 'int_list_2d', 'char_array_2d'
@@ -35,6 +39,7 @@ async function atomicText(file, value) {
 
 function normalizeRecord(record) {
   if (!record || typeof record !== 'object') throw new Error('record must be an object');
+  if (record.adapterError) throw new Error(record.adapterError);
   if (!/^\d+$/.test(String(record.frontendId ?? ''))) throw new Error('frontendId must be numeric text');
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(record.slug ?? '')) throw new Error('slug is not canonical');
   if (!record.languages || typeof record.languages !== 'object') throw new Error('languages are required');
@@ -51,7 +56,8 @@ async function repositoryProblems(repositoryRoot) {
   for (const entry of entries.filter((item) => item.isDirectory())) {
     try {
       const metadata = await readJson(path.join(root, entry.name, 'metadata.json'));
-      problems.push({ problemId: entry.name, root: path.join(root, entry.name), metadata });
+      const generated = await fs.access(path.join(root, entry.name, '.codegate-generated.json')).then(() => true).catch(() => false);
+      problems.push({ problemId: entry.name, root: path.join(root, entry.name), metadata, generated });
     } catch {
       // Existing incomplete directories remain outside the importer.
     }
@@ -99,6 +105,37 @@ async function resolveAsset(record, candidate, label, repositoryRoot) {
   return real;
 }
 
+async function sourceText(record, assets, key, label, repositoryRoot) {
+  const inline = assets[`${key}Code`];
+  if (typeof inline === 'string' && inline.trim()) return inline;
+  const resolved = await resolveAsset(record, assets[key], label, repositoryRoot);
+  return fs.readFile(resolved, 'utf8');
+}
+
+async function createPack(record, repositoryRoot) {
+  if (!record.pack) return undefined;
+  const problemRoot = path.join(repositoryRoot, 'problems', record.slug);
+  const relative = path.relative(path.join(repositoryRoot, 'problems'), problemRoot);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('generated problem path escapes problems directory');
+  const metadata = { ...record.pack.metadata, id: record.slug, frontendId: record.frontendId };
+  if (!Array.isArray(record.pack.tests) || !record.pack.tests.length) throw new Error('generated pack has no tests');
+  if (JSON.stringify(record.pack.tests).includes('@javascript:')) throw new Error('generated packs cannot contain dynamic test expressions');
+  if (typeof record.pack.marker !== 'string' || !record.pack.marker.includes('isCorrect')) throw new Error('generated pack has no validator');
+  await Promise.all([
+    atomicText(path.join(problemRoot, 'statement.md'), record.pack.statement),
+    atomicJson(path.join(problemRoot, 'metadata.json'), metadata),
+    atomicJson(path.join(problemRoot, 'official-tests.json'), record.pack.tests),
+    atomicText(path.join(problemRoot, 'Marker.java'), record.pack.marker),
+    atomicJson(path.join(problemRoot, '.codegate-generated.json'), {
+      schemaVersion: 1,
+      adapter: 'leetcode-bundle',
+      frontendId: record.frontendId,
+      sourceRecord: record.sourceRecord
+    })
+  ]);
+  return { problemId: record.slug, root: problemRoot, metadata, generated: true };
+}
+
 async function inspectPack(problem, record) {
   if (record.shape !== 'function') throw new Error(`unsupported problem shape: ${record.shape ?? 'unknown'}`);
   const required = ['statement.md', 'metadata.json', 'official-tests.json', 'Marker.java'];
@@ -115,7 +152,8 @@ async function inspectPack(problem, record) {
   for (const [index, test] of tests.entries()) {
     for (const param of metadata.params) if (!(param.name in test)) throw new Error(`official test ${index + 1} is missing ${param.name}`);
   }
-  if (JSON.stringify(tests).includes('@javascript:')) throw new Error('dynamic test expressions are outside the initial offline import scope');
+  // Dynamic expressions are accepted only from complete problem packs already
+  // checked into the repository. Generated adapters never emit them.
   if (!marker.includes(metadata.functionName) || !marker.includes('isCorrect')) throw new Error('Marker.java does not agree with metadata or lacks a trusted validator');
   if (record.validatorKinds && !record.validatorKinds.includes('custom')) throw new Error('record does not permit the existing custom validator');
   return { metadata, tests };
@@ -125,9 +163,10 @@ async function importRecord(problem, record, repositoryRoot) {
   const { metadata } = await inspectPack(problem, record);
   const languages = {};
   for (const [language, assets] of Object.entries(record.languages)) {
-    const referencePath = await resolveAsset(record, assets.reference, `${language} reference`, repositoryRoot);
-    const incorrectPath = await resolveAsset(record, assets.incorrect, `${language} incorrect solution`, repositoryRoot);
-    const [reference, incorrect] = await Promise.all([fs.readFile(referencePath, 'utf8'), fs.readFile(incorrectPath, 'utf8')]);
+    const [reference, incorrect] = await Promise.all([
+      sourceText(record, assets, 'reference', `${language} reference`, repositoryRoot),
+      sourceText(record, assets, 'incorrect', `${language} incorrect solution`, repositoryRoot)
+    ]);
     for (const [label, source] of [['reference', reference], ['incorrect solution', incorrect]]) {
       if (source.length > 262_144) throw new Error(`${language} ${label} exceeds the import source limit`);
       if (/https?:\/\/|\b(requests|socket|curl|wget)\b|\bfetch\s*\(/i.test(source)) throw new Error(`${language} ${label} appears to require network access`);
@@ -137,9 +176,16 @@ async function importRecord(problem, record, repositoryRoot) {
     const outputReference = path.join(problem.root, 'reference', `${language}.${extension}`);
     const outputIncorrect = path.join(problem.root, 'reference', 'incorrect', `${language}.${extension}`);
     await Promise.all([atomicText(outputReference, reference), atomicText(outputIncorrect, incorrect)]);
-    const variants = generateVariants({ metadata, language, reference, hints: record.difficultyHints ?? [] });
+    const variants = generateVariants({
+      metadata,
+      language,
+      reference,
+      starter: assets.starterCode,
+      hints: record.difficultyHints ?? [],
+      endpointOnly: record.endpointOnly === true
+    });
     const variantPaths = {};
-    for (const level of difficultyLevels) {
+    for (const level of difficultyLevels.filter((candidate) => variants[candidate])) {
       const output = path.join(problem.root, 'variants', language, `${level}.${extension}`);
       await atomicText(output, variants[level]);
       variantPaths[level] = path.relative(problem.root, output).replaceAll(path.sep, '/');
@@ -147,7 +193,8 @@ async function importRecord(problem, record, repositoryRoot) {
     languages[language] = {
       reference: path.relative(problem.root, outputReference).replaceAll(path.sep, '/'),
       incorrect: path.relative(problem.root, outputIncorrect).replaceAll(path.sep, '/'),
-      variants: variantPaths
+      variants: variantPaths,
+      ...(assets.provenance ? { solutionSource: assets.provenance } : {})
     };
   }
   if (!Object.keys(languages).length) throw new Error('record has no supported language assets');
@@ -178,7 +225,13 @@ export async function runImport(configPath, repositoryRoot = process.cwd()) {
     const adapter = adapters.get(source.adapter);
     if (!adapter) throw new Error(`unknown source adapter: ${source.adapter}`);
     rawRecords.push(...await adapter(source, context));
-    sources.push({ adapter: source.adapter, name: source.name, revision: source.revision, path: source.path });
+    sources.push({
+      adapter: source.adapter,
+      name: source.name,
+      revision: source.revision,
+      ...(source.path ? { path: source.path } : {}),
+      ...(source.paths ? { paths: source.paths } : {})
+    });
   }
   const normalized = [];
   const failed = [];
@@ -196,11 +249,14 @@ export async function runImport(configPath, repositoryRoot = process.cwd()) {
       continue;
     }
     try {
-      const problem = matchProblem(record, problems);
+      let problem = matchProblem(record, problems);
+      if (problem?.generated && record.pack) problem = await createPack(record, repositoryRoot);
+      if (!problem) problem = await createPack(record, repositoryRoot);
       if (!problem) {
         skipped.push({ frontendId: record.frontendId, slug: record.slug, reason: 'no matching complete CoJudge problem pack' });
         continue;
       }
+      if (!problems.includes(problem)) problems.push(problem);
       accepted.push(await importRecord(problem, record, repositoryRoot));
     } catch (error) {
       skipped.push({ frontendId: record.frontendId, slug: record.slug, reason: error instanceof Error ? error.message : String(error) });

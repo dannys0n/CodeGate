@@ -39,3 +39,20 @@ Docker and the three runner images must already be installed/cached for judging.
 See [CodeGate operations and architecture](docs/CODEGATE.md) for exact startup controls, import
 and quarantine workflow, troubleshooting, recovery, offline operation, and uninstall steps.
 Problem-pack authoring remains documented in [Adding a Problem](docs/ADD_PROBLEMS.md).
+
+## Offline LeetCode sources
+
+The repository includes an offline adapter pipeline for locally cloned Neenza problem metadata,
+Kamyu/Doocs solutions, and Newfacade test vectors. Raw upstream clones live under ignored
+`sources/`; generated output remains an ordinary CoJudge problem pack. Imported records currently
+emit only `Original (0%)` and `Solution (100%)`. Nothing becomes playable until the existing Docker
+judge validates the reference, original starter, and incorrect control.
+
+```powershell
+npm.cmd run codegate:import:audit -- --config .\codegate\import-leetcode.json --offline
+npm.cmd run codegate:import -- --config .\codegate\import-leetcode-smoke.json --offline
+npm.cmd run codegate:validate -- --offline
+```
+
+Use `codegate/import-leetcode.json` for the complete candidate import. Because validation executes
+real submissions, use `frontendIds` in a copied config to import and validate manageable batches.

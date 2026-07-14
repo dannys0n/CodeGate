@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "adapter": "leetcode-bundle",
+  "frontendId": "704",
+  "sourceRecord": "sources/leetcode-problems/problems/0704-binary-search.json"
+}

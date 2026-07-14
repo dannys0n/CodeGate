@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-13T00:00:00.000Z",
+  "report": "codegate/import-smoke-report.json",
+  "sources": [
+    {
+      "adapter": "leetcode-bundle",
+      "name": "neenza-kamyu-doocs-newfacade-smoke",
+      "revision": "neenza@16c26d1+kamyu@4b89ed8+doocs@a0ced3e+newfacade@215604a",
+      "paths": {
+        "neenza": "sources/leetcode-problems",
+        "kamyu": "sources/kamyu-solutions",
+        "doocs": "sources/doocs-solutions",
+        "newfacade": "sources/leetcode-dataset"
+      },
+      "frontendIds": ["1", "9", "20", "58", "121", "217", "347", "704", "1929", "3243"],
+      "minimumTests": 3
+    }
+  ]
+}

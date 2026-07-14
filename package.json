@@ -23,6 +23,7 @@
 		"codegate:validate": "node scripts/codegate/validate.mjs",
 		"codegate:regenerate-difficulties": "node scripts/codegate/regenerate-difficulties.mjs",
 		"codegate:import": "node scripts/codegate/import.mjs",
+		"codegate:import:audit": "node scripts/codegate/importer/audit.mjs",
 		"codegate:failure-smoke": "node scripts/codegate/failure-smoke.mjs",
 		"importer:test": "node scripts/codegate/importer/test.mjs",
 		"desktop": "electron .",

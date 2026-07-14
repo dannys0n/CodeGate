@@ -1,0 +1,53 @@
+{
+  "id": "binary-search",
+  "frontendId": "704",
+  "title": "704. Binary Search",
+  "difficulty": "Easy",
+  "link": "https://leetcode.com/problems/binary-search/",
+  "category": "array",
+  "examples": [
+    {
+      "input": "nums = [-10,0,10,20,30], target = -5",
+      "output": "-1"
+    },
+    {
+      "input": "nums = [1,2,3,4,5], target = 6",
+      "output": "-1"
+    },
+    {
+      "input": "nums = [-10,-9,-8,-7,-6,-5,-4,-3,-2,-1], target = 0",
+      "output": "-1"
+    }
+  ],
+  "starterCode": {
+    "python": "class Solution:\n    def search(self, nums: List[int], target: int) -> int:",
+    "cpp": "class Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n\n    }\n};"
+  },
+  "testCases": [
+    {
+      "nums": "[-10,0,10,20,30]",
+      "target": -5
+    },
+    {
+      "nums": "[1,2,3,4,5]",
+      "target": 6
+    },
+    {
+      "nums": "[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1]",
+      "target": 0
+    }
+  ],
+  "functionName": "search",
+  "params": [
+    {
+      "name": "nums",
+      "type": "int_array"
+    },
+    {
+      "name": "target",
+      "type": "int"
+    }
+  ],
+  "outputType": "int",
+  "hints": []
+}

@@ -1,0 +1,46 @@
+{
+  "id": "length-of-last-word",
+  "frontendId": "58",
+  "title": "58. Length of Last Word",
+  "difficulty": "Easy",
+  "link": "https://leetcode.com/problems/length-of-last-word/",
+  "category": "string",
+  "examples": [
+    {
+      "input": "s = \"Hello World\"",
+      "output": "5"
+    },
+    {
+      "input": "s = \"   fly me   to   the moon  \"",
+      "output": "4"
+    },
+    {
+      "input": "s = \"luffy is still joyboy\"",
+      "output": "6"
+    }
+  ],
+  "starterCode": {
+    "python": "class Solution:\n    def lengthOfLastWord(self, s: str) -> int:",
+    "cpp": "class Solution {\npublic:\n    int lengthOfLastWord(string s) {\n\n    }\n};"
+  },
+  "testCases": [
+    {
+      "s": "Hello World"
+    },
+    {
+      "s": "   fly me   to   the moon  "
+    },
+    {
+      "s": "luffy is still joyboy"
+    }
+  ],
+  "functionName": "lengthOfLastWord",
+  "params": [
+    {
+      "name": "s",
+      "type": "string"
+    }
+  ],
+  "outputType": "int",
+  "hints": []
+}

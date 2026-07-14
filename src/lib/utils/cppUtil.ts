@@ -469,7 +469,12 @@ static GraphNode* to_graph_node(const string &s) {
 
 function cppEscapeStringLiteral(str: string): string {
     if (str === null || str === undefined) return '""';
-    const escaped = String(str).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escaped = String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\r/g, '\\r')
+        .replace(/\n/g, '\\n')
+        .replace(/\t/g, '\\t');
     return `"${escaped}"`;
 }
 

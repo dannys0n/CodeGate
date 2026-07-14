@@ -397,7 +397,12 @@ export function formatAndSplitJavaString(str: string, chunkSize = 3000, funcName
     if (typeof str !== 'string') {
         str = JSON.stringify(str);
     }
-    const escapedStr = str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedStr = str
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\r/g, '\\r')
+        .replace(/\n/g, '\\n')
+        .replace(/\t/g, '\\t');
     if (escapedStr.length <= chunkSize) {
         return `"${escapedStr}"`;
     }

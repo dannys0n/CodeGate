@@ -168,7 +168,12 @@ export function pyGetFullParam(params: Param[], tc: any): string {
         const val = tc[param.name];
         if (param.type === 'string') {
             // preserve as Python string literal
-            const escaped = (val ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            const escaped = String(val ?? '')
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/\r/g, '\\r')
+                .replace(/\n/g, '\\n')
+                .replace(/\t/g, '\\t');
             parts.push(`'${escaped}'`);
         } else if (param.type === 'int_array') {
             const raw = val ?? '[]';

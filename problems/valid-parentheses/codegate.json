@@ -3,9 +3,9 @@
   "problemId": "valid-parentheses",
   "frontendId": "20",
   "source": {
-    "name": "codegate-mixed-difficulty-fixture",
-    "revision": "fixture-v1-2026-07-12",
-    "record": "fixtures/import/records.json#0"
+    "name": "neenza-kamyu-doocs-newfacade-smoke",
+    "revision": "neenza@16c26d1+kamyu@4b89ed8+doocs@a0ced3e+newfacade@215604a",
+    "record": "sources/leetcode-problems/problems/0020-valid-parentheses.json"
   },
   "validation": {
     "status": "pending",
@@ -18,22 +18,18 @@
       "incorrect": "reference/incorrect/python.py",
       "variants": {
         "0": "variants/python/0.py",
-        "25": "variants/python/25.py",
-        "50": "variants/python/50.py",
-        "75": "variants/python/75.py",
         "100": "variants/python/100.py"
-      }
+      },
+      "solutionSource": "doocs"
     },
     "cpp": {
       "reference": "reference/cpp.cpp",
       "incorrect": "reference/incorrect/cpp.cpp",
       "variants": {
         "0": "variants/cpp/0.cpp",
-        "25": "variants/cpp/25.cpp",
-        "50": "variants/cpp/50.cpp",
-        "75": "variants/cpp/75.cpp",
         "100": "variants/cpp/100.cpp"
-      }
+      },
+      "solutionSource": "kamyu"
     }
   }
 }

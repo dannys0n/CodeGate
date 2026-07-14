@@ -39,8 +39,8 @@ function reduceReference(reference, language, suppliedPercent, hints) {
   return `${lines.join('\n')}\n`;
 }
 
-export function generateVariants({ metadata, language, reference, hints = [] }) {
-  const starter = metadata.starterCode?.[language];
+export function generateVariants({ metadata, language, reference, starter: suppliedStarter, hints = [], endpointOnly = false }) {
+  const starter = suppliedStarter ?? metadata.starterCode?.[language];
   if (typeof starter !== 'string' || !starter.trim()) throw new Error(`missing ${language} starter code`);
   const availableHints = [...hints, ...(metadata.hints ?? [])]
     .filter((hint) => typeof hint === 'string' && hint.trim())
@@ -48,12 +48,17 @@ export function generateVariants({ metadata, language, reference, hints = [] }) 
   if (availableHints.length === 0) {
     availableHints.push(`Implement ${metadata.functionName ?? 'the method'} using the problem constraints.`);
   }
-  return {
+  const endpoints = {
     '0': `${starter.trimEnd()}\n`,
+    '100': `${reference.trimEnd()}\n`
+  };
+  if (endpointOnly) return endpoints;
+  return {
+    '0': endpoints['0'],
     '25': reduceReference(reference, language, 25, availableHints),
     '50': reduceReference(reference, language, 50, availableHints),
     '75': reduceReference(reference, language, 75, availableHints),
-    '100': `${reference.trimEnd()}\n`
+    '100': endpoints['100']
   };
 }
 

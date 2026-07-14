@@ -1,0 +1,48 @@
+{
+  "id": "palindrome-number",
+  "frontendId": "9",
+  "title": "9. Palindrome Number",
+  "difficulty": "Easy",
+  "link": "https://leetcode.com/problems/palindrome-number/",
+  "category": "math",
+  "examples": [
+    {
+      "input": "x = 1221",
+      "output": "true"
+    },
+    {
+      "input": "x = 10",
+      "output": "false"
+    },
+    {
+      "input": "x = 123421",
+      "output": "false"
+    }
+  ],
+  "starterCode": {
+    "python": "class Solution:\n    def isPalindrome(self, x: int) -> bool:",
+    "cpp": "class Solution {\npublic:\n    bool isPalindrome(int x) {\n\n    }\n};"
+  },
+  "testCases": [
+    {
+      "x": 1221
+    },
+    {
+      "x": 10
+    },
+    {
+      "x": 123421
+    }
+  ],
+  "functionName": "isPalindrome",
+  "params": [
+    {
+      "name": "x",
+      "type": "int"
+    }
+  ],
+  "outputType": "boolean",
+  "hints": [
+    "Beware of overflow when you reverse the integer."
+  ]
+}

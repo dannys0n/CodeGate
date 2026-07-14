@@ -1,12 +1,16 @@
-from typing import List
-
+from typing import *
+from collections import *
+from functools import *
+from itertools import *
+from math import *
+from bisect import *
+from heapq import *
+import bisect, heapq, math
 
 class Solution:
     def twoSum(self, nums: List[int], target: int) -> List[int]:
-        seen = {}
-        for index, value in enumerate(nums):
-            complement = target - value
-            if complement in seen:
-                return [seen[complement], index]
-            seen[value] = index
-        return []
+        d = {}
+        for i, x in enumerate(nums):
+            if (y := target - x) in d:
+                return [d[y], i]
+            d[x] = i

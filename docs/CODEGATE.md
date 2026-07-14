@@ -130,12 +130,52 @@ incorrect solutions and validator kind. Matching uses frontend ID first
 when repository metadata has it, then canonical slug; disagreement and duplicate identity mappings
 are rejected. Source real paths and generated outputs must stay inside the repository.
 
+The `leetcode-bundle` adapter joins four local, pinned upstream sources without network access:
+
+- Neenza supplies problem identity, statement, hints, and original Python/C++ starters.
+- Kamyu is preferred for C++; Doocs is the fallback.
+- Doocs is preferred for Python 3; Python-3-compatible Kamyu is the fallback.
+- Newfacade supplies structured test vectors for newly generated packs.
+
+Newfacade's executable `test` field is never evaluated. The adapter parses only a restricted
+Python-literal subset from `input_output`, rejects type/range-invalid vectors, and stores neutral
+CoJudge test inputs. Existing complete CoJudge packs retain their official tests and custom
+`Marker.java`. New exact-output packs receive a deterministic Java marker generated from the
+normalized vectors. Statements that advertise multiple valid answers or unordered results do not
+receive an exact marker and remain dependent on an existing trusted custom validator.
+
+Raw clones are kept in ignored `sources/` directories. Generated packs contain a
+`.codegate-generated.json` ownership marker so later imports may refresh adapter-owned statement,
+metadata, test, and marker files without replacing upstream CoJudge packs.
+
+Audit all configured sources without writing packs:
+
+```powershell
+npm.cmd run codegate:import:audit -- --config .\codegate\import-leetcode.json --offline
+```
+
+Import the validated smoke cohort, or import the full candidate set:
+
+```powershell
+npm.cmd run codegate:import -- --config .\codegate\import-leetcode-smoke.json --offline
+npm.cmd run codegate:import -- --config .\codegate\import-leetcode.json --offline
+```
+
+The full import creates pending candidates; it does not activate them. For practical validation
+batches, copy the config and set `frontendIds` to the desired IDs, then import and run
+`codegate:validate`. The playable manifest remains the only runtime activation authority.
+
 Difficulty is the percentage of the validated reference implementation supplied. The selectable
 levels are `Original (0%)`, `25%`, `50%`, `75%`, and `Solution (100%)`. Intermediate Python/C++
 files are deterministic nested reductions of the reference: imports/includes, class and function
 signatures, structural control-flow headers, braces, and loop-progress mutations are preserved.
 Removed executable lines become small TODO comments or harmless placeholders. Changing difficulty
 or language stays on the active problem; only Different Problem refreshes problem identity.
+
+Records imported through `leetcode-bundle` intentionally contain only `0` and `100`: the exact
+Neenza starter and the selected complete reference. Intermediate percentages remain available for
+legacy/local-json packs but are deferred for the new corpus until their generation policy is
+revisited.
 
 Import writes `codegate/import-report.json` with `accepted`, `skipped`, and `failed` records. An
 accepted record is only pending validation. The existing playable manifest remains the activation

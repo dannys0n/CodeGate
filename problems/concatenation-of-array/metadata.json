@@ -1,0 +1,48 @@
+{
+  "id": "concatenation-of-array",
+  "frontendId": "1929",
+  "title": "1929. Concatenation of Array",
+  "difficulty": "Easy",
+  "link": "https://leetcode.com/problems/concatenation-of-array/",
+  "category": "array",
+  "examples": [
+    {
+      "input": "nums = [7,7,7,7,7,7,7]",
+      "output": "[7,7,7,7,7,7,7,7,7,7,7,7,7,7]"
+    },
+    {
+      "input": "nums = [5,6,7]",
+      "output": "[5,6,7,5,6,7]"
+    },
+    {
+      "input": "nums = [1,1,1,1,1,1,1,1,1,1]",
+      "output": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]"
+    }
+  ],
+  "starterCode": {
+    "python": "class Solution:\n    def getConcatenation(self, nums: List[int]) -> List[int]:",
+    "cpp": "class Solution {\npublic:\n    vector<int> getConcatenation(vector<int>& nums) {\n\n    }\n};"
+  },
+  "testCases": [
+    {
+      "nums": "[7,7,7,7,7,7,7]"
+    },
+    {
+      "nums": "[5,6,7]"
+    },
+    {
+      "nums": "[1,1,1,1,1,1,1,1,1,1]"
+    }
+  ],
+  "functionName": "getConcatenation",
+  "params": [
+    {
+      "name": "nums",
+      "type": "int_array"
+    }
+  ],
+  "outputType": "int_array",
+  "hints": [
+    "Build an array of size 2 * n and assign num[i] to ans[i] and ans[i + n]"
+  ]
+}

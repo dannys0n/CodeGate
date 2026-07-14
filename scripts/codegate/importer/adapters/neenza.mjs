@@ -1,0 +1,41 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { splitTopLevel } from './python-literal.mjs';
+
+const typeMap = new Map([
+  ['int', 'int'], ['str', 'string'], ['bool', 'boolean'],
+  ['List[int]', 'int_array'], ['list[int]', 'int_array'],
+  ['List[str]', 'string_array'], ['list[str]', 'string_array'],
+  ['List[List[int]]', 'int_array_2d'], ['list[list[int]]', 'int_array_2d']
+]);
+
+function normalizeAnnotation(value) { return String(value ?? '').replace(/\s+/g, ''); }
+function cojudgeType(annotation) { return typeMap.get(normalizeAnnotation(annotation)); }
+function clean(source) { return typeof source === 'string' ? source.replace(/[ \t]+$/gm, '').trimEnd() : source; }
+
+export function parsePythonSignature(source) {
+  const match = String(source).match(/def\s+([A-Za-z_]\w*)\s*\(\s*self\s*,?([\s\S]*?)\)\s*(?:->\s*([^:\n]+))?\s*:/);
+  if (!match) throw new Error('Python starter signature was not recognized');
+  const params = splitTopLevel(match[2]).map((part) => {
+    const parameter = part.trim().match(/^([A-Za-z_]\w*)\s*:\s*(.+?)(?:\s*=.*)?$/);
+    if (!parameter) throw new Error(`untyped or unsupported parameter: ${part.trim()}`);
+    const type = cojudgeType(parameter[2]);
+    if (!type) throw new Error(`unsupported parameter type: ${parameter[2].trim()}`);
+    return { name: parameter[1], type };
+  });
+  const outputType = cojudgeType(match[3]);
+  if (!params.length || !outputType) throw new Error(`unsupported output type: ${String(match[3] ?? '').trim()}`);
+  return { functionName: match[1], params, outputType };
+}
+
+export async function loadNeenza(root) {
+  const document = JSON.parse(await fs.readFile(path.join(root, 'merged_problems.json'), 'utf8'));
+  const records = Array.isArray(document) ? document : document.questions;
+  if (!Array.isArray(records)) throw new Error('Neenza merged_problems.json must contain an array');
+  return records.map((record) => ({
+    ...record,
+    frontendId: String(record.frontend_id),
+    slug: record.problem_slug,
+    starters: { python: clean(record.code_snippets?.python3), cpp: clean(record.code_snippets?.cpp) }
+  }));
+}
