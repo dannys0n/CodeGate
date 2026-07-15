@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { DifficultyLevel, GateLanguage, PlayableVariant } from '../../codegate/types';
+import type { DifficultyLevel, GateLanguage, LeetcodeDifficulty, PlayableVariant } from '../../codegate/types';
 import { stripSolution } from '../../codegate/source-transform.mjs';
 import { loadCandidateAssets, loadCandidateManifest, type CandidateAssets } from './catalog';
 
@@ -20,13 +20,16 @@ export async function prepareChallenge(
     language: GateLanguage,
     difficulty: DifficultyLevel,
     recentProblemIds: string[],
-    options: { problemId?: string; random?: () => number; root?: string } = {}
+    options: { problemId?: string; random?: () => number; root?: string; leetcodeDifficulties?: readonly LeetcodeDifficulty[] } = {}
 ): Promise<PlayableVariant> {
     const root = options.root ?? process.env.CODEGATE_APP_ROOT ?? process.cwd();
     const manifest = await loadCandidateManifest(root);
     const recent = new Set(recentProblemIds);
+    const allowedDifficulties = options.leetcodeDifficulties ? new Set(options.leetcodeDifficulties) : undefined;
     const matches = Object.entries(manifest.problems).filter(([, problem]) =>
-        Boolean(problem.languages[language]) && (!options.problemId || problem.slug === options.problemId)
+        Boolean(problem.languages[language])
+        && (!options.problemId || problem.slug === options.problemId)
+        && (!allowedDifficulties || allowedDifficulties.has(problem.leetcodeDifficulty))
     );
     const fresh = matches.filter(([, problem]) => !recent.has(problem.slug));
     const selected = randomized(fresh.length ? fresh : matches, options.random ?? Math.random)[0];

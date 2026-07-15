@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { selectChallenge } from '../../codegate/selection';
-import type { DifficultyLevel, GateLanguage, PlayableManifest, PlayableVariant } from '../../codegate/types';
+import { leetcodeDifficultyLevels, type DifficultyLevel, type GateLanguage, type LeetcodeDifficulty, type PlayableManifest, type PlayableVariant } from '../../codegate/types';
 
 export type GateOutcome = 'accepted' | 'given-up' | 'infrastructure-failure' | 'abandoned';
 
@@ -17,6 +17,7 @@ export type GateSession = {
     releasedAt?: string;
     challenge: GateChallenge;
     recentProblemIds: string[];
+    leetcodeDifficulties: LeetcodeDifficulty[];
     activeSubmission?: {
         id: string;
         challengeId: string;
@@ -42,7 +43,8 @@ export function createGateSession(
     manifest: PlayableManifest,
     language: GateLanguage,
     difficulty: DifficultyLevel,
-    random: () => number = Math.random
+    random: () => number = Math.random,
+    leetcodeDifficulties: readonly LeetcodeDifficulty[] = leetcodeDifficultyLevels
 ): GateSession {
     const variant = choose(manifest, language, difficulty, [], random);
     const session: GateSession = {
@@ -50,7 +52,8 @@ export function createGateSession(
         createdAt: new Date().toISOString(),
         status: 'active',
         challenge: { id: randomUUID(), variant },
-        recentProblemIds: [variant.problemId]
+        recentProblemIds: [variant.problemId],
+        leetcodeDifficulties: [...leetcodeDifficulties]
     };
     sessions.set(session.id, session);
     return session;
@@ -73,13 +76,15 @@ export function refreshGateChallenge(
     manifest: PlayableManifest,
     language: GateLanguage,
     difficulty: DifficultyLevel,
-    random: () => number = Math.random
+    random: () => number = Math.random,
+    leetcodeDifficulties: readonly LeetcodeDifficulty[] = leetcodeDifficultyLevels
 ): GateSession {
     const session = requireActiveChallenge(sessionId, challengeId);
     const variant = choose(manifest, language, difficulty, session.recentProblemIds, random);
     session.activeSubmission = undefined;
     session.challenge = { id: randomUUID(), variant };
     session.recentProblemIds = [...session.recentProblemIds.slice(-9), variant.problemId];
+    session.leetcodeDifficulties = [...leetcodeDifficulties];
     return session;
 }
 

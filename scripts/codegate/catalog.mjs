@@ -108,6 +108,7 @@ export async function buildCandidateCatalog(repositoryRoot = process.cwd(), conf
     }
     problems[record.frontendId] = {
       slug: record.slug,
+      leetcodeDifficulty: record.difficulty,
       record: recordLocator,
       judgeSha256,
       ...(judge ? { judge } : {}),
@@ -116,7 +117,7 @@ export async function buildCandidateCatalog(repositoryRoot = process.cwd(), conf
   }
   const bundleContents = bundle.contents();
   return { manifest: {
-    schemaVersion: 3,
+    schemaVersion: 4,
     generatorVersion: sourceTransformVersion,
     generatedAt: new Date().toISOString(),
     sourceRevision: source.revision,
@@ -160,7 +161,7 @@ export async function ensureCandidateManifest(repositoryRoot = process.cwd(), co
     const source = config.sources?.find((candidate) => candidate.adapter === 'leetcode-bundle');
     const target = path.join(repositoryRoot, 'codegate', 'candidate-manifest.json');
     const manifest = JSON.parse(await fs.readFile(target, 'utf8'));
-    if (manifest.schemaVersion !== 3 || manifest.generatorVersion !== sourceTransformVersion || manifest.sourceRevision !== source?.revision || !manifest.assetBundle?.file) throw new Error('stale catalog');
+    if (manifest.schemaVersion !== 4 || manifest.generatorVersion !== sourceTransformVersion || manifest.sourceRevision !== source?.revision || !manifest.assetBundle?.file) throw new Error('stale catalog');
     const stat = await fs.stat(path.join(repositoryRoot, 'codegate', manifest.assetBundle.file));
     if (stat.size !== manifest.assetBundle.length) throw new Error('incomplete asset bundle');
     return manifest;

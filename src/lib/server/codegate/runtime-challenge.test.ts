@@ -49,14 +49,14 @@ async function fixture(): Promise<void> {
     const bundle = record + solution;
     await fs.writeFile(path.join(root, 'codegate', 'candidate-assets.bin'), bundle);
     await fs.writeFile(path.join(root, 'codegate', 'candidate-manifest.json'), JSON.stringify({
-        schemaVersion: 3,
+        schemaVersion: 4,
         generatorVersion: 1,
         generatedAt: 'now',
         sourceRevision: 'fixture',
         assetBundle: { file: 'candidate-assets.bin', length: Buffer.byteLength(bundle), sha256: digest(bundle) },
         problems: {
             '1': {
-                slug: 'example', record: locator(record), judgeSha256: judgeDigest(judgeFiles),
+                slug: 'example', leetcodeDifficulty: 'Easy', record: locator(record), judgeSha256: judgeDigest(judgeFiles),
                 languages: { python: { solutionSource: 'doocs', solution: locator(solution, Buffer.byteLength(record)) } }
             }
         },
@@ -72,5 +72,11 @@ describe('CodeGate runtime challenge preparation', () => {
             difficulty: '25',
             language: 'python'
         });
+    });
+
+    it('filters replacement candidates by LeetCode difficulty', async () => {
+        await fixture();
+        await expect(prepareChallenge('python', '25', [], { root, leetcodeDifficulties: ['Hard'] }))
+            .rejects.toThrow('No python challenge is available');
     });
 });

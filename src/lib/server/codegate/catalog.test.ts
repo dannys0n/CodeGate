@@ -26,11 +26,11 @@ function judgeDigest(files: Array<[string, Buffer]>) {
 describe('CodeGate grouped candidate manifest', () => {
     it('accepts one problem containing multiple languages', () => {
         expect(() => assertCandidateManifest({
-            schemaVersion: 3,
+            schemaVersion: 4,
             assetBundle: { file: 'candidate-assets.bin', length: 4, sha256: 'e'.repeat(64) },
             problems: {
                 '1': {
-                    slug: 'two-sum', record: { offset: 0, length: 1, sha256: 'a'.repeat(64) }, judgeSha256: 'b'.repeat(64),
+                    slug: 'two-sum', leetcodeDifficulty: 'Easy', record: { offset: 0, length: 1, sha256: 'a'.repeat(64) }, judgeSha256: 'b'.repeat(64),
                     languages: {
                         python: { solutionSource: 'doocs', solution: { offset: 1, length: 1, sha256: 'c'.repeat(64) } },
                         cpp: { solutionSource: 'kamyu', solution: { offset: 2, length: 1, sha256: 'd'.repeat(64) } }
@@ -60,9 +60,9 @@ describe('CodeGate grouped candidate manifest', () => {
             await fs.writeFile(target, contents);
         }
         const manifest = {
-            schemaVersion: 3, generatorVersion: 1, generatedAt: 'now', sourceRevision: 'fixture',
+            schemaVersion: 4, generatorVersion: 1, generatedAt: 'now', sourceRevision: 'fixture',
             assetBundle: { file: 'candidate-assets.bin', length: bundle.length, sha256: rawDigest(bundle) },
-            problems: { '1': { slug: 'example', record: locator(record), judgeSha256: judgeDigest(judgeFiles), languages: { python: { solutionSource: 'doocs', solution: locator(solution, record.length) } } } },
+            problems: { '1': { slug: 'example', leetcodeDifficulty: 'Easy', record: locator(record), judgeSha256: judgeDigest(judgeFiles), languages: { python: { solutionSource: 'doocs', solution: locator(solution, record.length) } } } },
             quarantine: []
         };
         await fs.mkdir(path.join(temporaryRoot, 'codegate'), { recursive: true });
@@ -90,9 +90,9 @@ describe('CodeGate grouped candidate manifest', () => {
         await fs.mkdir(path.join(temporaryRoot, 'codegate'));
         await fs.writeFile(path.join(temporaryRoot, 'codegate', 'candidate-assets.bin'), bundle);
         await fs.writeFile(path.join(temporaryRoot, 'codegate', 'candidate-manifest.json'), JSON.stringify({
-            schemaVersion: 3, generatorVersion: 1, generatedAt: 'now', sourceRevision: 'fixture',
+            schemaVersion: 4, generatorVersion: 1, generatedAt: 'now', sourceRevision: 'fixture',
             assetBundle: { file: 'candidate-assets.bin', length: bundle.length, sha256: rawDigest(bundle) },
-            problems: { '1': { slug: 'example', record: locator(recordBuffer), judgeSha256: rawDigest(JSON.stringify(judge)), judge, languages: { python: { solutionSource: 'doocs', solution: locator(solutionBuffer, recordBuffer.length) } } } },
+            problems: { '1': { slug: 'example', leetcodeDifficulty: 'Easy', record: locator(recordBuffer), judgeSha256: rawDigest(JSON.stringify(judge)), judge, languages: { python: { solutionSource: 'doocs', solution: locator(solutionBuffer, recordBuffer.length) } } } },
             quarantine: []
         }));
 

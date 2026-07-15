@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { createHash } from 'crypto';
-import { gateLanguages, type AssetLocator, type CandidateLanguage, type CandidateManifest, type CandidateProblem, type DifficultyLevel, type GateLanguage } from '../../codegate/types';
+import { gateLanguages, leetcodeDifficultyLevels, type AssetLocator, type CandidateLanguage, type CandidateManifest, type CandidateProblem, type DifficultyLevel, type GateLanguage } from '../../codegate/types';
 import { normalizeSource, starterField, stripSolution } from '../../codegate/source-transform.mjs';
 import { deactivateGeneratedProblem, materializeGeneratedProblem } from '../problem-files';
 import { extractExactCases } from '../../codegate/test-vectors.mjs';
@@ -13,14 +13,14 @@ const defaultAppRoot = () => process.env.CODEGATE_APP_ROOT || process.cwd();
 export function assertCandidateManifest(value: unknown): asserts value is CandidateManifest {
     if (!value || typeof value !== 'object') throw new Error('Candidate manifest must be an object');
     const manifest = value as Record<string, unknown>;
-    if (manifest.schemaVersion !== 3 || !isLocator((manifest.assetBundle as Record<string, unknown> | undefined), true) || typeof manifest.problems !== 'object' || !manifest.problems || !Array.isArray(manifest.quarantine)) {
+    if (manifest.schemaVersion !== 4 || !isLocator((manifest.assetBundle as Record<string, unknown> | undefined), true) || typeof manifest.problems !== 'object' || !manifest.problems || !Array.isArray(manifest.quarantine)) {
         throw new Error('Unsupported candidate manifest schema');
     }
     for (const [frontendId, entry] of Object.entries(manifest.problems as Record<string, unknown>)) {
         if (!/^\d+$/.test(frontendId) || !entry || typeof entry !== 'object') throw new Error('Invalid CodeGate problem');
         const problem = entry as Record<string, unknown>;
         if (
-            typeof problem.slug !== 'string' || !isLocator(problem.record as Record<string, unknown>) ||
+            typeof problem.slug !== 'string' || !leetcodeDifficultyLevels.includes(problem.leetcodeDifficulty as any) || !isLocator(problem.record as Record<string, unknown>) ||
             !/^[a-f0-9]{64}$/.test(String(problem.judgeSha256)) ||
             !problem.languages || typeof problem.languages !== 'object'
         ) {

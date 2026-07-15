@@ -65,6 +65,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
             codegate: {
                 selected,
                 source,
+                leetcodeDifficulties: session.leetcodeDifficulties,
                 available: problemVariants.map((language) => ({ language }))
             }
         };

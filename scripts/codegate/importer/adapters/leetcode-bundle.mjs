@@ -102,6 +102,7 @@ export async function loadLeetcodeBundle(source, context) {
       records.push({
         frontendId: problem.frontendId,
         slug: problem.slug,
+        difficulty: problem.difficulty,
         shape: 'function',
         endpointOnly: true,
         slimSources: true,

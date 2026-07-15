@@ -2,6 +2,8 @@ import type { ProgrammingLanguage } from '$lib/utils/util';
 
 export const difficultyLevels = ['0', '25', '50', '75', '99', '100'] as const;
 export type DifficultyLevel = (typeof difficultyLevels)[number];
+export const leetcodeDifficultyLevels = ['Easy', 'Medium', 'Hard'] as const;
+export type LeetcodeDifficulty = (typeof leetcodeDifficultyLevels)[number];
 export const gateLanguages = ['java', 'python', 'cpp', 'csharp', 'rust', 'go', 'typescript'] as const satisfies readonly ProgrammingLanguage[];
 export type GateLanguage = (typeof gateLanguages)[number];
 
@@ -14,6 +16,7 @@ export type AssetLocator = { offset: number; length: number; sha256: string };
 
 export type CandidateProblem = {
     slug: string;
+    leetcodeDifficulty: LeetcodeDifficulty;
     record: AssetLocator;
     judgeSha256: string;
     judge?: {
@@ -25,7 +28,7 @@ export type CandidateProblem = {
 };
 
 export type CandidateManifest = {
-    schemaVersion: 3;
+    schemaVersion: 4;
     generatorVersion: number;
     generatedAt: string;
     sourceRevision: string;

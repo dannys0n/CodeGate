@@ -20,7 +20,7 @@
     import { onMount, tick } from 'svelte';
     import { v4 as uuidv4 } from 'uuid';
     import gameResultsStore, { computeGameResult } from '$lib/stores/gameResultsStore';
-    import type { DifficultyLevel, GateLanguage } from '$lib/codegate/types';
+    import { leetcodeDifficultyLevels, type DifficultyLevel, type GateLanguage, type LeetcodeDifficulty } from '$lib/codegate/types';
 
     export let data;
     const problemId = data.problem.id;
@@ -47,6 +47,7 @@
     let CodeEditor: any = null;
     let language: ProgrammingLanguage = data.codegate?.selected.language ?? $userSettingsStorage.preferredLanguage ?? 'java';
     let difficulty: DifficultyLevel = data.codegate?.selected.difficulty ?? '99';
+    let selectedLeetcodeDifficulties: LeetcodeDifficulty[] = data.codegate?.leetcodeDifficulties ?? [...leetcodeDifficultyLevels];
     let gateSessionId = isCodeGate ? $page.url.searchParams.get('sessionId') ?? '' : '';
     let gateChallengeId = isCodeGate ? $page.url.searchParams.get('challengeId') ?? '' : '';
     let gateActionPending = false;
@@ -689,7 +690,8 @@
                     sessionId: gateSessionId,
                     challengeId: gateChallengeId,
                     language: requestedLanguage,
-                    difficulty: requestedDifficulty
+                    difficulty: requestedDifficulty,
+                    leetcodeDifficulties: selectedLeetcodeDifficulties
                 })
             });
             const session = await response.json();
@@ -725,6 +727,15 @@
     function handleDifficultyChange(event: Event) {
         const requestedDifficulty = (event.currentTarget as HTMLSelectElement).value as DifficultyLevel;
         void updateGateChallenge('switch-variant', language as GateLanguage, requestedDifficulty);
+    }
+
+    function toggleLeetcodeDifficulty(value: LeetcodeDifficulty) {
+        if (selectedLeetcodeDifficulties.includes(value)) {
+            if (selectedLeetcodeDifficulties.length === 1) return;
+            selectedLeetcodeDifficulties = selectedLeetcodeDifficulties.filter((candidate) => candidate !== value);
+        } else {
+            selectedLeetcodeDifficulties = [...selectedLeetcodeDifficulties, value];
+        }
     }
 
     async function giveUpGate() {
@@ -935,7 +946,7 @@
                         {/if}
                     </select>
                     {#if isCodeGate}
-                        <label for="difficulty-select" style="font-size:0.9rem;color:var(--color-text-secondary);">Difficulty</label>
+                        <label for="difficulty-select" style="font-size:0.9rem;color:var(--color-text-secondary);">Solution difficulty</label>
                         <select id="difficulty-select" value={difficulty} on:change={handleDifficultyChange} disabled={gateActionPending}>
                             <option value="0">Original (0%)</option>
                             <option value="25">25%</option>
@@ -944,6 +955,23 @@
                             <option value="99">99% (One line missing)</option>
                             <option value="100">Solution (100%)</option>
                         </select>
+                        <span class="gate-filter-label">LeetCode difficulty</span>
+                        <details class="leetcode-filter">
+                            <summary>{selectedLeetcodeDifficulties.length === leetcodeDifficultyLevels.length ? 'All' : selectedLeetcodeDifficulties.join(', ')}</summary>
+                            <div class="leetcode-filter-menu">
+                                {#each leetcodeDifficultyLevels as level}
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedLeetcodeDifficulties.includes(level)}
+                                            disabled={gateActionPending || (selectedLeetcodeDifficulties.length === 1 && selectedLeetcodeDifficulties.includes(level))}
+                                            on:change={() => toggleLeetcodeDifficulty(level)}
+                                        />
+                                        {level}
+                                    </label>
+                                {/each}
+                            </div>
+                        </details>
                         <button class="btn gate-action" on:click={replaceGateChallenge} disabled={gateActionPending}>Different Problem</button>
                         <button class="btn gate-give-up" on:click={giveUpGate} disabled={gateActionPending}>Give Up</button>
                     {/if}
@@ -1647,6 +1675,45 @@
         gap: var(--spacing-2);
         flex: 1;
         min-width: 0;
+    }
+    .gate-filter-label {
+        font-size: 0.9rem;
+        color: var(--color-text-secondary);
+    }
+    .leetcode-filter {
+        position: relative;
+    }
+    .leetcode-filter summary {
+        min-width: 72px;
+        padding: 6px 8px;
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        background: var(--color-bg);
+        color: var(--color-text);
+        cursor: pointer;
+        list-style-position: inside;
+        white-space: nowrap;
+    }
+    .leetcode-filter-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        z-index: 1100;
+        min-width: 130px;
+        padding: 8px;
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        background: var(--color-bg);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        display: grid;
+        gap: 8px;
+    }
+    .leetcode-filter-menu label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        white-space: nowrap;
     }
     .editor-header.codegate-header > .lang-dropdown-tabs-container {
         flex-basis: 100%;
