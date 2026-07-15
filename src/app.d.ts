@@ -3,6 +3,8 @@
 declare global {
 	interface Window {
 		codegateDesktop?: {
+			settingsSnapshot: Record<string, unknown>;
+			saveSettings(settings: object): Promise<Record<string, unknown>>;
 			release(outcome: 'accepted' | 'given-up' | 'infrastructure-failure' | 'abandoned'): Promise<{ released: boolean }>;
 			startupStatus(): Promise<boolean>;
 			startupEventsStatus(): Promise<{ logon: boolean; unlock: boolean; resume: boolean }>;

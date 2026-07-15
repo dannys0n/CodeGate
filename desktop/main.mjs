@@ -1,12 +1,14 @@
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { appendSessionHistory } from './lib/history.mjs';
 import { configuredPort, selectLoopbackPort } from './lib/port.mjs';
 import { checkDocker, localRequest, runCommand, waitForServer, wakeWsl } from './lib/readiness.mjs';
 import { recoveryHtml, serverExitDiagnostics } from './lib/recovery.mjs';
 import { isStartupEnabled } from './lib/startup.mjs';
+import { defaultDesktopSettings, loadDesktopSettings, normalizeDesktopSettings, saveDesktopSettings } from './lib/settings.mjs';
 
 const requestedPort = configuredPort(process.env.CODEGATE_PORT);
 let port;
@@ -26,6 +28,10 @@ let released = false;
 let quitting = false;
 let recovering = false;
 let uiReady = false;
+let desktopSettings = normalizeDesktopSettings(defaultDesktopSettings);
+let desktopSettingsFile;
+let desktopSettingsPresent = false;
+let desktopSettingsSaveQueue = Promise.resolve(desktopSettings);
 
 function startupMode() {
   const argument = process.argv.find((value) => value.startsWith('--startup='));
@@ -83,6 +89,12 @@ function readinessDiagnostics(server, wsl, docker) {
 async function configureServerAddress() {
   port = requestedPort ?? await selectLoopbackPort();
   baseUrl = `http://127.0.0.1:${port}`;
+}
+
+async function initializeDesktopSettings() {
+  desktopSettingsFile = path.join(app.getPath('userData'), 'settings.json');
+  desktopSettingsPresent = existsSync(desktopSettingsFile);
+  desktopSettings = await loadDesktopSettings(desktopSettingsFile);
 }
 
 async function handleStartupCommand(mode) {
@@ -151,7 +163,11 @@ function secureWindow(win) {
 }
 
 async function resolveGateUrl() {
-  const response = await localRequest(`${baseUrl}/gate?language=python&difficulty=99`, 600_000);
+  const gateUrl = new URL('/gate', baseUrl);
+  gateUrl.searchParams.set('language', desktopSettings.codegateLanguage);
+  gateUrl.searchParams.set('difficulty', desktopSettings.solutionDifficulty);
+  gateUrl.searchParams.set('leetcodeDifficulties', desktopSettings.leetcodeDifficulties.join(','));
+  const response = await localRequest(gateUrl.href, 600_000);
   if (response.status !== 303 || !response.headers.location) throw new Error(`Gate route returned ${response.status}`);
   const url = new URL(response.headers.location, baseUrl);
   activeDesktopSession = { sessionId: url.searchParams.get('sessionId'), challengeId: url.searchParams.get('challengeId'), startedAt: new Date().toISOString() };
@@ -203,6 +219,21 @@ async function release(outcome) {
 }
 
 ipcMain.handle('codegate:release', (_event, outcome) => release(outcome));
+ipcMain.on('codegate:settings-snapshot', (event) => {
+  event.returnValue = { ...desktopSettings, desktopSettingsPresent };
+});
+ipcMain.handle('codegate:settings-save', async (_event, patch) => {
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error('Invalid settings update');
+  desktopSettingsSaveQueue = desktopSettingsSaveQueue.catch(() => desktopSettings).then(async () => {
+    desktopSettings = normalizeDesktopSettings({ ...desktopSettings, ...patch });
+    if (desktopSettingsFile) {
+      desktopSettings = await saveDesktopSettings(desktopSettingsFile, desktopSettings);
+      desktopSettingsPresent = true;
+    }
+    return desktopSettings;
+  });
+  return desktopSettingsSaveQueue;
+});
 ipcMain.handle('codegate:startup-status', () => {
   const options = loginItemOptions();
   return isStartupEnabled(app.getLoginItemSettings(options), options);
@@ -223,6 +254,7 @@ if (requiresSingleInstance && hasSingleInstanceLock) {
 
 async function runSmokeTest() {
   const wsl = wakeWsl();
+  await initializeDesktopSettings();
   await configureServerAddress();
   startServer();
   const server = await waitForServer(baseUrl, 60, 250, instanceToken);
@@ -249,6 +281,7 @@ async function runSmokeTest() {
 async function runDesktop() {
   uiReady = true;
   void wakeWsl();
+  await initializeDesktopSettings();
   await configureServerAddress();
   await showPreparingWindows();
   startServer();

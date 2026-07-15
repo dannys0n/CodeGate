@@ -1,5 +1,6 @@
 import { browser } from '$app/environment';
 import type { ProgrammingLanguage } from '$lib/utils/util';
+import { leetcodeDifficultyLevels, type DifficultyLevel, type GateLanguage, type LeetcodeDifficulty } from '$lib/codegate/types';
 import { writable } from 'svelte/store';
 
 export type ThemeChoice = 'dark' | 'light';
@@ -14,6 +15,9 @@ export interface UserSettings {
     vimMode: 'off' | 'on';
     isSidebarOpen: boolean;
     activePanel: ActivePanel;
+    codegateLanguage: GateLanguage;
+    solutionDifficulty: DifficultyLevel;
+    leetcodeDifficulties: LeetcodeDifficulty[];
 }
 
 const STORAGE_KEY = 'user-settings';
@@ -26,6 +30,9 @@ const defaultSettings: UserSettings = {
     vimMode: 'off',
     isSidebarOpen: true,
     activePanel: 'explorer',
+    codegateLanguage: 'python',
+    solutionDifficulty: '99',
+    leetcodeDifficulties: [...leetcodeDifficultyLevels],
 };
 
 function normalizeSettings(input: any): UserSettings {
@@ -40,12 +47,23 @@ function normalizeSettings(input: any): UserSettings {
     const isSidebarOpen = typeof input?.isSidebarOpen === 'boolean' ? input.isSidebarOpen : defaultSettings.isSidebarOpen;
     const validPanels: ActivePanel[] = ['explorer', 'search', null];
     const activePanel = validPanels.includes(input?.activePanel as ActivePanel) ? input.activePanel as ActivePanel : defaultSettings.activePanel;
-    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel };
+    const gateLanguages: GateLanguage[] = ['java', 'python', 'cpp', 'csharp', 'rust', 'go', 'typescript'];
+    const difficultyLevels: DifficultyLevel[] = ['0', '25', '50', '75', '99', '100'];
+    const codegateLanguage = gateLanguages.includes(input?.codegateLanguage) ? input.codegateLanguage as GateLanguage : defaultSettings.codegateLanguage;
+    const solutionDifficulty = difficultyLevels.includes(input?.solutionDifficulty) ? input.solutionDifficulty as DifficultyLevel : defaultSettings.solutionDifficulty;
+    const selectedLeetcodeDifficulties = Array.isArray(input?.leetcodeDifficulties)
+        ? leetcodeDifficultyLevels.filter((value) => input.leetcodeDifficulties.includes(value))
+        : [];
+    const leetcodeDifficulties = selectedLeetcodeDifficulties.length ? selectedLeetcodeDifficulties : [...defaultSettings.leetcodeDifficulties];
+    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties };
 }
 
-// Load initial settings from localStorage if available
+// Packaged Electron uses its user-data settings file. A missing file falls back
+// to the legacy localStorage value once so it can be migrated.
 const initialSettings: UserSettings = browser
-    ? normalizeSettings(JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'))
+    ? normalizeSettings(window.codegateDesktop?.settingsSnapshot?.desktopSettingsPresent === false
+        ? JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+        : window.codegateDesktop?.settingsSnapshot ?? JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'))
     : defaultSettings;
 
 const userSettingsStorage = writable<UserSettings>(initialSettings);
@@ -55,11 +73,18 @@ function applyTheme(theme: ThemeChoice) {
     root.dataset.theme = theme;
 }
 
-// Persist changes to localStorage in the browser
 if (browser) {
     applyTheme(initialSettings.theme);
     userSettingsStorage.subscribe((value) => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+        if (window.codegateDesktop) {
+            void window.codegateDesktop.saveSettings(value).then(() => {
+                localStorage.removeItem(STORAGE_KEY);
+            }).catch((error) => {
+                console.error('Unable to save desktop settings', error);
+            });
+        } else {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+        }
         applyTheme(value.theme);
     });
 }

@@ -741,6 +741,12 @@
             const session = await response.json();
             if (!response.ok) throw new Error(session.error ?? (action === 'refresh' ? 'Unable to replace challenge' : 'Unable to switch variant'));
             const selected = session.challenge.variant;
+            userSettingsStorage.update((settings) => ({
+                ...settings,
+                codegateLanguage: selected.language,
+                solutionDifficulty: selected.difficulty,
+                leetcodeDifficulties: [...selectedLeetcodeDifficulties]
+            }));
             const target = new URL(`/problems/${selected.problemId}`, window.location.origin);
             target.searchParams.set('codegate', '1');
             target.searchParams.set('language', selected.language);
@@ -780,6 +786,7 @@
         } else {
             selectedLeetcodeDifficulties = [...selectedLeetcodeDifficulties, value];
         }
+        userSettingsStorage.update((settings) => ({ ...settings, leetcodeDifficulties: [...selectedLeetcodeDifficulties] }));
     }
 
     async function giveUpGate() {
