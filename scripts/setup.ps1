@@ -68,7 +68,7 @@ foreach ($source in $lock.repositories) {
     }
 
     $currentCommit = (& git -C $target rev-parse HEAD 2>$null).Trim()
-    if ($currentCommit -ne $source.commit) {
+    if (-not $hasCheckout -or $currentCommit -ne $source.commit) {
         & git -C $target cat-file -e "$($source.commit)^{commit}" 2>$null
         if ($LASTEXITCODE -ne 0) {
             Invoke-Git @('-C', $target, 'fetch', '--filter=blob:none', '--depth=1', 'origin', $source.commit)
