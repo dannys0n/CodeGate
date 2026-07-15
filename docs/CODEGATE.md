@@ -110,6 +110,9 @@ packs, identity conflicts, and records without a trusted test/validator combinat
 ## Windows sign-in startup
 
 The installer startup checkbox is enabled by default. No reboot is required after registration.
+After installation, open the editor's settings gear to change the sign-in, unlock, and
+resume-from-sleep triggers. Those controls read the current-user `CodeGate Start Events` scheduled
+task directly, replace it when a selection changes, and keep the installer's saved choices in sync.
 Development-tree commands are:
 
 ```powershell

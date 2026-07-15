@@ -118,7 +118,8 @@ updating imported problem sources.
 ![CodeGate installer preview](docs/assets/installer-placeholder.svg)
 
 The installer lets the user choose sign-in, unlock, and resume-from-sleep startup events; all three
-are selected by default. Uninstalling CodeGate removes its scheduled startup registration,
+are selected by default. The same choices can be changed later from the editor's settings gear.
+Uninstalling CodeGate removes its scheduled startup registration,
 application files, and per-user state. Removing shared Docker images is an optional uninstall step
 because those images may be used by other projects.
 

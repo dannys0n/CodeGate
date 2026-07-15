@@ -184,6 +184,10 @@
     let settingsDropdown: HTMLElement | null = null;
     let settingsLeft = 0;
     let settingsTop = 0;
+    let hasDesktopStartupControls = false;
+    let startupEvents: { logon: boolean; unlock: boolean; resume: boolean } | null = null;
+    let startupEventsBusy = false;
+    let startupEventsError = '';
     const fontSizes: number[] = Array.from({ length: 13 }, (_, i) => 12 + i); // 12..24
     let fontSize: number = $userSettingsStorage.editorFontSize ?? 14;
     let theme: ThemeChoice = $userSettingsStorage.theme ?? 'dark';
@@ -401,6 +405,7 @@
     }
 
     onMount(async () => {
+        hasDesktopStartupControls = Boolean(window.codegateDesktop?.startupEventsStatus);
         const module = await import('$lib/components/CodeEditor.svelte');
         CodeEditor = module.default;
 
@@ -510,6 +515,39 @@
     async function toggleSettings() {
         showSettings = !showSettings;
         if (showSettings) {
+            if (hasDesktopStartupControls && !startupEvents) await loadStartupEvents();
+            await tick();
+            updateSettingsPosition();
+        }
+    }
+
+    async function loadStartupEvents() {
+        if (!window.codegateDesktop?.startupEventsStatus || startupEventsBusy) return;
+        startupEventsBusy = true;
+        startupEventsError = '';
+        try {
+            startupEvents = await window.codegateDesktop.startupEventsStatus();
+        } catch (error) {
+            startupEventsError = error instanceof Error ? error.message : String(error);
+        } finally {
+            startupEventsBusy = false;
+        }
+    }
+
+    async function updateStartupEvent(eventName: 'logon' | 'unlock' | 'resume', enabled: boolean) {
+        if (!window.codegateDesktop?.setStartupEvents || !startupEvents || startupEventsBusy) return;
+        const previous = startupEvents;
+        const next = { ...startupEvents, [eventName]: enabled };
+        startupEvents = next;
+        startupEventsBusy = true;
+        startupEventsError = '';
+        try {
+            startupEvents = await window.codegateDesktop.setStartupEvents(next);
+        } catch (error) {
+            startupEvents = previous;
+            startupEventsError = error instanceof Error ? error.message : String(error);
+        } finally {
+            startupEventsBusy = false;
             await tick();
             updateSettingsPosition();
         }
@@ -1112,6 +1150,29 @@
                                 <option value="off">Standard</option>
                                 <option value="on">Vim</option>
                             </select>
+                            {#if hasDesktopStartupControls}
+                                <div class="settings-divider"></div>
+                                <div class="settings-section-title">Open CodeGate when Windows:</div>
+                                {#if startupEvents}
+                                    <label class="startup-event-option">
+                                        <input type="checkbox" checked={startupEvents.logon} disabled={startupEventsBusy} on:change={(event) => updateStartupEvent('logon', event.currentTarget.checked)} />
+                                        Signs in
+                                    </label>
+                                    <label class="startup-event-option">
+                                        <input type="checkbox" checked={startupEvents.unlock} disabled={startupEventsBusy} on:change={(event) => updateStartupEvent('unlock', event.currentTarget.checked)} />
+                                        Unlocks
+                                    </label>
+                                    <label class="startup-event-option">
+                                        <input type="checkbox" checked={startupEvents.resume} disabled={startupEventsBusy} on:change={(event) => updateStartupEvent('resume', event.currentTarget.checked)} />
+                                        Resumes from sleep
+                                    </label>
+                                {:else if startupEventsBusy}
+                                    <div class="settings-note">Loading startup settings…</div>
+                                {:else}
+                                    <button class="btn" on:click={loadStartupEvents}>Retry</button>
+                                {/if}
+                                {#if startupEventsError}<div class="settings-error">{startupEventsError}</div>{/if}
+                            {/if}
                         </div>
                     {/if}
                 </div>
@@ -1617,7 +1678,7 @@
         padding: var(--spacing-2);
         box-shadow: 0 8px 24px rgba(0,0,0,0.25);
         z-index: 1000;
-        min-width: 170px;
+        min-width: 220px;
         max-width: calc(100vw - 16px);
         max-height: calc(100vh - 16px);
         overflow-y: auto;
@@ -1675,6 +1736,31 @@
         gap: var(--spacing-2);
         flex: 1;
         min-width: 0;
+    }
+    .settings-divider {
+        border-top: 1px solid var(--color-border);
+        margin: var(--spacing-1) 0;
+    }
+    .settings-section-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--color-text);
+    }
+    .settings-dropdown .startup-event-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--color-text);
+        cursor: pointer;
+    }
+    .settings-note {
+        font-size: 0.8rem;
+        color: var(--color-text-secondary);
+    }
+    .settings-error {
+        max-width: 260px;
+        font-size: 0.78rem;
+        color: var(--color-error, #ef4444);
     }
     .gate-filter-label {
         font-size: 0.9rem;

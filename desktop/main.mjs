@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { appendSessionHistory } from './lib/history.mjs';
 import { configuredPort, selectLoopbackPort } from './lib/port.mjs';
-import { checkDocker, localRequest, waitForServer, wakeWsl } from './lib/readiness.mjs';
+import { checkDocker, localRequest, runCommand, waitForServer, wakeWsl } from './lib/readiness.mjs';
 import { recoveryHtml, serverExitDiagnostics } from './lib/recovery.mjs';
 import { isStartupEnabled } from './lib/startup.mjs';
 
@@ -34,6 +34,42 @@ function startupMode() {
 
 function loginItemOptions() {
   return { path: process.execPath, args: app.isPackaged ? [] : [appRoot] };
+}
+
+function startEventsScriptPath() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'app.asar.unpacked', 'desktop', 'start-events.ps1')
+    : path.join(appRoot, 'desktop', 'start-events.ps1');
+}
+
+async function startupEventsStatus() {
+  if (process.platform !== 'win32') return { logon: false, unlock: false, resume: false };
+  const result = await runCommand('powershell.exe', [
+    '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+    '-File', startEventsScriptPath(), '-Status'
+  ], { timeout: 15_000 });
+  if (!result.ok) throw new Error(result.stderr.trim() || 'Unable to read Windows startup events');
+  const status = JSON.parse(result.stdout.trim());
+  return { logon: status.logon === true, unlock: status.unlock === true, resume: status.resume === true };
+}
+
+async function setStartupEvents(events) {
+  if (!events || ['logon', 'unlock', 'resume'].some((key) => typeof events[key] !== 'boolean')) {
+    throw new Error('Invalid startup event selection');
+  }
+  if (process.platform !== 'win32') throw new Error('Windows startup events are only available on Windows');
+  const args = [
+    '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+    '-File', startEventsScriptPath(),
+    '-ExecutablePath', process.execPath,
+    '-Logon', events.logon ? '1' : '0',
+    '-Unlock', events.unlock ? '1' : '0',
+    '-Resume', events.resume ? '1' : '0'
+  ];
+  if (!app.isPackaged) args.push('-ExecutableArguments', `"${appRoot}"`);
+  const result = await runCommand('powershell.exe', args, { timeout: 15_000 });
+  if (!result.ok) throw new Error(result.stderr.trim() || 'Unable to update Windows startup events');
+  return startupEventsStatus();
 }
 
 function readinessDiagnostics(server, wsl, docker) {
@@ -171,6 +207,8 @@ ipcMain.handle('codegate:startup-status', () => {
   const options = loginItemOptions();
   return isStartupEnabled(app.getLoginItemSettings(options), options);
 });
+ipcMain.handle('codegate:startup-events-status', () => startupEventsStatus());
+ipcMain.handle('codegate:set-startup-events', (_event, events) => setStartupEvents(events));
 
 app.on('before-quit', () => { quitting = true; if (serverProcess && !serverProcess.killed) serverProcess.kill(); });
 app.on('window-all-closed', () => { if (!released && !quitting) void release('abandoned'); });
