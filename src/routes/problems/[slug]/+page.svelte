@@ -48,6 +48,8 @@
     let language: ProgrammingLanguage = data.codegate?.selected.language ?? $userSettingsStorage.preferredLanguage ?? 'java';
     let difficulty: DifficultyLevel = data.codegate?.selected.difficulty ?? '99';
     let selectedLeetcodeDifficulties: LeetcodeDifficulty[] = data.codegate?.leetcodeDifficulties ?? [...leetcodeDifficultyLevels];
+    let showLeetcodeDifficultyFilter = false;
+    let leetcodeDifficultyFilterContainer: HTMLElement | null = null;
     let gateSessionId = isCodeGate ? $page.url.searchParams.get('sessionId') ?? '' : '';
     let gateChallengeId = isCodeGate ? $page.url.searchParams.get('challengeId') ?? '' : '';
     let gateActionPending = false;
@@ -469,10 +471,14 @@
             if (showSettings && settingsContainer && !settingsContainer.contains(e.target as Node)) {
                 showSettings = false;
             }
+            if (showLeetcodeDifficultyFilter && leetcodeDifficultyFilterContainer && !leetcodeDifficultyFilterContainer.contains(e.target as Node)) {
+                showLeetcodeDifficultyFilter = false;
+            }
         };
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 showSettings = false;
+                showLeetcodeDifficultyFilter = false;
             }
             if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
                 e.preventDefault();
@@ -993,23 +999,35 @@
                             <option value="99">99% (One line missing)</option>
                             <option value="100">Solution (100%)</option>
                         </select>
-                        <span class="gate-filter-label">LeetCode difficulty</span>
-                        <details class="leetcode-filter">
-                            <summary>{selectedLeetcodeDifficulties.length === leetcodeDifficultyLevels.length ? 'All' : selectedLeetcodeDifficulties.join(', ')}</summary>
-                            <div class="leetcode-filter-menu">
-                                {#each leetcodeDifficultyLevels as level}
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedLeetcodeDifficulties.includes(level)}
-                                            disabled={gateActionPending || (selectedLeetcodeDifficulties.length === 1 && selectedLeetcodeDifficulties.includes(level))}
-                                            on:change={() => toggleLeetcodeDifficulty(level)}
-                                        />
-                                        {level}
-                                    </label>
-                                {/each}
-                            </div>
-                        </details>
+                        <label for="leetcode-difficulty-select" style="font-size:0.9rem;color:var(--color-text-secondary);">LeetCode difficulty</label>
+                        <div class="leetcode-filter" bind:this={leetcodeDifficultyFilterContainer}>
+                            <button
+                                id="leetcode-difficulty-select"
+                                type="button"
+                                class="leetcode-filter-trigger"
+                                aria-haspopup="true"
+                                aria-expanded={showLeetcodeDifficultyFilter}
+                                disabled={gateActionPending}
+                                on:click={() => showLeetcodeDifficultyFilter = !showLeetcodeDifficultyFilter}
+                            >
+                                {selectedLeetcodeDifficulties.length === leetcodeDifficultyLevels.length ? 'All' : selectedLeetcodeDifficulties.join(', ')}
+                            </button>
+                            {#if showLeetcodeDifficultyFilter}
+                                <div class="leetcode-filter-menu">
+                                    {#each leetcodeDifficultyLevels as level}
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedLeetcodeDifficulties.includes(level)}
+                                                disabled={gateActionPending || (selectedLeetcodeDifficulties.length === 1 && selectedLeetcodeDifficulties.includes(level))}
+                                                on:change={() => toggleLeetcodeDifficulty(level)}
+                                            />
+                                            {level}
+                                        </label>
+                                    {/each}
+                                </div>
+                            {/if}
+                        </div>
                         <button class="btn gate-action" on:click={replaceGateChallenge} disabled={gateActionPending}>Different Problem</button>
                         <button class="btn gate-give-up" on:click={giveUpGate} disabled={gateActionPending}>Give Up</button>
                     {/if}
@@ -1690,13 +1708,52 @@
         font-size: 0.85rem;
         color: var(--color-text-secondary);
     }
-    .settings-dropdown select, #language-select, #difficulty-select {
+    .settings-dropdown select, #language-select, #difficulty-select, .leetcode-filter-trigger {
         background: var(--color-bg);
         color: var(--color-text);
         border: 1px solid var(--color-border);
         border-radius: 6px;
-        padding: 6px 8px;
+        padding: 6px 28px 6px 8px;
         font-family: inherit;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+    }
+    .leetcode-filter {
+        position: relative;
+    }
+    .leetcode-filter-trigger {
+        min-width: 72px;
+        text-align: left;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    .leetcode-filter-trigger:disabled {
+        cursor: default;
+        opacity: 0.6;
+    }
+    .leetcode-filter-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        z-index: 1100;
+        min-width: 130px;
+        padding: 8px;
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        background: var(--color-bg);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        display: grid;
+        gap: 8px;
+    }
+    .leetcode-filter-menu label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--color-text);
+        cursor: pointer;
+        white-space: nowrap;
     }
 
     /* Hints section */
@@ -1761,45 +1818,6 @@
         max-width: 260px;
         font-size: 0.78rem;
         color: var(--color-error, #ef4444);
-    }
-    .gate-filter-label {
-        font-size: 0.9rem;
-        color: var(--color-text-secondary);
-    }
-    .leetcode-filter {
-        position: relative;
-    }
-    .leetcode-filter summary {
-        min-width: 72px;
-        padding: 6px 8px;
-        border: 1px solid var(--color-border);
-        border-radius: 6px;
-        background: var(--color-bg);
-        color: var(--color-text);
-        cursor: pointer;
-        list-style-position: inside;
-        white-space: nowrap;
-    }
-    .leetcode-filter-menu {
-        position: absolute;
-        top: calc(100% + 4px);
-        right: 0;
-        z-index: 1100;
-        min-width: 130px;
-        padding: 8px;
-        border: 1px solid var(--color-border);
-        border-radius: 6px;
-        background: var(--color-bg);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-        display: grid;
-        gap: 8px;
-    }
-    .leetcode-filter-menu label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        white-space: nowrap;
     }
     .editor-header.codegate-header > .lang-dropdown-tabs-container {
         flex-basis: 100%;
