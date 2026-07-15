@@ -31,7 +31,7 @@ export function resolveProblemFile(problemId: string, fileName: string): string 
 function statement(record: Record<string, any>): string {
     const constraints = (record.constraints ?? []).map((value: unknown) => `- ${String(value)}`).join('\n');
     const followups = (record.follow_ups ?? []).map((value: unknown) => `- ${String(value)}`).join('\n');
-    return `# ${record.frontend_id}. ${record.title}\n\n${record.description ?? ''}\n\n${constraints ? `## Constraints\n\n${constraints}\n\n` : ''}${followups ? `## Follow-ups\n\n${followups}\n` : ''}`;
+    return `${record.description ?? ''}\n\n${constraints ? `## Constraints\n\n${constraints}\n\n` : ''}${followups ? `## Follow-ups\n\n${followups}\n` : ''}`;
 }
 
 export async function materializeGeneratedProblem(problem: CandidateProblem, record: Record<string, any>, cases: Array<{ input: Record<string, unknown>; output: unknown }>): Promise<void> {
