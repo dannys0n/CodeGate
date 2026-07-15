@@ -13,6 +13,10 @@ function rawDigest(value: Buffer | string) {
     return createHash('sha256').update(value).digest('hex');
 }
 
+function locator(contents: Buffer | string, offset = 0) {
+    return { offset, length: Buffer.byteLength(contents), sha256: rawDigest(contents) };
+}
+
 function judgeDigest(files: Array<[string, Buffer]>) {
     const hash = createHash('sha256');
     for (const [name, contents] of files) hash.update(name).update('\0').update(contents).update('\0');
@@ -22,14 +26,14 @@ function judgeDigest(files: Array<[string, Buffer]>) {
 describe('CodeGate grouped candidate manifest', () => {
     it('accepts one problem containing multiple languages', () => {
         expect(() => assertCandidateManifest({
-            schemaVersion: 2,
-            sources: { neenza: 'sources/problems', doocs: 'sources/doocs', kamyu: 'sources/kamyu', newfacade: 'sources/newfacade' },
+            schemaVersion: 3,
+            assetBundle: { file: 'candidate-assets.bin', length: 4, sha256: 'e'.repeat(64) },
             problems: {
                 '1': {
-                    slug: 'two-sum', record: '0001-two-sum.json', recordSha256: 'a'.repeat(64), judgeSha256: 'b'.repeat(64),
+                    slug: 'two-sum', record: { offset: 0, length: 1, sha256: 'a'.repeat(64) }, judgeSha256: 'b'.repeat(64),
                     languages: {
-                        python: { solutionSource: 'doocs', solution: '0001/solution.py', solutionSha256: 'c'.repeat(64) },
-                        cpp: { solutionSource: 'kamyu', solution: 'C++/two-sum.cpp', solutionSha256: 'd'.repeat(64) }
+                        python: { solutionSource: 'doocs', solution: { offset: 1, length: 1, sha256: 'c'.repeat(64) } },
+                        cpp: { solutionSource: 'kamyu', solution: { offset: 2, length: 1, sha256: 'd'.repeat(64) } }
                     }
                 }
             },
@@ -45,8 +49,9 @@ describe('CodeGate grouped candidate manifest', () => {
         const judgeFiles: Array<[string, Buffer]> = [
             ['metadata.json', metadata], ['official-tests.json', Buffer.from('[]')], ['Marker.java', Buffer.from('class Marker {}')]
         ];
+        const bundle = Buffer.concat([record, solution]);
         const writes: Array<[string, Buffer]> = [
-            ['sources/problems/0001-example.json', record], ['sources/doocs/0001/solution.py', solution],
+            ['codegate/candidate-assets.bin', bundle],
             ...judgeFiles.map(([name, contents]) => [`problems/example/${name}`, contents] as [string, Buffer])
         ];
         for (const [relative, contents] of writes) {
@@ -55,15 +60,16 @@ describe('CodeGate grouped candidate manifest', () => {
             await fs.writeFile(target, contents);
         }
         const manifest = {
-            schemaVersion: 2, generatorVersion: 1, generatedAt: 'now', sourceRevision: 'fixture',
-            sources: { neenza: 'sources/problems', doocs: 'sources/doocs', kamyu: 'sources/kamyu', newfacade: 'sources/newfacade' },
-            problems: { '1': { slug: 'example', record: '0001-example.json', recordSha256: rawDigest(record), judgeSha256: judgeDigest(judgeFiles), languages: { python: { solutionSource: 'doocs', solution: '0001/solution.py', solutionSha256: rawDigest(solution) } } } },
+            schemaVersion: 3, generatorVersion: 1, generatedAt: 'now', sourceRevision: 'fixture',
+            assetBundle: { file: 'candidate-assets.bin', length: bundle.length, sha256: rawDigest(bundle) },
+            problems: { '1': { slug: 'example', record: locator(record), judgeSha256: judgeDigest(judgeFiles), languages: { python: { solutionSource: 'doocs', solution: locator(solution, record.length) } } } },
             quarantine: []
         };
-        await fs.mkdir(path.join(temporaryRoot, 'codegate'));
+        await fs.mkdir(path.join(temporaryRoot, 'codegate'), { recursive: true });
         await fs.writeFile(path.join(temporaryRoot, 'codegate', 'candidate-manifest.json'), JSON.stringify(manifest));
         await expect(loadCandidateAssets('1', 'python', temporaryRoot)).resolves.toMatchObject({ frontendId: '1' });
-        await fs.writeFile(path.join(temporaryRoot, 'sources/doocs/0001/solution.py'), 'changed');
+        bundle[record.length] ^= 0xff;
+        await fs.writeFile(path.join(temporaryRoot, 'codegate', 'candidate-assets.bin'), bundle);
         await expect(loadCandidateAssets('1', 'python', temporaryRoot)).rejects.toThrow(/changed after indexing/);
     });
 
@@ -72,24 +78,21 @@ describe('CodeGate grouped candidate manifest', () => {
         const record = JSON.stringify({ frontend_id: '1', title: 'Example', description: 'Solve it.', code_snippets: { python3: 'class Solution:\n    def solve(self, value: int) -> int:\n        pass' } });
         const solution = 'class Solution:\n    def solve(self, value):\n        return value\n';
         const dataset = JSON.stringify({ input_output: [{ input: 'value = 1', output: '1' }, { input: 'value = 2', output: '2' }, { input: 'value = 3', output: '3' }] });
+        const recordBuffer = Buffer.from(record);
+        const solutionBuffer = Buffer.from(solution);
+        const datasetBuffer = Buffer.from(dataset);
+        const bundle = Buffer.concat([recordBuffer, solutionBuffer, datasetBuffer]);
         const judge = {
             kind: 'generated-exact',
             metadata: { id: 'example', title: '1. Example', difficulty: 'Easy', functionName: 'solve', params: [{ name: 'value', type: 'int' }], outputType: 'int', hints: [] },
-            testRecord: { file: 'dataset.jsonl', offset: 0, length: Buffer.byteLength(dataset), sha256: rawDigest(dataset) }
+            testRecord: locator(datasetBuffer, recordBuffer.length + solutionBuffer.length)
         };
-        const writes: Array<[string, string]> = [
-            ['sources/problems/0001-example.json', record], ['sources/doocs/0001/Solution.py', solution], ['sources/newfacade/dataset.jsonl', dataset]
-        ];
-        for (const [relative, contents] of writes) {
-            const target = path.join(temporaryRoot, relative);
-            await fs.mkdir(path.dirname(target), { recursive: true });
-            await fs.writeFile(target, contents);
-        }
         await fs.mkdir(path.join(temporaryRoot, 'codegate'));
+        await fs.writeFile(path.join(temporaryRoot, 'codegate', 'candidate-assets.bin'), bundle);
         await fs.writeFile(path.join(temporaryRoot, 'codegate', 'candidate-manifest.json'), JSON.stringify({
-            schemaVersion: 2, generatorVersion: 1, generatedAt: 'now', sourceRevision: 'fixture',
-            sources: { neenza: 'sources/problems', doocs: 'sources/doocs', kamyu: 'sources/kamyu', newfacade: 'sources/newfacade' },
-            problems: { '1': { slug: 'example', record: '0001-example.json', recordSha256: rawDigest(record), judgeSha256: rawDigest(JSON.stringify(judge)), judge, languages: { python: { solutionSource: 'doocs', solution: '0001/Solution.py', solutionSha256: rawDigest(solution) } } } },
+            schemaVersion: 3, generatorVersion: 1, generatedAt: 'now', sourceRevision: 'fixture',
+            assetBundle: { file: 'candidate-assets.bin', length: bundle.length, sha256: rawDigest(bundle) },
+            problems: { '1': { slug: 'example', record: locator(recordBuffer), judgeSha256: rawDigest(JSON.stringify(judge)), judge, languages: { python: { solutionSource: 'doocs', solution: locator(solutionBuffer, recordBuffer.length) } } } },
             quarantine: []
         }));
 

@@ -6,7 +6,7 @@ import type { CandidateProblem } from '$lib/codegate/types';
 import { generateExactMarker } from '../codegate/exact-marker.mjs';
 import { officialTests } from '../codegate/test-vectors.mjs';
 
-const ordinaryRoot = path.resolve('problems');
+const ordinaryRoot = path.resolve(process.env.CODEGATE_APP_ROOT || process.cwd(), 'problems');
 const runtimeRoot = path.resolve(process.env.CODEGATE_RUNTIME_PACK_ROOT || path.join(os.tmpdir(), `codegate-runtime-${process.pid}`));
 let activeGenerated: { slug: string; hash: string } | undefined;
 let materialization = Promise.resolve();

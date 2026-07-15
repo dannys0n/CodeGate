@@ -18,26 +18,53 @@ async function digestFiles(files) {
   return hash.digest('hex');
 }
 
-async function fileSha256(file) {
-  return createHash('sha256').update(await fs.readFile(file)).digest('hex');
-}
-
 function valueSha256(value) {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
 }
 
-export async function buildCandidateManifest(repositoryRoot = process.cwd(), configFile = 'codegate/import-leetcode.json') {
+class AssetBundle {
+  constructor() {
+    this.buffers = [];
+    this.offset = 0;
+    this.entries = new Map();
+  }
+
+  add(contents) {
+    const sha256 = createHash('sha256').update(contents).digest('hex');
+    const key = `${sha256}:${contents.length}`;
+    const existing = this.entries.get(key);
+    if (existing) return existing;
+    const locator = { offset: this.offset, length: contents.length, sha256 };
+    this.entries.set(key, locator);
+    this.buffers.push(contents);
+    this.offset += contents.length;
+    return locator;
+  }
+
+  contents() {
+    return Buffer.concat(this.buffers, this.offset);
+  }
+}
+
+async function readSlice(file, offset, length) {
+  const handle = await fs.open(file, 'r');
+  try {
+    const buffer = Buffer.alloc(length);
+    const { bytesRead } = await handle.read(buffer, 0, length, offset);
+    if (bytesRead !== length) throw new Error(`Truncated source record: ${file}`);
+    return buffer;
+  } finally {
+    await handle.close();
+  }
+}
+
+export async function buildCandidateCatalog(repositoryRoot = process.cwd(), configFile = 'codegate/import-leetcode.json') {
   const configPath = path.resolve(repositoryRoot, configFile);
   const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
   const source = config.sources?.find((candidate) => candidate.adapter === 'leetcode-bundle');
   if (!source) throw new Error('candidate config has no leetcode-bundle source');
   const records = await loadLeetcodeBundle(source, { repositoryRoot, configDirectory: path.dirname(configPath) });
-  const roots = {
-    neenza: `${source.paths.neenza.replaceAll('\\', '/')}/problems`,
-    doocs: `${source.paths.doocs.replaceAll('\\', '/')}/solution`,
-    kamyu: source.paths.kamyu.replaceAll('\\', '/'),
-    newfacade: source.paths.newfacade.replaceAll('\\', '/')
-  };
+  const bundle = new AssetBundle();
   const problems = {};
   const quarantine = [];
   for (const record of records) {
@@ -53,17 +80,15 @@ export async function buildCandidateManifest(repositoryRoot = process.cwd(), con
       continue;
     }
     const recordPath = path.resolve(repositoryRoot, record.sourceRecord);
+    const recordLocator = bundle.add(await fs.readFile(recordPath));
     const languages = {};
     for (const [language, assets] of Object.entries(record.languages ?? {})) {
       if (!supportedLanguages.includes(language) || !assets.solutionSource?.path) continue;
       const alias = assets.provenance;
-      const root = roots[alias];
-      if (!root) continue;
       const absoluteSolution = path.resolve(repositoryRoot, assets.solutionSource.path);
       languages[language] = {
         solutionSource: alias,
-        solution: path.relative(path.resolve(repositoryRoot, root), absoluteSolution).replaceAll(path.sep, '/'),
-        solutionSha256: await fileSha256(absoluteSolution)
+        solution: bundle.add(await fs.readFile(absoluteSolution))
       };
     }
     if (!Object.keys(languages).length) continue;
@@ -73,56 +98,80 @@ export async function buildCandidateManifest(repositoryRoot = process.cwd(), con
       judgeSha256 = await digestFiles(required.map((name) => path.join(problemRoot, name)));
     } else {
       const { starterCode: _starterCode, testCases: _testCases, ...metadata } = record.pack.metadata;
+      const testContents = await readSlice(record.testLocator.file, record.testLocator.offset, record.testLocator.length);
       judge = {
         kind: 'generated-exact',
         metadata,
-        testRecord: {
-          file: path.relative(path.resolve(repositoryRoot, roots.newfacade), record.testLocator.file).replaceAll(path.sep, '/'),
-          offset: record.testLocator.offset,
-          length: record.testLocator.length,
-          sha256: record.testLocator.sha256
-        }
+        testRecord: bundle.add(testContents)
       };
       judgeSha256 = valueSha256(judge);
     }
     problems[record.frontendId] = {
       slug: record.slug,
-      record: path.relative(path.resolve(repositoryRoot, roots.neenza), recordPath).replaceAll(path.sep, '/'),
-      recordSha256: await fileSha256(recordPath),
+      record: recordLocator,
       judgeSha256,
       ...(judge ? { judge } : {}),
       languages
     };
   }
-  return {
-    schemaVersion: 2,
+  const bundleContents = bundle.contents();
+  return { manifest: {
+    schemaVersion: 3,
     generatorVersion: sourceTransformVersion,
     generatedAt: new Date().toISOString(),
     sourceRevision: source.revision,
-    sources: roots,
+    assetBundle: {
+      file: 'candidate-assets.bin',
+      length: bundleContents.length,
+      sha256: createHash('sha256').update(bundleContents).digest('hex')
+    },
     problems,
     quarantine
-  };
+  }, bundle: bundleContents };
+}
+
+export async function buildCandidateManifest(repositoryRoot = process.cwd(), configFile = 'codegate/import-leetcode.json') {
+  return (await buildCandidateCatalog(repositoryRoot, configFile)).manifest;
 }
 
 export async function writeCandidateManifest(repositoryRoot = process.cwd()) {
-  const manifest = await buildCandidateManifest(repositoryRoot);
+  const { manifest, bundle } = await buildCandidateCatalog(repositoryRoot);
   const target = path.join(repositoryRoot, 'codegate', 'candidate-manifest.json');
+  const bundleTarget = path.join(repositoryRoot, 'codegate', manifest.assetBundle.file);
   await fs.mkdir(path.dirname(target), { recursive: true });
   try {
     const existing = JSON.parse(await fs.readFile(target, 'utf8'));
     const withoutTimestamp = ({ generatedAt: _generatedAt, ...value }) => value;
-    if (JSON.stringify(withoutTimestamp(existing)) === JSON.stringify(withoutTimestamp(manifest))) return existing;
+    if (JSON.stringify(withoutTimestamp(existing)) === JSON.stringify(withoutTimestamp(manifest))) {
+      const stat = await fs.stat(bundleTarget);
+      if (stat.size === bundle.length) return existing;
+    }
   } catch {
     // Missing or malformed indexes are replaced below.
   }
-  await fs.writeFile(target, `${JSON.stringify(manifest, null, 2)}\n`);
+  await fs.writeFile(bundleTarget, bundle);
+  await fs.writeFile(target, `${JSON.stringify(manifest)}\n`);
   return manifest;
 }
 
+export async function ensureCandidateManifest(repositoryRoot = process.cwd(), configFile = 'codegate/import-leetcode.json') {
+  try {
+    const config = JSON.parse(await fs.readFile(path.resolve(repositoryRoot, configFile), 'utf8'));
+    const source = config.sources?.find((candidate) => candidate.adapter === 'leetcode-bundle');
+    const target = path.join(repositoryRoot, 'codegate', 'candidate-manifest.json');
+    const manifest = JSON.parse(await fs.readFile(target, 'utf8'));
+    if (manifest.schemaVersion !== 3 || manifest.generatorVersion !== sourceTransformVersion || manifest.sourceRevision !== source?.revision || !manifest.assetBundle?.file) throw new Error('stale catalog');
+    const stat = await fs.stat(path.join(repositoryRoot, 'codegate', manifest.assetBundle.file));
+    if (stat.size !== manifest.assetBundle.length) throw new Error('incomplete asset bundle');
+    return manifest;
+  } catch {
+    return writeCandidateManifest(repositoryRoot);
+  }
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) {
-  if (process.argv.includes('--write')) {
-    const generated = await writeCandidateManifest();
+  if (process.argv.includes('--write') || process.argv.includes('--ensure')) {
+    const generated = process.argv.includes('--ensure') ? await ensureCandidateManifest() : await writeCandidateManifest();
     const problemCount = Object.keys(generated.problems).length;
     const languageCount = Object.values(generated.problems).reduce((total, problem) => total + Object.keys(problem.languages).length, 0);
     console.log(JSON.stringify({ problems: problemCount, problemLanguages: languageCount, quarantinedProblems: generated.quarantine.length }, null, 2));

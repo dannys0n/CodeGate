@@ -21,13 +21,14 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"codegate:catalog": "node scripts/codegate/catalog.mjs",
 		"codegate:candidates": "node scripts/codegate/catalog.mjs --write",
+		"codegate:candidates:ensure": "node scripts/codegate/catalog.mjs --ensure",
 		"codegate:import:audit": "node scripts/codegate/importer/audit.mjs",
 		"codegate:failure-smoke": "node scripts/codegate/failure-smoke.mjs",
 		"importer:test": "vitest run scripts/codegate/importer",
 		"desktop": "electron .",
 		"desktop:test": "vitest run desktop",
 		"desktop:smoke": "electron . --smoke-test",
-		"desktop:build": "npm run codegate:candidates && npm run build && electron-builder --win nsis",
+		"desktop:build": "npm run codegate:candidates:ensure && npm run build && electron-builder --win nsis",
 		"startup:enable": "electron . --startup=enable",
 		"startup:disable": "electron . --startup=disable",
 		"startup:status": "electron . --startup=status"
@@ -49,21 +50,22 @@
 	"build": {
 		"appId": "dev.codegate.desktop",
 		"productName": "CodeGate",
-		"asar": false,
+		"asar": true,
+		"npmRebuild": false,
+		"asarUnpack": [
+			"codegate/candidate-assets.bin",
+			"desktop/*.ps1"
+		],
 		"directories": {
 			"output": "dist-desktop"
 		},
 		"files": [
 			"build/**/*",
-			"codegate/**/*",
+			"codegate/candidate-manifest.json",
+			"codegate/candidate-assets.bin",
 			"courses/**/*",
 			"desktop/**/*",
 			"problems/**/*",
-			"sources/leetcode-problems/problems/**/*",
-			"sources/leetcode-dataset/LeetCodeDataset-*.jsonl",
-			"sources/kamyu-solutions/Python/**/*",
-			"sources/kamyu-solutions/C++/**/*",
-			"sources/doocs-solutions/solution/**/*",
 			"package.json",
 			"node_modules/**/*"
 		],

@@ -25,11 +25,20 @@ function probePort(port, host) {
   });
 }
 
-export async function selectLoopbackPort(preferredPort = 5375, host = '127.0.0.1') {
-  const preferred = await probePort(preferredPort, host);
-  if (preferred !== undefined) return preferred;
+async function portIsAvailable(port) {
+  // Windows can allow an IPv4 bind beside an IPv6 wildcard listener (and the
+  // reverse). Both probes must succeed before the desktop app claims a port.
+  if (await probePort(port, '127.0.0.1') === undefined) return false;
+  if (await probePort(port, '::') === undefined) return false;
+  return true;
+}
 
-  const ephemeral = await probePort(0, host);
-  if (ephemeral === undefined) throw new Error('Unable to reserve an available local CodeGate port.');
-  return ephemeral;
+export async function selectLoopbackPort(preferredPort = 5375) {
+  if (await portIsAvailable(preferredPort)) return preferredPort;
+
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const ephemeral = await probePort(0, '127.0.0.1');
+    if (ephemeral !== undefined && await portIsAvailable(ephemeral)) return ephemeral;
+  }
+  throw new Error('Unable to reserve an available local CodeGate port.');
 }

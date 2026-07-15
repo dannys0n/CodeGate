@@ -22,7 +22,7 @@ export async function prepareChallenge(
     recentProblemIds: string[],
     options: { problemId?: string; random?: () => number; root?: string } = {}
 ): Promise<PlayableVariant> {
-    const root = options.root ?? process.cwd();
+    const root = options.root ?? process.env.CODEGATE_APP_ROOT ?? process.cwd();
     const manifest = await loadCandidateManifest(root);
     const recent = new Set(recentProblemIds);
     const matches = Object.entries(manifest.problems).filter(([, problem]) =>
@@ -47,7 +47,7 @@ export async function prepareChallenge(
     };
 }
 
-export async function availableCandidates(problemId: string, root = process.cwd()): Promise<GateLanguage[]> {
+export async function availableCandidates(problemId: string, root = process.env.CODEGATE_APP_ROOT ?? process.cwd()): Promise<GateLanguage[]> {
     const manifest = await loadCandidateManifest(root);
     const problem = Object.values(manifest.problems).find((candidate) => candidate.slug === problemId);
     if (!problem) return [];

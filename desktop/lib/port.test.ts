@@ -35,4 +35,18 @@ describe('selectLoopbackPort', () => {
     expect(selected).not.toBe(address.port);
     expect(selected).toBeGreaterThan(0);
   });
+
+  it('falls back when an IPv6 wildcard listener occupies the preferred port', async () => {
+    const occupied = createServer();
+    servers.push(occupied);
+    await new Promise<void>((resolve, reject) => {
+      occupied.once('error', reject);
+      occupied.listen({ host: '::', port: 0 }, () => resolve());
+    });
+    const address = occupied.address();
+    if (!address || typeof address === 'string') throw new Error('Test server did not expose a TCP port.');
+
+    const selected = await selectLoopbackPort(address.port);
+    expect(selected).not.toBe(address.port);
+  });
 });

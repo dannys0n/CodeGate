@@ -15,6 +15,7 @@ const appRoot = app.getAppPath();
 const preload = path.join(appRoot, 'desktop', 'preload.cjs');
 const instanceToken = randomUUID();
 const smokeTest = process.argv.includes('--smoke-test');
+const launchStartedAt = Date.now();
 const requestedStartupMode = startupMode();
 const requiresSingleInstance = !smokeTest && !requestedStartupMode;
 const hasSingleInstanceLock = !requiresSingleInstance || app.requestSingleInstanceLock();
@@ -61,9 +62,10 @@ async function handleStartupCommand(mode) {
 
 function startServer() {
   const serverEntry = path.join(appRoot, 'build', 'index.js');
+  const packagedAssetRoot = path.join(process.resourcesPath, 'app.asar.unpacked');
   const captureServerOutput = smokeTest;
   serverProcess = spawn(process.execPath, [serverEntry], {
-    cwd: appRoot,
+    cwd: app.isPackaged ? process.resourcesPath : appRoot,
     windowsHide: true,
     stdio: captureServerOutput ? ['ignore', 'pipe', 'pipe'] : 'ignore',
     env: {
@@ -73,6 +75,8 @@ function startServer() {
       PORT: String(port),
       CODEGATE_DESKTOP: '1',
       CODEGATE_INSTANCE_TOKEN: instanceToken,
+      CODEGATE_APP_ROOT: appRoot,
+      CODEGATE_ASSET_ROOT: app.isPackaged ? packagedAssetRoot : appRoot,
       CODEGATE_RUNTIME_PACK_ROOT: path.join(app.getPath('userData'), 'runtime-problem'),
       BROWSER: 'none'
     }
@@ -184,10 +188,20 @@ async function runSmokeTest() {
   await configureServerAddress();
   startServer();
   const server = await waitForServer(baseUrl, 60, 250, instanceToken);
+  let challenge = false;
+  let challengeError;
+  if (server.ok) {
+    try {
+      await resolveGateUrl();
+      challenge = true;
+    } catch (error) {
+      challengeError = error instanceof Error ? error.message : String(error);
+    }
+  }
   const wslResult = await wsl;
   const docker = await checkDocker();
-  const diagnostics = readinessDiagnostics(server, wslResult, docker);
-  process.stdout.write(`${JSON.stringify({ server: server.ok, wsl: wslResult.ok, docker: docker.ok, diagnostics })}\n`);
+  const diagnostics = [...readinessDiagnostics(server, wslResult, docker), ...(challengeError ? [challengeError] : [])];
+  process.stdout.write(`${JSON.stringify({ server: server.ok, challenge, wsl: wslResult.ok, docker: docker.ok, startupMs: Date.now() - launchStartedAt, diagnostics })}\n`);
   quitting = true;
   serverProcess?.kill();
   await new Promise((resolve) => serverProcess?.once('exit', resolve) ?? resolve());
@@ -198,6 +212,7 @@ async function runDesktop() {
   uiReady = true;
   void wakeWsl();
   await configureServerAddress();
+  await showPreparingWindows();
   startServer();
   const server = await waitForServer(baseUrl, 60, 250, instanceToken);
   if (!server.ok) {
@@ -205,7 +220,6 @@ async function runDesktop() {
     return;
   }
   try {
-    await showPreparingWindows();
     await openGateWindows(await resolveGateUrl());
   } catch (error) {
     showRecovery([error instanceof Error ? error.message : String(error)]);

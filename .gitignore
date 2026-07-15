@@ -163,4 +163,5 @@ blob-report/
 # Large, replaceable upstream datasets used by the offline CodeGate importer.
 /sources/
 /codegate/candidate-manifest.json
+/codegate/candidate-assets.bin
 /codegate/import-smoke-report.json

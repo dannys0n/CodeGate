@@ -7,29 +7,29 @@ export type GateLanguage = (typeof gateLanguages)[number];
 
 export type CandidateLanguage = {
     solutionSource: string;
-    solution: string;
-    solutionSha256: string;
+    solution: AssetLocator;
 };
+
+export type AssetLocator = { offset: number; length: number; sha256: string };
 
 export type CandidateProblem = {
     slug: string;
-    record: string;
-    recordSha256: string;
+    record: AssetLocator;
     judgeSha256: string;
     judge?: {
         kind: 'generated-exact';
         metadata: Record<string, unknown>;
-        testRecord: { file: string; offset: number; length: number; sha256: string };
+        testRecord: AssetLocator;
     };
     languages: Partial<Record<GateLanguage, CandidateLanguage>>;
 };
 
 export type CandidateManifest = {
-    schemaVersion: 2;
+    schemaVersion: 3;
     generatorVersion: number;
     generatedAt: string;
     sourceRevision: string;
-    sources: Record<string, string>;
+    assetBundle: { file: string; length: number; sha256: string };
     problems: Record<string, CandidateProblem>;
     quarantine: Array<{ problemId: string; reason: string }>;
 };

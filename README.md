@@ -68,8 +68,9 @@ cd CodeGate
 ```
 
 Setup installs npm dependencies, restores the required upstream data sources at pinned commits,
-and generates the local problem catalog. Raw source repositories and the generated catalog are
-ignored by Git. The optional multi-gigabyte LiveCodeBench dataset is skipped by default; importer
+and generates the local problem catalog and its compact binary asset bundle. Raw source repositories
+and generated catalog files are ignored by Git. Release builds include the bundle rather than tens
+of thousands of loose upstream files. The optional multi-gigabyte LiveCodeBench dataset is skipped by default; importer
 developers can include it with:
 
 ```powershell
@@ -110,7 +111,9 @@ Run the release script:
 
 It creates both the installer at `dist-desktop\CodeGate-Setup-0.1.0.exe` and the unpacked app at
 `dist-desktop\win-unpacked\CodeGate.exe`. It does not install or launch either artifact. Run the
-installer manually when you want to test its wizard and startup options.
+installer manually when you want to test its wizard and startup options. The release command reuses
+an up-to-date generated catalog; run `npm.cmd run codegate:candidates` first only after changing or
+updating imported problem sources.
 
 ![CodeGate installer preview](docs/assets/installer-placeholder.svg)
 
@@ -146,7 +149,8 @@ problem-pack format:
   optional importer-development source
 
 The compact JSON catalog stores one record per problem with its supported languages nested beneath
-it. Only the selected challenge is loaded and exposed as a temporary ordinary CoJudge pack. A
+it and byte ranges into one generated asset bundle. Only the selected challenge is loaded and
+exposed as a temporary ordinary CoJudge pack. A
 catalog entry describes a match between source assets; it is not a promise that every upstream
 reference solution has already passed the selected tests.
 

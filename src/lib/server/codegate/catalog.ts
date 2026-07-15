@@ -1,30 +1,27 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { createHash } from 'crypto';
-import { gateLanguages, type CandidateLanguage, type CandidateManifest, type CandidateProblem, type DifficultyLevel, type GateLanguage } from '../../codegate/types';
+import { gateLanguages, type AssetLocator, type CandidateLanguage, type CandidateManifest, type CandidateProblem, type DifficultyLevel, type GateLanguage } from '../../codegate/types';
 import { normalizeSource, starterField, stripSolution } from '../../codegate/source-transform.mjs';
 import { deactivateGeneratedProblem, materializeGeneratedProblem } from '../problem-files';
 import { extractExactCases } from '../../codegate/test-vectors.mjs';
 
 const supportedLanguages = new Set<string>(gateLanguages);
 const manifestCache = new Map<string, { mtimeMs: number; size: number; manifest: CandidateManifest }>();
+const defaultAppRoot = () => process.env.CODEGATE_APP_ROOT || process.cwd();
 
 export function assertCandidateManifest(value: unknown): asserts value is CandidateManifest {
     if (!value || typeof value !== 'object') throw new Error('Candidate manifest must be an object');
     const manifest = value as Record<string, unknown>;
-    if (manifest.schemaVersion !== 2 || typeof manifest.sources !== 'object' || !manifest.sources || typeof manifest.problems !== 'object' || !manifest.problems || !Array.isArray(manifest.quarantine)) {
+    if (manifest.schemaVersion !== 3 || !isLocator((manifest.assetBundle as Record<string, unknown> | undefined), true) || typeof manifest.problems !== 'object' || !manifest.problems || !Array.isArray(manifest.quarantine)) {
         throw new Error('Unsupported candidate manifest schema');
-    }
-    const sources = manifest.sources as Record<string, unknown>;
-    if (typeof sources.neenza !== 'string' || typeof sources.doocs !== 'string' || typeof sources.kamyu !== 'string' || typeof sources.newfacade !== 'string') {
-        throw new Error('Candidate manifest source roots are incomplete');
     }
     for (const [frontendId, entry] of Object.entries(manifest.problems as Record<string, unknown>)) {
         if (!/^\d+$/.test(frontendId) || !entry || typeof entry !== 'object') throw new Error('Invalid CodeGate problem');
         const problem = entry as Record<string, unknown>;
         if (
-            typeof problem.slug !== 'string' || typeof problem.record !== 'string' ||
-            !/^[a-f0-9]{64}$/.test(String(problem.recordSha256)) || !/^[a-f0-9]{64}$/.test(String(problem.judgeSha256)) ||
+            typeof problem.slug !== 'string' || !isLocator(problem.record as Record<string, unknown>) ||
+            !/^[a-f0-9]{64}$/.test(String(problem.judgeSha256)) ||
             !problem.languages || typeof problem.languages !== 'object'
         ) {
             throw new Error(`Invalid candidate problem ${frontendId}`);
@@ -34,20 +31,25 @@ export function assertCandidateManifest(value: unknown): asserts value is Candid
         if (problem.judge !== undefined) {
             const judge = problem.judge as Record<string, unknown>;
             const testRecord = judge.testRecord as Record<string, unknown> | undefined;
-            if (judge.kind !== 'generated-exact' || !judge.metadata || typeof judge.metadata !== 'object' || !testRecord || typeof testRecord.file !== 'string' || !Number.isSafeInteger(testRecord.offset) || !Number.isSafeInteger(testRecord.length) || !/^[a-f0-9]{64}$/.test(String(testRecord.sha256))) {
+            if (judge.kind !== 'generated-exact' || !judge.metadata || typeof judge.metadata !== 'object' || !isLocator(testRecord)) {
                 throw new Error(`Invalid generated judge data for ${frontendId}`);
             }
         }
         for (const [language, value] of languages) {
             const solution = value as Record<string, unknown>;
-            if (!supportedLanguages.has(language) || !solution || typeof solution.solutionSource !== 'string' || typeof solution.solution !== 'string' || !/^[a-f0-9]{64}$/.test(String(solution.solutionSha256))) {
+            if (!supportedLanguages.has(language) || !solution || typeof solution.solutionSource !== 'string' || !isLocator(solution.solution as Record<string, unknown>)) {
                 throw new Error(`Invalid ${language} candidate for ${frontendId}`);
             }
         }
     }
 }
 
-export async function loadCandidateManifest(root = process.cwd()): Promise<CandidateManifest> {
+function isLocator(value: Record<string, unknown> | undefined, bundle = false): boolean {
+    if (!value || !Number.isSafeInteger(bundle ? value.length : value.offset) || !Number.isSafeInteger(value.length) || Number(value.length) < 0 || !/^[a-f0-9]{64}$/.test(String(value.sha256))) return false;
+    return bundle ? typeof value.file === 'string' && value.file.length > 0 : Number(value.offset) >= 0;
+}
+
+export async function loadCandidateManifest(root = defaultAppRoot()): Promise<CandidateManifest> {
     const manifestPath = path.join(root, 'codegate', 'candidate-manifest.json');
     const stat = await fs.stat(manifestPath);
     const cached = manifestCache.get(manifestPath);
@@ -71,27 +73,25 @@ export type CandidateAssets = {
     solution: string;
 };
 
-export async function loadCandidateAssets(frontendId: string, language: GateLanguage, root = process.cwd()): Promise<CandidateAssets> {
+export async function loadCandidateAssets(frontendId: string, language: GateLanguage, root = defaultAppRoot()): Promise<CandidateAssets> {
     const manifest = await loadCandidateManifest(root);
     const problem = manifest.problems[frontendId];
     const languageEntry = problem?.languages[language];
     if (!problem || !languageEntry) throw new Error(`No ${language} source is indexed for problem ${frontendId}`);
-    const recordPath = path.posix.join(manifest.sources.neenza, problem.record);
-    const solutionRoot = manifest.sources[languageEntry.solutionSource];
-    if (!solutionRoot) throw new Error(`Unknown solution source: ${languageEntry.solutionSource}`);
+    const assetRoot = process.env.CODEGATE_ASSET_ROOT || root;
+    const bundlePath = path.posix.join('codegate', manifest.assetBundle.file);
     const [recordContents, solutionContents] = await Promise.all([
-        readSafeFile(recordPath, root),
-        readSafeFile(path.posix.join(solutionRoot, languageEntry.solution), root)
+        readSafeSlice(bundlePath, problem.record, assetRoot),
+        readSafeSlice(bundlePath, languageEntry.solution, assetRoot)
     ]);
-    if (rawSha256(recordContents) !== problem.recordSha256) throw new Error(`Problem record changed after indexing: ${problem.slug}`);
-    if (rawSha256(solutionContents) !== languageEntry.solutionSha256) throw new Error(`Solution changed after indexing: ${problem.slug}/${language}`);
+    if (rawSha256(recordContents) !== problem.record.sha256) throw new Error(`Problem record changed after indexing: ${problem.slug}`);
+    if (rawSha256(solutionContents) !== languageEntry.solution.sha256) throw new Error(`Solution changed after indexing: ${problem.slug}/${language}`);
     const record = JSON.parse(recordContents.toString('utf8'));
     let metadata: Record<string, any>;
     if (problem.judge) {
         if (rawSha256(Buffer.from(JSON.stringify(problem.judge))) !== problem.judgeSha256) throw new Error(`Generated judge data changed after indexing: ${problem.slug}`);
         metadata = problem.judge.metadata;
-        const sourcePath = path.posix.join(manifest.sources.newfacade, problem.judge.testRecord.file);
-        const datasetContents = await readSafeSlice(sourcePath, problem.judge.testRecord.offset, problem.judge.testRecord.length, root);
+        const datasetContents = await readSafeSlice(bundlePath, problem.judge.testRecord, assetRoot);
         if (rawSha256(datasetContents) !== problem.judge.testRecord.sha256) throw new Error(`Test record changed after indexing: ${problem.slug}`);
         const cases = extractExactCases(JSON.parse(datasetContents.toString('utf8')), metadata as any);
         if (cases.length < 3) throw new Error(`Insufficient valid tests after loading: ${problem.slug}`);
@@ -127,23 +127,23 @@ async function readSafeFile(sourcePath: string, root: string): Promise<Buffer> {
     return fs.readFile(absoluteSource);
 }
 
-async function readSafeSlice(sourcePath: string, offset: number, length: number, root: string): Promise<Buffer> {
+async function readSafeSlice(sourcePath: string, locator: AssetLocator, root: string): Promise<Buffer> {
     const absoluteRoot = path.resolve(root);
     const absoluteSource = path.resolve(root, sourcePath);
     const relative = path.relative(absoluteRoot, absoluteSource);
     if (relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('Indexed source escapes repository root');
     const handle = await fs.open(absoluteSource, 'r');
     try {
-        const buffer = Buffer.alloc(length);
-        const { bytesRead } = await handle.read(buffer, 0, length, offset);
-        if (bytesRead !== length) throw new Error('Indexed test record is truncated');
+        const buffer = Buffer.alloc(locator.length);
+        const { bytesRead } = await handle.read(buffer, 0, locator.length, locator.offset);
+        if (bytesRead !== locator.length) throw new Error('Indexed asset bundle is truncated');
         return buffer;
     } finally {
         await handle.close();
     }
 }
 
-export async function loadChallengeSource(problemId: string, language: GateLanguage, difficulty: DifficultyLevel, root = process.cwd()): Promise<string> {
+export async function loadChallengeSource(problemId: string, language: GateLanguage, difficulty: DifficultyLevel, root = defaultAppRoot()): Promise<string> {
     const manifest = await loadCandidateManifest(root);
     const entry = Object.entries(manifest.problems).find(([, problem]) => problem.slug === problemId);
     if (!entry) throw new Error(`Problem is not indexed: ${problemId}`);

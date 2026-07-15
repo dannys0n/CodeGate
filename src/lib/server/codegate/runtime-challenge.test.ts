@@ -16,6 +16,10 @@ function digest(contents: string): string {
     return createHash('sha256').update(contents).digest('hex');
 }
 
+function locator(contents: string, offset = 0) {
+    return { offset, length: Buffer.byteLength(contents), sha256: digest(contents) };
+}
+
 function judgeDigest(files: Record<string, string>): string {
     const hash = createHash('sha256');
     for (const name of ['metadata.json', 'official-tests.json', 'Marker.java']) {
@@ -34,8 +38,6 @@ async function fixture(): Promise<void> {
         'Marker.java': 'class Marker { int[] solve(int value) { return null; } boolean isCorrect() { return false; } }'
     };
     const writes: Record<string, string> = {
-        'sources/neenza/problems/0001-example.json': record,
-        'sources/doocs/solution/0001/Solution.py': solution,
         ...Object.fromEntries(Object.entries(judgeFiles).map(([name, contents]) => [`problems/example/${name}`, contents]))
     };
     for (const [name, contents] of Object.entries(writes)) {
@@ -44,16 +46,18 @@ async function fixture(): Promise<void> {
         await fs.writeFile(target, contents);
     }
     await fs.mkdir(path.join(root, 'codegate'));
+    const bundle = record + solution;
+    await fs.writeFile(path.join(root, 'codegate', 'candidate-assets.bin'), bundle);
     await fs.writeFile(path.join(root, 'codegate', 'candidate-manifest.json'), JSON.stringify({
-        schemaVersion: 2,
+        schemaVersion: 3,
         generatorVersion: 1,
         generatedAt: 'now',
         sourceRevision: 'fixture',
-        sources: { neenza: 'sources/neenza/problems', doocs: 'sources/doocs/solution', kamyu: 'sources/kamyu', newfacade: 'sources/newfacade' },
+        assetBundle: { file: 'candidate-assets.bin', length: Buffer.byteLength(bundle), sha256: digest(bundle) },
         problems: {
             '1': {
-                slug: 'example', record: '0001-example.json', recordSha256: digest(record), judgeSha256: judgeDigest(judgeFiles),
-                languages: { python: { solutionSource: 'doocs', solution: '0001/Solution.py', solutionSha256: digest(solution) } }
+                slug: 'example', record: locator(record), judgeSha256: judgeDigest(judgeFiles),
+                languages: { python: { solutionSource: 'doocs', solution: locator(solution, Buffer.byteLength(record)) } }
             }
         },
         quarantine: []
