@@ -74,6 +74,45 @@ FunctionEnd
 !macroend
 !endif
 
+!ifdef BUILD_UNINSTALLER
+Var ImageCleanupDialog
+Var RemoveJudgeImagesCheckbox
+Var RemoveJudgeImages
+
+!macro customUnInit
+  StrCpy $RemoveJudgeImages ${BST_UNCHECKED}
+!macroend
+
+Function un.ImageCleanupPageCreate
+  nsDialogs::Create 1018
+  Pop $ImageCleanupDialog
+  ${If} $ImageCleanupDialog == error
+    Abort
+  ${EndIf}
+
+  ${NSD_CreateLabel} 0 0 100% 24u "CodeGate will always remove its Windows startup registrations, application data, and remaining CodeGate containers."
+  Pop $0
+
+  ${NSD_CreateCheckbox} 0 38u 100% 12u "Also remove all cached CodeGate judge Docker images"
+  Pop $RemoveJudgeImagesCheckbox
+  ${NSD_SetState} $RemoveJudgeImagesCheckbox $RemoveJudgeImages
+
+  ${NSD_CreateLabel} 16u 58u 94% 34u "Warning: these language images are shared Docker resources and may also be used by other development projects. Leave this unchecked to keep them."
+  Pop $0
+
+  nsDialogs::Show
+FunctionEnd
+
+Function un.ImageCleanupPageLeave
+  ${NSD_GetState} $RemoveJudgeImagesCheckbox $RemoveJudgeImages
+FunctionEnd
+
+!macro customUnWelcomePage
+  !insertmacro MUI_UNPAGE_WELCOME
+  UninstPage custom un.ImageCleanupPageCreate un.ImageCleanupPageLeave
+!macroend
+!endif
+
 !macro customUnInstall
   ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\start-events.ps1" -Disable' $0
   ; Fall back to the native scheduler command if PowerShell task cleanup failed.
@@ -93,6 +132,14 @@ FunctionEnd
     MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker was unavailable or could not remove its remaining containers. Start Docker Desktop and remove containers labeled codegate.created=true to finish cleanup."
   ${EndIf}
 
+  ${If} $RemoveJudgeImages == ${BST_CHECKED}
+    nsExec::ExecToLog 'docker.exe image rm "python:3.11-slim" "gcc:13" "alpine/java:22-jdk" "mcr.microsoft.com/dotnet/sdk:8.0-alpine" "rust:1.78-slim" "golang:1.22-alpine" "node:22-alpine"'
+    Pop $0
+    ${If} $0 != 0
+      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but one or more shared Docker judge images could not be removed. They may still be in use by another container or Docker Desktop may be unavailable."
+    ${EndIf}
+  ${EndIf}
+
   ; Remove Electron state, CodeGate session history, caches, and updater downloads.
   RMDir /r "$APPDATA\CodeGate"
   RMDir /r "$APPDATA\codegate"
@@ -100,11 +147,4 @@ FunctionEnd
   RMDir /r "$LOCALAPPDATA\codegate"
   RMDir /r "$LOCALAPPDATA\codegate-updater"
   Delete "$LOCALAPPDATA\CrashDumps\CodeGate.exe.*.dmp"
-!macroend
-
-!macro customUnInstallSection
-  Section /o "Remove all cached judge images for every language (WARNING: may affect other Docker projects)" RemoveJudgeImages
-    nsExec::ExecToLog 'docker.exe image rm "python:3.11-slim" "gcc:13" "alpine/java:22-jdk" "mcr.microsoft.com/dotnet/sdk:8.0-alpine" "rust:1.78-slim" "golang:1.22-alpine" "node:22-alpine"'
-    Pop $0
-  SectionEnd
 !macroend
