@@ -54,11 +54,17 @@ foreach ($source in $lock.repositories) {
         throw "$target has an unexpected origin remote: $remote"
     }
 
-    & git -C $target diff --quiet
-    $workingTreeChanged = $LASTEXITCODE -ne 0
-    & git -C $target diff --cached --quiet
-    if ($workingTreeChanged -or $LASTEXITCODE -ne 0) {
-        throw "$target contains tracked changes. Preserve or discard them before running setup."
+    # A --no-checkout clone has no index yet, so `git diff --cached` reports
+    # the entire repository as deleted. Only enforce the dirty-tree guard once
+    # a checkout exists; the pinned commit below creates the initial index.
+    $hasCheckout = Test-Path -LiteralPath (Join-Path $target '.git\index')
+    if ($hasCheckout) {
+        & git -C $target diff --quiet
+        $workingTreeChanged = $LASTEXITCODE -ne 0
+        & git -C $target diff --cached --quiet
+        if ($workingTreeChanged -or $LASTEXITCODE -ne 0) {
+            throw "$target contains tracked changes. Preserve or discard them before running setup."
+        }
     }
 
     $currentCommit = (& git -C $target rev-parse HEAD 2>$null).Trim()
