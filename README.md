@@ -80,6 +80,10 @@ developers can include it with:
 Docker Desktop may download a language image the first time that language is judged. Keep Docker
 running and allow a little extra time for the first submission.
 
+On Windows, CodeGate checks the Docker daemon at launch and, when necessary, asks Docker Desktop to
+start through the supported `docker desktop start` command. This is best-effort; older Docker
+Desktop releases without that CLI command must still be started manually.
+
 ### Quick desktop test
 
 Run:

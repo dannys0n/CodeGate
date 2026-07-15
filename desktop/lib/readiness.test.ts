@@ -1,6 +1,6 @@
 import http from 'node:http';
-import { afterEach, describe, expect, it } from 'vitest';
-import { waitForServer, wakeWsl } from './readiness.mjs';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { startDockerDesktop, waitForServer, wakeWsl } from './readiness.mjs';
 
 let server: http.Server | undefined;
 
@@ -65,6 +65,51 @@ describe('WSL wake-up', () => {
       ok: false,
       attempted: true,
       diagnostic: 'WSL could not be started automatically: WSL is not installed'
+    });
+  });
+});
+
+describe('Docker Desktop startup', () => {
+  it('does nothing outside Windows', async () => {
+    const run = vi.fn();
+    await expect(startDockerDesktop({ platform: 'linux', run })).resolves.toEqual({ ok: true, attempted: false });
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it('does not start Docker Desktop when Docker is already ready', async () => {
+    const run = vi.fn().mockResolvedValue({ ok: true, stdout: '27.0.0', stderr: '' });
+
+    await expect(startDockerDesktop({ platform: 'win32', run })).resolves.toEqual({
+      ok: true,
+      attempted: false,
+      alreadyRunning: true
+    });
+    expect(run).toHaveBeenCalledOnce();
+  });
+
+  it('starts Docker Desktop through the Docker CLI when needed', async () => {
+    const run = vi.fn()
+      .mockResolvedValueOnce({ ok: false, stdout: '', stderr: 'daemon unavailable' })
+      .mockResolvedValueOnce({ ok: true, stdout: '', stderr: '' });
+
+    await expect(startDockerDesktop({ platform: 'win32', run })).resolves.toEqual({ ok: true, attempted: true });
+    expect(run).toHaveBeenNthCalledWith(
+      2,
+      'docker',
+      ['desktop', 'start', '--timeout', '60'],
+      { timeout: 65_000 }
+    );
+  });
+
+  it('reports when the Docker Desktop CLI cannot start the application', async () => {
+    const run = vi.fn()
+      .mockResolvedValueOnce({ ok: false, stdout: '', stderr: 'daemon unavailable' })
+      .mockResolvedValueOnce({ ok: false, stdout: '', stderr: 'desktop command unavailable' });
+
+    await expect(startDockerDesktop({ platform: 'win32', run })).resolves.toEqual({
+      ok: false,
+      attempted: true,
+      diagnostic: 'Docker Desktop could not be started automatically: desktop command unavailable'
     });
   });
 });

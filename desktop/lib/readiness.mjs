@@ -33,6 +33,27 @@ export async function wakeWsl({
   };
 }
 
+export async function startDockerDesktop({
+  platform = process.platform,
+  command = 'docker',
+  run = runCommand
+} = {}) {
+  if (platform !== 'win32') return { ok: true, attempted: false };
+
+  const daemon = await run(command, ['info', '--format', '{{.ServerVersion}}'], { timeout: 5_000 });
+  if (daemon.ok) return { ok: true, attempted: false, alreadyRunning: true };
+
+  const started = await run(command, ['desktop', 'start', '--timeout', '60'], { timeout: 65_000 });
+  if (started.ok) return { ok: true, attempted: true };
+
+  const detail = started.stderr?.trim() || started.stdout?.trim() || 'the Docker Desktop command did not complete successfully';
+  return {
+    ok: false,
+    attempted: true,
+    diagnostic: `Docker Desktop could not be started automatically: ${detail}`
+  };
+}
+
 export async function waitForServer(baseUrl, attempts = 60, delayMs = 250, expectedInstanceToken) {
   let lastError = 'Local server did not respond';
   for (let attempt = 0; attempt < attempts; attempt++) {

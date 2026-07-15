@@ -5,7 +5,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { appendSessionHistory } from './lib/history.mjs';
 import { configuredPort, selectLoopbackPort } from './lib/port.mjs';
-import { checkDocker, localRequest, runCommand, waitForServer, wakeWsl } from './lib/readiness.mjs';
+import { checkDocker, localRequest, runCommand, startDockerDesktop, waitForServer, wakeWsl } from './lib/readiness.mjs';
 import { recoveryHtml, serverExitDiagnostics } from './lib/recovery.mjs';
 import { isStartupEnabled } from './lib/startup.mjs';
 import { defaultDesktopSettings, loadDesktopSettings, normalizeDesktopSettings, saveDesktopSettings } from './lib/settings.mjs';
@@ -147,6 +147,7 @@ function windowOptions(display, recovery = false) {
     fullscreen: !recovery,
     kiosk: false,
     autoHideMenuBar: true,
+    icon: path.join(appRoot, 'desktop', 'resources', 'icon.ico'),
     backgroundColor: '#111827',
     webPreferences: { preload, contextIsolation: true, sandbox: true, nodeIntegration: false }
   };
@@ -254,6 +255,7 @@ if (requiresSingleInstance && hasSingleInstanceLock) {
 
 async function runSmokeTest() {
   const wsl = wakeWsl();
+  const dockerStartup = startDockerDesktop();
   await initializeDesktopSettings();
   await configureServerAddress();
   startServer();
@@ -269,6 +271,7 @@ async function runSmokeTest() {
     }
   }
   const wslResult = await wsl;
+  await dockerStartup;
   const docker = await checkDocker();
   const diagnostics = [...readinessDiagnostics(server, wslResult, docker), ...(challengeError ? [challengeError] : [])];
   process.stdout.write(`${JSON.stringify({ server: server.ok, challenge, wsl: wslResult.ok, docker: docker.ok, startupMs: Date.now() - launchStartedAt, diagnostics })}\n`);
@@ -281,6 +284,7 @@ async function runSmokeTest() {
 async function runDesktop() {
   uiReady = true;
   void wakeWsl();
+  void startDockerDesktop();
   await initializeDesktopSettings();
   await configureServerAddress();
   await showPreparingWindows();
