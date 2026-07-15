@@ -3,12 +3,14 @@ import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { appendSessionHistory } from './lib/history.mjs';
+import { configuredPort, selectLoopbackPort } from './lib/port.mjs';
 import { checkDocker, localRequest, waitForServer, wakeWsl } from './lib/readiness.mjs';
 import { recoveryHtml, serverExitDiagnostics } from './lib/recovery.mjs';
 import { isStartupEnabled } from './lib/startup.mjs';
 
-const port = Number(process.env.CODEGATE_PORT || 5375);
-const baseUrl = `http://127.0.0.1:${port}`;
+const requestedPort = configuredPort(process.env.CODEGATE_PORT);
+let port;
+let baseUrl;
 const appRoot = app.getAppPath();
 const preload = path.join(appRoot, 'desktop', 'preload.cjs');
 const instanceToken = randomUUID();
@@ -39,6 +41,11 @@ function readinessDiagnostics(server, wsl, docker) {
     ...(!docker.ok && !wsl.ok ? [wsl.diagnostic] : []),
     ...(docker.ok ? [] : docker.diagnostics)
   ];
+}
+
+async function configureServerAddress() {
+  port = requestedPort ?? await selectLoopbackPort();
+  baseUrl = `http://127.0.0.1:${port}`;
 }
 
 async function handleStartupCommand(mode) {
@@ -174,6 +181,7 @@ if (requiresSingleInstance && hasSingleInstanceLock) {
 
 async function runSmokeTest() {
   const wsl = wakeWsl();
+  await configureServerAddress();
   startServer();
   const server = await waitForServer(baseUrl, 60, 250, instanceToken);
   const wslResult = await wsl;
@@ -189,6 +197,7 @@ async function runSmokeTest() {
 async function runDesktop() {
   uiReady = true;
   void wakeWsl();
+  await configureServerAddress();
   startServer();
   const server = await waitForServer(baseUrl, 60, 250, instanceToken);
   if (!server.ok) {

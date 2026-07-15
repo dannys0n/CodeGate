@@ -56,7 +56,9 @@ Start-Process .\dist-desktop\win-unpacked\CodeGate.exe
 `quick-test.bat` regenerates the index and starts the development server and Electron wrapper.
 
 The application wakes the default WSL instance on a best-effort basis. Docker Desktop remains
-responsible for its WSL backend and images. Set `CODEGATE_PORT` before launch to override port 5375.
+responsible for its WSL backend and images. The desktop prefers port 5375 and automatically selects
+a free loopback port if it is occupied. Set `CODEGATE_PORT` before launch only when a fixed port is
+required; an explicitly configured port does not fall back when occupied.
 
 ## Compact source index and difficulty
 
