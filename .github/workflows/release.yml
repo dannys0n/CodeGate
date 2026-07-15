@@ -1,0 +1,84 @@
+name: Publish Windows Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Verify tag and package version
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $expectedTag = "v$version"
+          if ('${{ github.ref_name }}' -ne $expectedTag) {
+            throw "Release tag '${{ github.ref_name }}' must match package.json version '$expectedTag'."
+          }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore pinned problem sources and catalog
+        shell: pwsh
+        run: ./scripts/setup.ps1 -SkipDependencies
+
+      - name: Validate application
+        run: |
+          npm run check
+          npm test -- --run
+
+      - name: Build Windows installer
+        run: npm run desktop:build -- --publish never
+        env:
+          CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+
+      - name: Create installer checksum
+        id: artifact
+        shell: pwsh
+        run: |
+          $installers = @(Get-ChildItem dist-desktop/CodeGate-Setup-*.exe)
+          if ($installers.Count -ne 1) {
+            throw "Expected one CodeGate installer, found $($installers.Count)."
+          }
+          $installer = $installers[0]
+          $checksum = Join-Path $installer.DirectoryName "$($installer.Name).sha256"
+          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $installer.FullName).Hash.ToLowerInvariant()
+          "$hash  $($installer.Name)" | Set-Content -Encoding ascii -LiteralPath $checksum
+          "installer=$($installer.FullName)" >> $env:GITHUB_OUTPUT
+          "checksum=$checksum" >> $env:GITHUB_OUTPUT
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create '${{ github.ref_name }}' `
+            '${{ steps.artifact.outputs.installer }}' `
+            '${{ steps.artifact.outputs.checksum }}' `
+            --verify-tag `
+            --generate-notes `
+            --title 'CodeGate ${{ github.ref_name }}'

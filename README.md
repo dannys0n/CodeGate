@@ -123,6 +123,28 @@ Uninstalling CodeGate removes its scheduled startup registration,
 application files, and per-user state. Removing shared Docker images is an optional uninstall step
 because those images may be used by other projects.
 
+## Publish a GitHub release
+
+Windows releases are built by GitHub Actions from version tags. Update `version` in `package.json`
+and `package-lock.json`, commit the change, then create and push the matching tag:
+
+```powershell
+npm.cmd version 0.2.0 --no-git-tag-version
+git add package.json package-lock.json
+git commit -m "Release 0.2.0"
+git tag v0.2.0
+git push origin main
+git push origin v0.2.0
+```
+
+The `Publish Windows Release` workflow restores the pinned problem sources, validates and builds the
+application on Windows, and creates a GitHub Release containing the installer and its SHA-256 file.
+The tag must exactly match the package version, so `v0.2.0` requires version `0.2.0`.
+
+GitHub supplies the release token automatically. No repository secret is required for unsigned
+builds. For signed installers, add the certificate and password as Actions secrets named
+`WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD`; never commit signing credentials to the repository.
+
 ## Project scripts
 
 | Script | Purpose |
