@@ -8,7 +8,7 @@ CodeGate is derived from the open-source [CoJudge](https://github.com/cojudge/co
 judge and adapts it into a fullscreen Windows self-discipline app. Finish the selected problem,
 pass its official tests, and continue with your day.
 
-![CodeGate desktop preview](docs/assets/codegate-demo-placeholder.svg)
+![CodeGate desktop preview](docs/assets/codegate-demo-placeholder.png)
 
 _Demo GIF coming soon._
 
