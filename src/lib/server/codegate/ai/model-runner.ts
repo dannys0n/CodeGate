@@ -173,22 +173,34 @@ export async function streamModelText(messages: ChatMessage[], onEvent: StreamEv
 export function eventStream(operation: (emit: StreamEvent, signal: AbortSignal) => Promise<void>, requestSignal?: AbortSignal) {
     const encoder = new TextEncoder();
     const controller = new AbortController();
-    const abort = () => controller.abort();
-    requestSignal?.addEventListener('abort', abort, { once: true });
+    let closed = false;
+    const abort = () => {
+        closed = true;
+        controller.abort();
+    };
+    if (requestSignal?.aborted) abort();
+    else requestSignal?.addEventListener('abort', abort, { once: true });
     return new Response(new ReadableStream({
         start(stream) {
-            const emit: StreamEvent = (type, text) => stream.enqueue(encoder.encode(`data: ${JSON.stringify({ type, text })}\n\n`));
+            const enqueue = (payload: Record<string, string>) => {
+                if (closed) return;
+                try { stream.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`)); }
+                catch { abort(); }
+            };
+            const emit: StreamEvent = (type, text) => enqueue({ type, text });
             void operation(emit, controller.signal).then(() => {
-                stream.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+                enqueue({ type: 'done' });
             }).catch((error) => {
                 const message = error instanceof Error ? error.message : String(error);
-                stream.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', text: message })}\n\n`));
+                enqueue({ type: 'error', text: message });
             }).finally(() => {
                 requestSignal?.removeEventListener('abort', abort);
+                if (closed) return;
+                closed = true;
                 try { stream.close(); } catch {}
             });
         },
-        cancel() { controller.abort(); }
+        cancel() { abort(); }
     }), {
         headers: {
             'content-type': 'text/event-stream; charset=utf-8',
