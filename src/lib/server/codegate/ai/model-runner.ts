@@ -73,7 +73,7 @@ export async function provisionCodeGateModel(onEvent: StreamEvent, signal?: Abor
     onEvent('status', 'Configuring the model for one independent request at a time...\n');
     await runDockerModelCommand([
         'model', 'configure', '--context-size', String(codeGateModelContextTokens), codeGateModel,
-        '--', '--parallel', '1', '--no-cache-prompt', '--cache-ram', '0'
+        '--', '--parallel', '1', '--no-cache-prompt', '--cache-ram', '0', '--reasoning-budget', '0'
     ], onEvent, signal);
     await warmCodeGateModel(onEvent, signal);
 }
@@ -108,7 +108,8 @@ export async function streamModelText(messages: ChatMessage[], onEvent: StreamEv
                 model: codeGateModel,
                 messages,
                 stream: true,
-                temperature: 0.15
+                temperature: 0.15,
+                chat_template_kwargs: { enable_thinking: false }
             }),
             signal
         });

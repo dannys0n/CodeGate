@@ -69,7 +69,7 @@ if ($LASTEXITCODE -ne 0) {
 
 & $docker.Source model pull $model
 if ($LASTEXITCODE -ne 0) { throw 'The Qwen3 4B model download failed.' }
-& $docker.Source model configure --context-size 8192 $model -- --parallel 1 --no-cache-prompt --cache-ram 0
+& $docker.Source model configure --context-size 8192 $model -- --parallel 1 --no-cache-prompt --cache-ram 0 --reasoning-budget 0
 if ($LASTEXITCODE -ne 0) { throw 'The Qwen3 4B model could not be configured for CodeGate.' }
 & $docker.Source model run --detach $model
 if ($LASTEXITCODE -ne 0) { throw 'The Qwen3 4B model could not be loaded.' }

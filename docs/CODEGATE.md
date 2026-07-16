@@ -25,8 +25,8 @@ Windows provisioning requests GPU-backed inference by default and safely falls b
 Docker reports that no compatible GPU is available.
 When AI is enabled, the desktop process warms the model at launch and unloads it during normal
 shutdown without disabling Docker Model Runner or removing the downloaded model.
-The model is configured for one inference slot, an 8,192-token context, and no prompt cache; every
-hint or selection explanation carries all of the bounded context it needs.
+The model is configured for one inference slot, an 8,192-token context, no prompt cache, and no
+reasoning budget; every hint or selection explanation carries all of the bounded context it needs.
 
 ## Development and packaging
 
