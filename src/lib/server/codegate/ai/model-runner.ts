@@ -97,6 +97,19 @@ export async function unloadCodeGateModel(onEvent: StreamEvent = () => {}, signa
 type ChatMessage = { role: 'system' | 'user'; content: string };
 let inferenceActive = false;
 
+export function extractModelDelta(payload: any) {
+    const choice = payload?.choices?.[0];
+    const delta = choice?.delta;
+    return {
+        content: typeof delta?.content === 'string'
+            ? delta.content
+            : typeof choice?.text === 'string' ? choice.text : '',
+        reasoning: typeof delta?.reasoning_content === 'string'
+            ? delta.reasoning_content
+            : typeof delta?.reasoning === 'string' ? delta.reasoning : ''
+    };
+}
+
 export async function streamModelText(messages: ChatMessage[], onEvent: StreamEvent, signal?: AbortSignal) {
     if (inferenceActive) throw new Error('Another local AI explanation is already running');
     inferenceActive = true;
@@ -122,6 +135,7 @@ export async function streamModelText(messages: ChatMessage[], onEvent: StreamEv
         const decoder = new TextDecoder();
         let buffer = '';
         let emitted = false;
+        let reasoningFallback = '';
         while (true) {
             const { done, value } = await reader.read();
             buffer += decoder.decode(value, { stream: !done });
@@ -134,16 +148,21 @@ export async function streamModelText(messages: ChatMessage[], onEvent: StreamEv
                 if (!data || data === '[DONE]') continue;
                 try {
                     const payload = JSON.parse(data);
-                    const text = payload.choices?.[0]?.delta?.content;
-                    if (typeof text === 'string' && text) {
+                    const { content, reasoning } = extractModelDelta(payload);
+                    if (content) {
                         emitted = true;
-                        onEvent('text', text);
+                        onEvent('text', content);
                     }
+                    if (reasoning) reasoningFallback += reasoning;
                 } catch {
                     // Ignore keepalive and non-chat events from compatible backends.
                 }
             }
             if (done) break;
+        }
+        if (!emitted && reasoningFallback.trim()) {
+            onEvent('text', reasoningFallback.replace(/<\/?think>/gi, '').trim());
+            emitted = true;
         }
         if (!emitted) throw new Error('The local model returned no explanation text');
     } finally {
