@@ -18,6 +18,7 @@ export interface UserSettings {
     codegateLanguage: GateLanguage;
     solutionDifficulty: DifficultyLevel;
     leetcodeDifficulties: LeetcodeDifficulty[];
+    aiEnabled: boolean;
 }
 
 const STORAGE_KEY = 'user-settings';
@@ -33,6 +34,7 @@ const defaultSettings: UserSettings = {
     codegateLanguage: 'python',
     solutionDifficulty: '99',
     leetcodeDifficulties: [...leetcodeDifficultyLevels],
+    aiEnabled: false,
 };
 
 function normalizeSettings(input: any): UserSettings {
@@ -55,7 +57,8 @@ function normalizeSettings(input: any): UserSettings {
         ? leetcodeDifficultyLevels.filter((value) => input.leetcodeDifficulties.includes(value))
         : [];
     const leetcodeDifficulties = selectedLeetcodeDifficulties.length ? selectedLeetcodeDifficulties : [...defaultSettings.leetcodeDifficulties];
-    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties };
+    const aiEnabled = typeof input?.aiEnabled === 'boolean' ? input.aiEnabled : defaultSettings.aiEnabled;
+    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties, aiEnabled };
 }
 
 // Packaged Electron uses its user-data settings file. A missing file falls back

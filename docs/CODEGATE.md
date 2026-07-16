@@ -17,6 +17,15 @@ CodeGate is a mode around CoJudge, not a second judge:
 
 CodeGate is a self-discipline gate, not a Windows security boundary.
 
+The optional local AI helper is also separate from judging. It uses Docker Model Runner with the
+pinned `hf.co/Qwen/Qwen3-4B-GGUF:Q4_K_M` model. The server exposes only fixed algorithm-hint and
+selected-code-explanation operations, streams model text to the existing hint and Console UI, and
+never executes model output or uses it to release the gate.
+Windows provisioning requests GPU-backed inference by default and safely falls back to CPU when
+Docker reports that no compatible GPU is available.
+When AI is enabled, the desktop process warms the model at launch and unloads it during normal
+shutdown without disabling Docker Model Runner or removing the downloaded model.
+
 ## Development and packaging
 
 Install dependencies and cache the runner images while online:
@@ -169,3 +178,6 @@ to identify the container after Docker starts again.
 Docker images are shared and are not removed by default. The optional uninstall checkbox removes
 the seven default Java, Python, C++, C#, Rust, Go, and TypeScript runner images and warns that doing
 so may affect other projects.
+
+The Qwen3 model has a separate uninstall checkbox that is selected by default. Removing the model
+does not disable Docker Model Runner globally because other applications may use it.

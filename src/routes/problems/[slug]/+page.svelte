@@ -21,6 +21,7 @@
     import { v4 as uuidv4 } from 'uuid';
     import gameResultsStore, { computeGameResult } from '$lib/stores/gameResultsStore';
     import { leetcodeDifficultyLevels, type DifficultyLevel, type GateLanguage, type LeetcodeDifficulty } from '$lib/codegate/types';
+    import { consumeAiStream } from '$lib/codegate/ai-stream';
 
     export let data;
     const problemId = data.problem.id;
@@ -178,6 +179,15 @@
     let isResizing = false;
     let workspaceElement: HTMLElement;
     let openedHints = new Set<number>([]);
+    let aiHintOpen = false;
+    let aiHintState: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
+    let aiHintText = '';
+    let aiHintController: AbortController | null = null;
+    let aiExplainController: AbortController | null = null;
+    let executionPanelComponent: any;
+    let aiSettingsBusy = false;
+    let aiSettingsStatus = '';
+    let aiSettingsError = '';
     let viewMode: 'statement' | 'solution' = 'statement';
 
     let showSettings = false;
@@ -410,6 +420,7 @@
         hasDesktopStartupControls = Boolean(window.codegateDesktop?.startupEventsStatus);
         const module = await import('$lib/components/CodeEditor.svelte');
         CodeEditor = module.default;
+        if (isCodeGate && $userSettingsStorage.aiEnabled) void runAiLifecycle('warm');
 
         const fb = initFirebase();
         if (fb) isFirebaseAvailable = true;
@@ -556,6 +567,109 @@
             startupEventsBusy = false;
             await tick();
             updateSettingsPosition();
+        }
+    }
+
+    function appendAiStatus(text: string) {
+        aiSettingsStatus = `${aiSettingsStatus}${text}`.slice(-800);
+    }
+
+    async function runAiLifecycle(endpoint: 'provision' | 'warm' | 'unload') {
+        aiSettingsBusy = true;
+        aiSettingsStatus = '';
+        aiSettingsError = '';
+        try {
+            const response = await fetch(`/api/codegate/ai/${endpoint}`, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ sessionId: gateSessionId, challengeId: gateChallengeId })
+            });
+            await consumeAiStream(response, (event) => {
+                if ((event.type === 'status' || event.type === 'text') && event.text) appendAiStatus(event.text);
+            });
+        } catch (error) {
+            aiSettingsError = error instanceof Error ? error.message : String(error);
+        } finally {
+            aiSettingsBusy = false;
+            await tick();
+            updateSettingsPosition();
+        }
+    }
+
+    async function setAiEnabled(enabled: boolean) {
+        userSettingsStorage.update((settings) => ({ ...settings, aiEnabled: enabled }));
+        aiHintController?.abort();
+        aiExplainController?.abort();
+        if (!enabled) {
+            aiHintOpen = false;
+            aiHintState = 'idle';
+            aiHintText = '';
+        }
+        await runAiLifecycle(enabled ? 'provision' : 'unload');
+    }
+
+    async function toggleAiHint() {
+        aiHintOpen = !aiHintOpen;
+        if (!aiHintOpen || aiHintState === 'ready' || aiHintState === 'loading') return;
+        aiHintController?.abort();
+        aiHintController = new AbortController();
+        aiHintState = 'loading';
+        aiHintText = 'Generating algorithm hint…';
+        let output = '';
+        try {
+            const response = await fetch('/api/codegate/ai/algorithm-hint', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ sessionId: gateSessionId, challengeId: gateChallengeId }),
+                signal: aiHintController.signal
+            });
+            await consumeAiStream(response, (event) => {
+                if (event.type === 'status' && !output && event.text) aiHintText = event.text;
+                if (event.type === 'text' && event.text) {
+                    output += event.text;
+                    aiHintText = output;
+                }
+            });
+            aiHintState = 'ready';
+        } catch (error) {
+            if (aiHintController.signal.aborted) return;
+            aiHintState = 'error';
+            aiHintText = error instanceof Error ? error.message : String(error);
+        }
+    }
+
+    function retryAiHint() {
+        aiHintState = 'idle';
+        aiHintOpen = false;
+        void toggleAiHint();
+    }
+
+    async function explainSelection(event: CustomEvent<{ source: string; selection: string; startLine: number; endLine: number }>) {
+        if (!$userSettingsStorage.aiEnabled || !isCodeGate) return;
+        aiExplainController?.abort();
+        aiExplainController = new AbortController();
+        const { source, selection, startLine, endLine } = event.detail;
+        const title = `AI Explanation — lines ${startLine}–${endLine}`;
+        let output = '';
+        executionPanelComponent?.showAiConsole(title, 'Explaining selected code…');
+        try {
+            const response = await fetch('/api/codegate/ai/explain-selection', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ sessionId: gateSessionId, challengeId: gateChallengeId, source, selection, startLine, endLine }),
+                signal: aiExplainController.signal
+            });
+            await consumeAiStream(response, (streamEvent) => {
+                if (streamEvent.type === 'status' && !output && streamEvent.text) executionPanelComponent?.showAiConsole(title, streamEvent.text);
+                if (streamEvent.type === 'text' && streamEvent.text) {
+                    output += streamEvent.text;
+                    executionPanelComponent?.showAiConsole(title, output);
+                }
+            });
+        } catch (error) {
+            if (aiExplainController.signal.aborted) return;
+            const message = error instanceof Error ? error.message : String(error);
+            executionPanelComponent?.showAiConsole(title, output ? `${output}\n\nError: ${message}` : `Error: ${message}`);
         }
     }
 
@@ -942,6 +1056,23 @@
                     {/each}
                 {/if}
 
+                {#if isCodeGate && $userSettingsStorage.aiEnabled}
+                    <div class="hint-item ai-hint-item">
+                        <button class="hint-header" disabled={aiSettingsBusy} on:click={toggleAiHint}>
+                            <span>AI Algorithm Hint ✦</span>
+                            <span class="chevron">{aiHintOpen ? "▾" : "▸"}</span>
+                        </button>
+                        {#if aiHintOpen}
+                            <div class="hint-body ai-hint-body">
+                                {aiHintText}
+                                {#if aiHintState === 'error'}
+                                    <button class="btn" on:click={retryAiHint}>Retry</button>
+                                {/if}
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
+
                 {#if data.problem.solution && !isCodeGate}
                     <div class="hint-item">
                         <button
@@ -1175,6 +1306,24 @@
                                 <option value="off">Standard</option>
                                 <option value="on">Vim</option>
                             </select>
+                            {#if isCodeGate}
+                                <div class="settings-divider"></div>
+                                <div class="settings-section-title">Local AI helper</div>
+                                <label class="startup-event-option">
+                                    <input
+                                        type="checkbox"
+                                        checked={$userSettingsStorage.aiEnabled}
+                                        disabled={aiSettingsBusy}
+                                        on:change={(event) => void setAiEnabled(event.currentTarget.checked)}
+                                    />
+                                    Enable Qwen3 4B hints
+                                </label>
+                                <div class="settings-note">Enabling downloads about 2–3 GB and turns on Docker Model Runner.</div>
+                                {#if aiSettingsBusy || aiSettingsStatus}
+                                    <pre class="settings-ai-status">{aiSettingsStatus || 'Preparing local AI…'}</pre>
+                                {/if}
+                                {#if aiSettingsError}<div class="settings-error">{aiSettingsError}</div>{/if}
+                            {/if}
                             {#if hasDesktopStartupControls}
                                 <div class="settings-divider"></div>
                                 <div class="settings-section-title">Open CodeGate when Windows:</div>
@@ -1216,12 +1365,15 @@
                     {theme} 
                     {vimMode} 
                     viewState={currentViewState}
+                    enableAiExplain={isCodeGate && $userSettingsStorage.aiEnabled && !aiSettingsBusy}
+                    on:explainSelection={explainSelection}
                 />
             {:else}
                 Loading...
             {/if}
         </div>
         <ExecutionPanel
+            bind:this={executionPanelComponent}
             problem={data.problem}
             {code}
             {language}
@@ -1794,6 +1946,17 @@
     .hint-body {
         padding: 0 var(--spacing-3) var(--spacing-3);
     }
+    .ai-hint-item {
+        border: 1px solid color-mix(in srgb, var(--color-border-active) 55%, transparent);
+    }
+    .ai-hint-body {
+        white-space: pre-wrap;
+        line-height: 1.5;
+    }
+    .ai-hint-body .btn {
+        display: block;
+        margin-top: var(--spacing-2);
+    }
 
     .lang-dropdown-tabs-container {
         display: flex;
@@ -1825,6 +1988,18 @@
         max-width: 260px;
         font-size: 0.78rem;
         color: var(--color-error, #ef4444);
+    }
+    .settings-ai-status {
+        max-width: 280px;
+        max-height: 110px;
+        overflow: auto;
+        margin: 0;
+        padding: 6px;
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        white-space: pre-wrap;
+        font-size: 0.72rem;
+        color: var(--color-text-secondary);
     }
     .editor-header.codegate-header > .lang-dropdown-tabs-container {
         flex-basis: 100%;

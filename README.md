@@ -24,6 +24,7 @@ _Demo GIF coming soon._
 - Opens a coding challenge at Windows sign-in, unlock, or resume from sleep.
 - Uses the familiar Monaco editor with dark mode enabled by default.
 - Supports Java, Python, C++, C#, Rust, Go, and TypeScript through Docker runners.
+- Optionally uses a local Qwen3 4B model for streamed algorithm hints and selected-code explanations.
 - Keeps the same problem while you switch language or difficulty.
 - Unlocks only after an explicit submission passes every official test for the active challenge.
 - Runs locally and reuses CoJudge's problem packs, submission API, runners, and validators.
@@ -80,6 +81,15 @@ developers can include it with:
 Docker Desktop may download a language image the first time that language is judged. Keep Docker
 running and allow a little extra time for the first submission.
 
+The optional local AI helper requires Docker Desktop 4.41 or newer with Docker Model Runner support.
+On Windows, CodeGate enables GPU-backed inference by default when Docker detects a compatible GPU;
+unsupported systems fall back to CPU inference.
+It is disabled by default. Enable it during installation or from the editor settings to download
+Qwen3 4B (about 2–3 GB). Algorithm help appears as a streamed sidebar hint; highlighting code and
+choosing **Explain selection with local AI** streams its explanation into the existing Console tab.
+CodeGate warms the model when AI is enabled and unloads it during normal application shutdown so it
+does not continue reserving VRAM after the app closes.
+
 On Windows, CodeGate checks the Docker daemon at launch and, when necessary, asks Docker Desktop to
 start through the supported `docker desktop start` command. This is best-effort; older Docker
 Desktop releases without that CLI command must still be started manually.
@@ -123,6 +133,8 @@ updating imported problem sources.
 
 The installer lets the user choose sign-in, unlock, and resume-from-sleep startup events; all three
 are selected by default. The same choices can be changed later from the editor's settings gear.
+An optional installer checkbox enables GPU-backed Docker Model Runner when supported and downloads Qwen3 4B. The uninstaller
+offers to remove that model and selects model removal by default.
 Uninstalling CodeGate removes its scheduled startup registration,
 application files, and per-user state. Removing shared Docker images is an optional uninstall step
 because those images may be used by other projects.

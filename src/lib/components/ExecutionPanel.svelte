@@ -39,6 +39,14 @@
     let hasRunOnce = false;
     let status: StatusType = "no-status";
     let runningMessage: string = "";
+    let aiConsoleTitle = "";
+    let aiConsoleOutput = "";
+
+    export function showAiConsole(title: string, output: string) {
+        aiConsoleTitle = title;
+        aiConsoleOutput = output;
+        activeMainTab = "console";
+    }
     // Docker image status for the selected language
     let imageStatus: "unknown" | "present" | "absent" = "unknown";
     let isDockerRunning = true;
@@ -999,9 +1007,16 @@
                     </div>
                 {/if}
             </div>
-        {:else if activeMainTab === "console" && hasRunOnce}
+        {:else if activeMainTab === "console" && (hasRunOnce || aiConsoleOutput)}
             <div class="output-view">
-                <div class="case-selector">
+                {#if aiConsoleOutput}
+                    <div class="result-item">
+                        <span class="result-title">{aiConsoleTitle || "AI Explanation"}</span>
+                        <pre class="result-output">{aiConsoleOutput}</pre>
+                    </div>
+                {/if}
+
+                {#if hasRunOnce}<div class="case-selector">
                     {#each testCaseResults as tc, i}
                         <div class="case-btn-wrap">
                             <button
@@ -1021,9 +1036,9 @@
                             >
                         </div>
                     {/each}
-                </div>
+                </div>{/if}
 
-                {#if activeTestCase}
+                {#if hasRunOnce && activeTestCase}
                     <div class="result-item">
                         <span class="result-title">Console</span>
                         <pre class="result-output">{activeTestCase.logs ||
@@ -1461,6 +1476,7 @@
     }
     .result-item {
         font-family: var(--font-mono);
+        min-width: 0;
     }
     .result-title {
         font-weight: bold;
@@ -1477,6 +1493,11 @@
         background-color: var(--color-bg);
         padding: var(--spacing-2);
         border-radius: var(--border-radius);
+        box-sizing: border-box;
+        max-width: 100%;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
     .result-output.error {
         color: var(--color-incorrect);

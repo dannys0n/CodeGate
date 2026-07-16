@@ -6,14 +6,17 @@ Var StartEventsDialog
 Var StartAtLogonCheckbox
 Var StartAtUnlockCheckbox
 Var StartAtResumeCheckbox
+Var InstallAiModelCheckbox
 Var StartAtLogon
 Var StartAtUnlock
 Var StartAtResume
+Var InstallAiModel
 
 !macro customInit
   StrCpy $StartAtLogon ${BST_CHECKED}
   StrCpy $StartAtUnlock ${BST_CHECKED}
   StrCpy $StartAtResume ${BST_CHECKED}
+  StrCpy $InstallAiModel ${BST_UNCHECKED}
 
   ClearErrors
   ReadRegDWORD $0 HKCU "Software\CodeGate\StartEvents" "Configured"
@@ -21,6 +24,12 @@ Var StartAtResume
     ReadRegDWORD $StartAtLogon HKCU "Software\CodeGate\StartEvents" "Logon"
     ReadRegDWORD $StartAtUnlock HKCU "Software\CodeGate\StartEvents" "Unlock"
     ReadRegDWORD $StartAtResume HKCU "Software\CodeGate\StartEvents" "Resume"
+  ${EndIf}
+
+  ClearErrors
+  ReadRegDWORD $0 HKCU "Software\CodeGate\AI" "Configured"
+  ${IfNot} ${Errors}
+    ReadRegDWORD $InstallAiModel HKCU "Software\CodeGate\AI" "Enabled"
   ${EndIf}
 !macroend
 
@@ -46,6 +55,13 @@ Function StartEventsPageCreate
   Pop $StartAtResumeCheckbox
   ${NSD_SetState} $StartAtResumeCheckbox $StartAtResume
 
+  ${NSD_CreateCheckbox} 0 98u 100% 12u "Download and enable the local AI helper (Qwen3 4B)"
+  Pop $InstallAiModelCheckbox
+  ${NSD_SetState} $InstallAiModelCheckbox $InstallAiModel
+
+  ${NSD_CreateLabel} 16u 116u 94% 28u "Optional: downloads about 2-3 GB, enables Docker Model Runner, and may make installation take several minutes."
+  Pop $0
+
   nsDialogs::Show
 FunctionEnd
 
@@ -53,6 +69,7 @@ Function StartEventsPageLeave
   ${NSD_GetState} $StartAtLogonCheckbox $StartAtLogon
   ${NSD_GetState} $StartAtUnlockCheckbox $StartAtUnlock
   ${NSD_GetState} $StartAtResumeCheckbox $StartAtResume
+  ${NSD_GetState} $InstallAiModelCheckbox $InstallAiModel
 FunctionEnd
 
 !macro customPageAfterChangeDir
@@ -71,6 +88,18 @@ FunctionEnd
   ${Else}
     MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was installed, but Windows start-event registration failed. You can retry it using the manual registration script."
   ${EndIf}
+
+  ${If} $InstallAiModel == ${BST_CHECKED}
+    DetailPrint "Enabling Docker Model Runner and downloading Qwen3 4B..."
+    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -Enable -SettingsPath "$APPDATA\CodeGate\settings.json"'
+    Pop $0
+    ${If} $0 != 0
+      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was installed, but the optional local AI model could not be prepared. You can retry from CodeGate settings."
+    ${EndIf}
+  ${Else}
+    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -Disable -SettingsPath "$APPDATA\CodeGate\settings.json"'
+    Pop $0
+  ${EndIf}
 !macroend
 !endif
 
@@ -78,9 +107,12 @@ FunctionEnd
 Var ImageCleanupDialog
 Var RemoveJudgeImagesCheckbox
 Var RemoveJudgeImages
+Var RemoveAiModelCheckbox
+Var RemoveAiModel
 
 !macro customUnInit
   StrCpy $RemoveJudgeImages ${BST_UNCHECKED}
+  StrCpy $RemoveAiModel ${BST_CHECKED}
 !macroend
 
 Function un.ImageCleanupPageCreate
@@ -100,11 +132,16 @@ Function un.ImageCleanupPageCreate
   ${NSD_CreateLabel} 16u 58u 94% 34u "Warning: these language images are shared Docker resources and may also be used by other development projects. Leave this unchecked to keep them."
   Pop $0
 
+  ${NSD_CreateCheckbox} 0 100u 100% 12u "Remove the downloaded CodeGate AI model (Qwen3 4B)"
+  Pop $RemoveAiModelCheckbox
+  ${NSD_SetState} $RemoveAiModelCheckbox $RemoveAiModel
+
   nsDialogs::Show
 FunctionEnd
 
 Function un.ImageCleanupPageLeave
   ${NSD_GetState} $RemoveJudgeImagesCheckbox $RemoveJudgeImages
+  ${NSD_GetState} $RemoveAiModelCheckbox $RemoveAiModel
 FunctionEnd
 
 !macro customUnWelcomePage
@@ -137,6 +174,14 @@ FunctionEnd
     Pop $0
     ${If} $0 != 0
       MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but one or more shared Docker judge images could not be removed. They may still be in use by another container or Docker Desktop may be unavailable."
+    ${EndIf}
+  ${EndIf}
+
+  ${If} $RemoveAiModel == ${BST_CHECKED}
+    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -Remove'
+    Pop $0
+    ${If} $0 != 0
+      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker Model Runner could not remove the Qwen3 4B model. Start Docker Desktop and remove it with docker model rm hf.co/Qwen/Qwen3-4B-GGUF:Q4_K_M."
     ${EndIf}
   ${EndIf}
 

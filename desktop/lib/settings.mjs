@@ -17,6 +17,7 @@ export const defaultDesktopSettings = Object.freeze({
   codegateLanguage: 'python',
   solutionDifficulty: '99',
   leetcodeDifficulties: [...leetcodeDifficulties],
+  aiEnabled: false,
   leftPaneWidth: 50,
   execPaneHeight: 50
 });
@@ -49,6 +50,7 @@ export function normalizeDesktopSettings(input = {}) {
     leetcodeDifficulties: selectedLeetcodeDifficulties.length
       ? selectedLeetcodeDifficulties
       : [...defaultDesktopSettings.leetcodeDifficulties],
+    aiEnabled: typeof input.aiEnabled === 'boolean' ? input.aiEnabled : defaultDesktopSettings.aiEnabled,
     leftPaneWidth: boundedNumber(input.leftPaneWidth, 0, 90, defaultDesktopSettings.leftPaneWidth),
     execPaneHeight: boundedNumber(input.execPaneHeight, 0, 100, defaultDesktopSettings.execPaneHeight)
   };

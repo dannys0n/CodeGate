@@ -18,6 +18,7 @@ const preload = path.join(appRoot, 'desktop', 'preload.cjs');
 const instanceToken = randomUUID();
 const smokeTest = process.argv.includes('--smoke-test');
 const launchStartedAt = Date.now();
+const codeGateAiModel = 'hf.co/Qwen/Qwen3-4B-GGUF:Q4_K_M';
 const requestedStartupMode = startupMode();
 const requiresSingleInstance = !smokeTest && !requestedStartupMode;
 const hasSingleInstanceLock = !requiresSingleInstance || app.requestSingleInstanceLock();
@@ -32,6 +33,8 @@ let desktopSettings = normalizeDesktopSettings(defaultDesktopSettings);
 let desktopSettingsFile;
 let desktopSettingsPresent = false;
 let desktopSettingsSaveQueue = Promise.resolve(desktopSettings);
+let modelUnloadStarted = false;
+let modelUnloadFinished = false;
 
 function startupMode() {
   const argument = process.argv.find((value) => value.startsWith('--startup='));
@@ -242,7 +245,23 @@ ipcMain.handle('codegate:startup-status', () => {
 ipcMain.handle('codegate:startup-events-status', () => startupEventsStatus());
 ipcMain.handle('codegate:set-startup-events', (_event, events) => setStartupEvents(events));
 
-app.on('before-quit', () => { quitting = true; if (serverProcess && !serverProcess.killed) serverProcess.kill(); });
+app.on('before-quit', (event) => {
+  quitting = true;
+  if (serverProcess && !serverProcess.killed) serverProcess.kill();
+  if (modelUnloadFinished || !desktopSettings.aiEnabled) return;
+
+  event.preventDefault();
+  if (modelUnloadStarted) return;
+  modelUnloadStarted = true;
+  void runCommand('docker', ['model', 'unload', codeGateAiModel], { timeout: 10_000 })
+    .then((result) => {
+      if (!result.ok) process.stderr.write(`CodeGate could not unload its AI model: ${result.stderr.trim() || 'Docker Model Runner is unavailable'}\n`);
+    })
+    .finally(() => {
+      modelUnloadFinished = true;
+      app.quit();
+    });
+});
 app.on('window-all-closed', () => { if (!released && !quitting) void release('abandoned'); });
 if (requiresSingleInstance && hasSingleInstanceLock) {
   app.on('second-instance', () => {

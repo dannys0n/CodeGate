@@ -1,7 +1,7 @@
 <script lang="ts">
     import type * as Monaco from 'monaco-editor';
     import { configureMonacoVim } from '$lib/utils/vimMode';
-    import { onMount } from 'svelte';
+    import { createEventDispatcher, onMount } from 'svelte';
     export let value = '';
     export let language = 'javascript';
     export let fontSize: number = 14;
@@ -9,17 +9,49 @@
     export let vimMode: 'off' | 'on' = 'off';
     export let readOnly: boolean = false;
     export let viewState: string | null = null;
+    export let enableAiExplain = false;
+
+    const dispatch = createEventDispatcher();
 
     let editor: Monaco.editor.IStandaloneCodeEditor | null = null;
     let editorElement: HTMLDivElement;
     let monacoRef: any;
     let vimModeInstance: any = null;
     let vimStatusElement: HTMLDivElement;
+    let aiAction: Monaco.IDisposable | null = null;
 
     export function getViewState() {
         if (!editor) return null;
         const state = editor.saveViewState();
         return state ? JSON.stringify(state) : null;
+    }
+
+    function updateAiAction() {
+        if (!editor) return;
+        if (!enableAiExplain) {
+            aiAction?.dispose();
+            aiAction = null;
+            return;
+        }
+        if (aiAction) return;
+        aiAction = editor.addAction({
+            id: 'codegate.explainSelection',
+            label: 'Explain selection with local AI',
+            contextMenuGroupId: 'navigation',
+            contextMenuOrder: 1.5,
+            precondition: 'editorHasSelection',
+            run: (activeEditor) => {
+                const selection = activeEditor.getSelection();
+                const model = activeEditor.getModel();
+                if (!selection || !model || selection.isEmpty()) return;
+                dispatch('explainSelection', {
+                    source: model.getValue(),
+                    selection: model.getValueInRange(selection),
+                    startLine: selection.startLineNumber,
+                    endLine: selection.endLineNumber
+                });
+            }
+        });
     }
 
     onMount(() => {
@@ -96,6 +128,8 @@
                 value = editor.getValue();
             });
 
+            updateAiAction();
+
             // Reactively handle vim mode after editor creation
             const updateVimMode = (enabled: string) => {
                 if (!editor) return;
@@ -121,6 +155,7 @@
             if (vimModeInstance) {
                 vimModeInstance.dispose();
             }
+            aiAction?.dispose();
             editor?.dispose();
         };
     });
@@ -155,6 +190,10 @@
 
     $: if (editor && typeof readOnly === 'boolean') {
         editor.updateOptions({ readOnly });
+    }
+
+    $: if (editor && typeof enableAiExplain === 'boolean') {
+        updateAiAction();
     }
 
     // Update editor content when `value` prop changes externally (e.g., language switch)
