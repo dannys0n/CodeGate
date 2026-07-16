@@ -143,16 +143,19 @@ because those images may be used by other projects.
 
 ## Publish a GitHub release
 
-Windows releases are built by GitHub Actions from version tags. Update `version` in `package.json`
-and `package-lock.json`, commit the change, then create and push the matching tag:
+Windows releases are built by GitHub Actions from version tags. Run the interactive publisher:
 
 ```powershell
-npm.cmd version 0.2.0 --no-git-tag-version
-git add package.json package-lock.json
-git commit -m "Release 0.2.0"
-git tag v0.2.0
-git push origin main
-git push origin v0.2.0
+.\commit-release.bat
+```
+
+Choose a patch, minor, or major increment. The script previews the files being released, asks for
+confirmation, runs the type checks and test suite, updates both package version files, creates the
+release commit and matching annotated local tag. It does not push, require the GitHub CLI, or build
+the installer locally. Review the resulting commit, then publish it when ready:
+
+```powershell
+git push origin main --follow-tags
 ```
 
 The `Publish Windows Release` workflow restores the pinned problem sources, validates and builds the
@@ -170,10 +173,12 @@ builds. For signed installers, add the certificate and password as Actions secre
 | `setup.bat` | Prepare a fresh checkout for development |
 | `quick-test.bat` | Build and launch a disposable local desktop test |
 | `build-release.bat` | Produce the Windows installer and unpacked release app |
+| `commit-release.bat` | Validate, version, commit, and locally tag a release |
 
 Run `setup.bat` once after cloning, `quick-test.bat` while developing, and `build-release.bat` when
-you need distributable artifacts. Setup's implementation lives under `scripts/` to keep the
-repository root focused on these three entry points.
+you need local distributable artifacts. Use `commit-release.bat` to prepare a reviewed release
+commit before manually pushing it to trigger GitHub Actions. Setup's implementation lives under
+`scripts/` to keep the repository root entry points simple.
 
 ## Problem catalog
 
