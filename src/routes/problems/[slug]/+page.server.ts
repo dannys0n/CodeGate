@@ -66,6 +66,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
                 selected,
                 source,
                 leetcodeDifficulties: session.leetcodeDifficulties,
+                problemNumberRange: session.problemNumberRange,
                 available: problemVariants.map((language) => ({ language }))
             }
         };

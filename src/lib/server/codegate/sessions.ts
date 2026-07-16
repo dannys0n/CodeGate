@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { selectChallenge } from '../../codegate/selection';
-import { leetcodeDifficultyLevels, type DifficultyLevel, type GateLanguage, type LeetcodeDifficulty, type PlayableManifest, type PlayableVariant } from '../../codegate/types';
+import { leetcodeDifficultyLevels, type DifficultyLevel, type GateLanguage, type LeetcodeDifficulty, type PlayableManifest, type PlayableVariant, type ProblemNumberRange } from '../../codegate/types';
 
 export type GateOutcome = 'accepted' | 'given-up' | 'infrastructure-failure' | 'abandoned';
 
@@ -18,6 +18,7 @@ export type GateSession = {
     challenge: GateChallenge;
     recentProblemIds: string[];
     leetcodeDifficulties: LeetcodeDifficulty[];
+    problemNumberRange: ProblemNumberRange;
     activeSubmission?: {
         id: string;
         challengeId: string;
@@ -44,7 +45,8 @@ export function createGateSession(
     language: GateLanguage,
     difficulty: DifficultyLevel,
     random: () => number = Math.random,
-    leetcodeDifficulties: readonly LeetcodeDifficulty[] = leetcodeDifficultyLevels
+    leetcodeDifficulties: readonly LeetcodeDifficulty[] = leetcodeDifficultyLevels,
+    problemNumberRange: ProblemNumberRange = { min: null, max: null }
 ): GateSession {
     const variant = choose(manifest, language, difficulty, [], random);
     const session: GateSession = {
@@ -53,7 +55,8 @@ export function createGateSession(
         status: 'active',
         challenge: { id: randomUUID(), variant },
         recentProblemIds: [variant.problemId],
-        leetcodeDifficulties: [...leetcodeDifficulties]
+        leetcodeDifficulties: [...leetcodeDifficulties],
+        problemNumberRange: { ...problemNumberRange }
     };
     sessions.set(session.id, session);
     return session;
@@ -77,7 +80,8 @@ export function refreshGateChallenge(
     language: GateLanguage,
     difficulty: DifficultyLevel,
     random: () => number = Math.random,
-    leetcodeDifficulties: readonly LeetcodeDifficulty[] = leetcodeDifficultyLevels
+    leetcodeDifficulties: readonly LeetcodeDifficulty[] = leetcodeDifficultyLevels,
+    problemNumberRange: ProblemNumberRange = { min: null, max: null }
 ): GateSession {
     const session = requireActiveChallenge(sessionId, challengeId);
     const variant = choose(manifest, language, difficulty, session.recentProblemIds, random);
@@ -85,6 +89,7 @@ export function refreshGateChallenge(
     session.challenge = { id: randomUUID(), variant };
     session.recentProblemIds = [...session.recentProblemIds.slice(-9), variant.problemId];
     session.leetcodeDifficulties = [...leetcodeDifficulties];
+    session.problemNumberRange = { ...problemNumberRange };
     return session;
 }
 

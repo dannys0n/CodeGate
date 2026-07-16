@@ -51,6 +51,10 @@
     let selectedLeetcodeDifficulties: LeetcodeDifficulty[] = data.codegate?.leetcodeDifficulties ?? [...leetcodeDifficultyLevels];
     let showLeetcodeDifficultyFilter = false;
     let leetcodeDifficultyFilterContainer: HTMLElement | null = null;
+    let problemNumberMin: number | null = data.codegate?.problemNumberRange?.min ?? null;
+    let problemNumberMax: number | null = data.codegate?.problemNumberRange?.max ?? null;
+    let showProblemNumberFilter = false;
+    let problemNumberFilterContainer: HTMLElement | null = null;
     let gateSessionId = isCodeGate ? $page.url.searchParams.get('sessionId') ?? '' : '';
     let gateChallengeId = isCodeGate ? $page.url.searchParams.get('challengeId') ?? '' : '';
     let gateActionPending = false;
@@ -485,11 +489,15 @@
             if (showLeetcodeDifficultyFilter && leetcodeDifficultyFilterContainer && !leetcodeDifficultyFilterContainer.contains(e.target as Node)) {
                 showLeetcodeDifficultyFilter = false;
             }
+            if (showProblemNumberFilter && problemNumberFilterContainer && !problemNumberFilterContainer.contains(e.target as Node)) {
+                showProblemNumberFilter = false;
+            }
         };
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 showSettings = false;
                 showLeetcodeDifficultyFilter = false;
+                showProblemNumberFilter = false;
             }
             if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
                 e.preventDefault();
@@ -850,7 +858,8 @@
                     challengeId: gateChallengeId,
                     language: requestedLanguage,
                     difficulty: requestedDifficulty,
-                    leetcodeDifficulties: selectedLeetcodeDifficulties
+                    leetcodeDifficulties: selectedLeetcodeDifficulties,
+                    problemNumberRange: { min: problemNumberMin, max: problemNumberMax }
                 })
             });
             const session = await response.json();
@@ -859,8 +868,10 @@
             userSettingsStorage.update((settings) => ({
                 ...settings,
                 codegateLanguage: selected.language,
-                solutionDifficulty: selected.difficulty,
-                leetcodeDifficulties: [...selectedLeetcodeDifficulties]
+                    solutionDifficulty: selected.difficulty,
+                    leetcodeDifficulties: [...selectedLeetcodeDifficulties],
+                    problemNumberMin,
+                    problemNumberMax
             }));
             const target = new URL(`/problems/${selected.problemId}`, window.location.origin);
             target.searchParams.set('codegate', '1');
@@ -902,6 +913,28 @@
             selectedLeetcodeDifficulties = [...selectedLeetcodeDifficulties, value];
         }
         userSettingsStorage.update((settings) => ({ ...settings, leetcodeDifficulties: [...selectedLeetcodeDifficulties] }));
+    }
+
+    function updateProblemNumberRange(bound: 'min' | 'max', event: Event) {
+        const input = event.currentTarget as HTMLInputElement;
+        const parsed = input.value.trim() === '' ? null : Number(input.value);
+        if (parsed !== null && (!Number.isSafeInteger(parsed) || parsed < 1)) {
+            input.value = String(bound === 'min' ? problemNumberMin ?? '' : problemNumberMax ?? '');
+            return;
+        }
+        if (bound === 'min') problemNumberMin = parsed;
+        else problemNumberMax = parsed;
+        if (problemNumberMin !== null && problemNumberMax !== null && problemNumberMin > problemNumberMax) {
+            if (bound === 'min') problemNumberMax = problemNumberMin;
+            else problemNumberMin = problemNumberMax;
+        }
+        userSettingsStorage.update((settings) => ({ ...settings, problemNumberMin, problemNumberMax }));
+    }
+
+    function clearProblemNumberRange() {
+        problemNumberMin = null;
+        problemNumberMax = null;
+        userSettingsStorage.update((settings) => ({ ...settings, problemNumberMin, problemNumberMax }));
     }
 
     async function giveUpGate() {
@@ -1164,6 +1197,33 @@
                                             {level}
                                         </label>
                                     {/each}
+                                </div>
+                            {/if}
+                        </div>
+                        <label for="problem-number-filter" style="font-size:0.9rem;color:var(--color-text-secondary);">Problem number</label>
+                        <div class="leetcode-filter" bind:this={problemNumberFilterContainer}>
+                            <button
+                                id="problem-number-filter"
+                                type="button"
+                                class="leetcode-filter-trigger"
+                                aria-haspopup="true"
+                                aria-expanded={showProblemNumberFilter}
+                                disabled={gateActionPending}
+                                on:click={() => showProblemNumberFilter = !showProblemNumberFilter}
+                            >
+                                {problemNumberMin === null && problemNumberMax === null ? 'All' : `${problemNumberMin ?? 'Any'}–${problemNumberMax ?? 'Any'}`}
+                            </button>
+                            {#if showProblemNumberFilter}
+                                <div class="leetcode-filter-menu problem-number-menu">
+                                    <div class="problem-number-field">
+                                        <label for="problem-number-min">Minimum</label>
+                                        <input id="problem-number-min" type="number" min="1" step="1" placeholder="Any" value={problemNumberMin ?? ''} on:change={(event) => updateProblemNumberRange('min', event)} />
+                                    </div>
+                                    <div class="problem-number-field">
+                                        <label for="problem-number-max">Maximum</label>
+                                        <input id="problem-number-max" type="number" min="1" step="1" placeholder="Any" value={problemNumberMax ?? ''} on:change={(event) => updateProblemNumberRange('max', event)} />
+                                    </div>
+                                    <button type="button" class="problem-number-clear" on:click={clearProblemNumberRange}>Use all problems</button>
                                 </div>
                             {/if}
                         </div>
@@ -1914,6 +1974,34 @@
         color: var(--color-text);
         cursor: pointer;
         white-space: nowrap;
+    }
+    .problem-number-menu {
+        min-width: 210px;
+    }
+    .problem-number-field {
+        display: grid;
+        grid-template-columns: 1fr 90px;
+        align-items: center;
+        gap: 10px;
+    }
+    .problem-number-field input {
+        min-width: 0;
+        width: 90px;
+        box-sizing: border-box;
+        padding: 5px 7px;
+        border: 1px solid var(--color-border);
+        border-radius: 5px;
+        background: var(--color-bg);
+        color: var(--color-text);
+        font: inherit;
+    }
+    .problem-number-clear {
+        padding: 5px 7px;
+        border: 1px solid var(--color-border);
+        border-radius: 5px;
+        background: transparent;
+        color: var(--color-text-secondary);
+        cursor: pointer;
     }
 
     /* Hints section */

@@ -4,6 +4,7 @@ export const difficultyLevels = ['0', '25', '50', '75', '99', '100'] as const;
 export type DifficultyLevel = (typeof difficultyLevels)[number];
 export const leetcodeDifficultyLevels = ['Easy', 'Medium', 'Hard'] as const;
 export type LeetcodeDifficulty = (typeof leetcodeDifficultyLevels)[number];
+export type ProblemNumberRange = { min: number | null; max: number | null };
 export const gateLanguages = ['java', 'python', 'cpp', 'csharp', 'rust', 'go', 'typescript'] as const satisfies readonly ProgrammingLanguage[];
 export type GateLanguage = (typeof gateLanguages)[number];
 

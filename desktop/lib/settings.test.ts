@@ -10,6 +10,8 @@ describe('desktop settings', () => {
       codegateLanguage: 'python',
       solutionDifficulty: '100',
       leetcodeDifficulties: ['Hard', 'invalid'],
+      problemNumberMin: 500,
+      problemNumberMax: 100,
       aiEnabled: true,
       editorFontSize: 99,
       problemId: 'must-not-persist'
@@ -18,6 +20,8 @@ describe('desktop settings', () => {
     expect(settings.codegateLanguage).toBe('python');
     expect(settings.solutionDifficulty).toBe('100');
     expect(settings.leetcodeDifficulties).toEqual(['Hard']);
+    expect(settings.problemNumberMin).toBe(100);
+    expect(settings.problemNumberMax).toBe(500);
     expect(settings.aiEnabled).toBe(true);
     expect(settings.editorFontSize).toBe(24);
     expect(settings).not.toHaveProperty('problemId');

@@ -26,12 +26,21 @@ export const POST: RequestHandler = async ({ request }) => {
                 ? body.leetcodeDifficulties.filter((value: unknown): value is LeetcodeDifficulty => leetcodeDifficultyLevels.includes(value as LeetcodeDifficulty))
                 : current.leetcodeDifficulties;
             const leetcodeDifficulties = requestedLeetcodeDifficulties.length ? requestedLeetcodeDifficulties : current.leetcodeDifficulties;
+            const readBound = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null;
+            let problemNumberMin = readBound(body.problemNumberRange?.min);
+            let problemNumberMax = readBound(body.problemNumberRange?.max);
+            if (problemNumberMin !== null && problemNumberMax !== null && problemNumberMin > problemNumberMax) {
+                [problemNumberMin, problemNumberMax] = [problemNumberMax, problemNumberMin];
+            }
+            const problemNumberRange = body.problemNumberRange && typeof body.problemNumberRange === 'object'
+                ? { min: problemNumberMin, max: problemNumberMax }
+                : current.problemNumberRange;
             const prepared = await prepareChallenge(language, difficulty, current.recentProblemIds, body.action === 'switch-variant'
                 ? { problemId: current.challenge.variant.problemId }
-                : { leetcodeDifficulties });
+                : { leetcodeDifficulties, problemNumberRange });
             const manifest = { schemaVersion: 1 as const, generatedAt: prepared.preparedAt, sourceRevision: 'runtime', variants: [prepared] };
             return json(body.action === 'refresh'
-                ? refreshGateChallenge(sessionId, challengeId, manifest, prepared.language, prepared.difficulty, Math.random, leetcodeDifficulties)
+                ? refreshGateChallenge(sessionId, challengeId, manifest, prepared.language, prepared.difficulty, Math.random, leetcodeDifficulties, problemNumberRange)
                 : switchGateVariant(sessionId, challengeId, manifest, prepared.language, prepared.difficulty));
         }
         return json({ error: 'Unsupported session action' }, { status: 400 });

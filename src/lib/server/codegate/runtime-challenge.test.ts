@@ -79,4 +79,10 @@ describe('CodeGate runtime challenge preparation', () => {
         await expect(prepareChallenge('python', '25', [], { root, leetcodeDifficulties: ['Hard'] }))
             .rejects.toThrow('No python challenge is available');
     });
+
+    it('filters replacement candidates by LeetCode problem number', async () => {
+        await fixture();
+        await expect(prepareChallenge('python', '25', [], { root, problemNumberRange: { min: 2, max: null } }))
+            .rejects.toThrow('No python challenge is available');
+    });
 });

@@ -17,6 +17,8 @@ export const defaultDesktopSettings = Object.freeze({
   codegateLanguage: 'python',
   solutionDifficulty: '99',
   leetcodeDifficulties: [...leetcodeDifficulties],
+  problemNumberMin: null,
+  problemNumberMax: null,
   aiEnabled: false,
   leftPaneWidth: 50,
   execPaneHeight: 50
@@ -32,10 +34,19 @@ function boundedNumber(value, minimum, maximum, fallback) {
     : fallback;
 }
 
+function optionalProblemNumber(value) {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null;
+}
+
 export function normalizeDesktopSettings(input = {}) {
   const selectedLeetcodeDifficulties = Array.isArray(input.leetcodeDifficulties)
     ? leetcodeDifficulties.filter((value) => input.leetcodeDifficulties.includes(value))
     : [];
+  let problemNumberMin = optionalProblemNumber(input.problemNumberMin);
+  let problemNumberMax = optionalProblemNumber(input.problemNumberMax);
+  if (problemNumberMin !== null && problemNumberMax !== null && problemNumberMin > problemNumberMax) {
+    [problemNumberMin, problemNumberMax] = [problemNumberMax, problemNumberMin];
+  }
 
   return {
     preferredLanguage: oneOf(input.preferredLanguage, programmingLanguages, defaultDesktopSettings.preferredLanguage),
@@ -50,6 +61,8 @@ export function normalizeDesktopSettings(input = {}) {
     leetcodeDifficulties: selectedLeetcodeDifficulties.length
       ? selectedLeetcodeDifficulties
       : [...defaultDesktopSettings.leetcodeDifficulties],
+    problemNumberMin,
+    problemNumberMax,
     aiEnabled: typeof input.aiEnabled === 'boolean' ? input.aiEnabled : defaultDesktopSettings.aiEnabled,
     leftPaneWidth: boundedNumber(input.leftPaneWidth, 0, 90, defaultDesktopSettings.leftPaneWidth),
     execPaneHeight: boundedNumber(input.execPaneHeight, 0, 100, defaultDesktopSettings.execPaneHeight)

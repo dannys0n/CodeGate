@@ -13,8 +13,18 @@ export const load: PageServerLoad = async ({ url }) => {
         .split(',')
         .filter((value): value is LeetcodeDifficulty => leetcodeDifficultyLevels.includes(value as LeetcodeDifficulty));
     const leetcodeDifficulties = requestedLeetcodeDifficulties.length ? requestedLeetcodeDifficulties : [...leetcodeDifficultyLevels];
-    const prepared = await prepareChallenge(language, difficulty, [], { leetcodeDifficulties });
-    const session = createGateSession({ schemaVersion: 1, generatedAt: prepared.preparedAt, sourceRevision: 'runtime', variants: [prepared] }, prepared.language, prepared.difficulty, Math.random, leetcodeDifficulties);
+    const readBound = (name: string) => {
+        const value = Number(url.searchParams.get(name));
+        return Number.isSafeInteger(value) && value > 0 ? value : null;
+    };
+    let problemNumberMin = readBound('problemNumberMin');
+    let problemNumberMax = readBound('problemNumberMax');
+    if (problemNumberMin !== null && problemNumberMax !== null && problemNumberMin > problemNumberMax) {
+        [problemNumberMin, problemNumberMax] = [problemNumberMax, problemNumberMin];
+    }
+    const problemNumberRange = { min: problemNumberMin, max: problemNumberMax };
+    const prepared = await prepareChallenge(language, difficulty, [], { leetcodeDifficulties, problemNumberRange });
+    const session = createGateSession({ schemaVersion: 1, generatedAt: prepared.preparedAt, sourceRevision: 'runtime', variants: [prepared] }, prepared.language, prepared.difficulty, Math.random, leetcodeDifficulties, problemNumberRange);
     const target = new URL(`/problems/${session.challenge.variant.problemId}`, url);
     target.searchParams.set('codegate', '1');
     target.searchParams.set('language', session.challenge.variant.language);

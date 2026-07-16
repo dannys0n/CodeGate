@@ -18,6 +18,8 @@ export interface UserSettings {
     codegateLanguage: GateLanguage;
     solutionDifficulty: DifficultyLevel;
     leetcodeDifficulties: LeetcodeDifficulty[];
+    problemNumberMin: number | null;
+    problemNumberMax: number | null;
     aiEnabled: boolean;
 }
 
@@ -34,8 +36,14 @@ const defaultSettings: UserSettings = {
     codegateLanguage: 'python',
     solutionDifficulty: '99',
     leetcodeDifficulties: [...leetcodeDifficultyLevels],
+    problemNumberMin: null,
+    problemNumberMax: null,
     aiEnabled: false,
 };
+
+function optionalProblemNumber(value: unknown): number | null {
+    return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null;
+}
 
 function normalizeSettings(input: any): UserSettings {
     const preferredLanguage = (input?.preferredLanguage ?? defaultSettings.preferredLanguage) as ProgrammingLanguage;
@@ -57,8 +65,13 @@ function normalizeSettings(input: any): UserSettings {
         ? leetcodeDifficultyLevels.filter((value) => input.leetcodeDifficulties.includes(value))
         : [];
     const leetcodeDifficulties = selectedLeetcodeDifficulties.length ? selectedLeetcodeDifficulties : [...defaultSettings.leetcodeDifficulties];
+    let problemNumberMin = optionalProblemNumber(input?.problemNumberMin);
+    let problemNumberMax = optionalProblemNumber(input?.problemNumberMax);
+    if (problemNumberMin !== null && problemNumberMax !== null && problemNumberMin > problemNumberMax) {
+        [problemNumberMin, problemNumberMax] = [problemNumberMax, problemNumberMin];
+    }
     const aiEnabled = typeof input?.aiEnabled === 'boolean' ? input.aiEnabled : defaultSettings.aiEnabled;
-    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties, aiEnabled };
+    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties, problemNumberMin, problemNumberMax, aiEnabled };
 }
 
 // Packaged Electron uses its user-data settings file. A missing file falls back

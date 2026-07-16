@@ -171,6 +171,8 @@ async function resolveGateUrl() {
   gateUrl.searchParams.set('language', desktopSettings.codegateLanguage);
   gateUrl.searchParams.set('difficulty', desktopSettings.solutionDifficulty);
   gateUrl.searchParams.set('leetcodeDifficulties', desktopSettings.leetcodeDifficulties.join(','));
+  if (desktopSettings.problemNumberMin !== null) gateUrl.searchParams.set('problemNumberMin', String(desktopSettings.problemNumberMin));
+  if (desktopSettings.problemNumberMax !== null) gateUrl.searchParams.set('problemNumberMax', String(desktopSettings.problemNumberMax));
   const response = await localRequest(gateUrl.href, 600_000);
   if (response.status !== 303 || !response.headers.location) throw new Error(`Gate route returned ${response.status}`);
   const url = new URL(response.headers.location, baseUrl);
