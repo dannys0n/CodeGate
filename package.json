@@ -1,7 +1,7 @@
 {
 	"name": "codegate",
 	"private": true,
-	"version": "0.1.6",
+	"version": "0.1.7",
 	"description": "A self-discipline coding gate built on the CoJudge offline judge",
 	"author": "CodeGate contributors",
 	"type": "module",
