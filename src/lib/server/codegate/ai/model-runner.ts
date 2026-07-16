@@ -108,8 +108,7 @@ export async function streamModelText(messages: ChatMessage[], onEvent: StreamEv
                 model: codeGateModel,
                 messages,
                 stream: true,
-                temperature: 0.15,
-                max_tokens: 500
+                temperature: 0.15
             }),
             signal
         });

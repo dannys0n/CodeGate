@@ -630,6 +630,7 @@
                     aiHintText = output;
                 }
             });
+            if (!output.trim()) throw new Error('The local model returned an empty algorithm hint');
             aiHintState = 'ready';
         } catch (error) {
             if (aiHintController.signal.aborted) return;

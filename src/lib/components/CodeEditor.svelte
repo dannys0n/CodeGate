@@ -36,7 +36,7 @@
         if (aiAction) return;
         aiAction = editor.addAction({
             id: 'codegate.explainSelection',
-            label: 'Explain selection with local AI',
+            label: 'Explain selection with local AI ✦',
             contextMenuGroupId: 'navigation',
             contextMenuOrder: 1.5,
             precondition: 'editorHasSelection',
