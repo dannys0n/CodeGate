@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { prepareChallenge } from './runtime-challenge';
+import { availableProblemCatalog, prepareChallenge } from './runtime-challenge';
 
 let root: string | undefined;
 
@@ -84,5 +84,13 @@ describe('CodeGate runtime challenge preparation', () => {
         await fixture();
         await expect(prepareChallenge('python', '25', [], { root, problemNumberRange: { min: 2, max: null } }))
             .rejects.toThrow('No python challenge is available');
+    });
+
+    it('lists catalogue entries under the active filters', async () => {
+        await fixture();
+        await expect(availableProblemCatalog('python', ['Easy'], { min: 1, max: 10 }, root))
+            .resolves.toEqual([{ problemId: 'example', number: 1, title: 'Example', leetcodeDifficulty: 'Easy' }]);
+        await expect(availableProblemCatalog('python', ['Hard'], { min: null, max: null }, root))
+            .resolves.toEqual([]);
     });
 });

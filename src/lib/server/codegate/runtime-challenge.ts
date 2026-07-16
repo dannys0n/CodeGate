@@ -3,6 +3,13 @@ import type { DifficultyLevel, GateLanguage, LeetcodeDifficulty, PlayableVariant
 import { stripSolution } from '../../codegate/source-transform.mjs';
 import { loadCandidateAssets, loadCandidateManifest, type CandidateAssets } from './catalog';
 
+export type ProblemCatalogEntry = {
+    problemId: string;
+    number: number;
+    title: string;
+    leetcodeDifficulty: LeetcodeDifficulty;
+};
+
 function randomized<T>(items: T[], random: () => number): T[] {
     return items
         .map((item) => ({ item, order: random() }))
@@ -62,4 +69,34 @@ export async function availableCandidates(problemId: string, root = process.env.
     const problem = Object.values(manifest.problems).find((candidate) => candidate.slug === problemId);
     if (!problem) return [];
     return Object.keys(problem.languages) as GateLanguage[];
+}
+
+function titleFromSlug(slug: string): string {
+    return slug.split('-').map((word) => word ? `${word[0].toUpperCase()}${word.slice(1)}` : '').join(' ');
+}
+
+export async function availableProblemCatalog(
+    language: GateLanguage,
+    leetcodeDifficulties: readonly LeetcodeDifficulty[],
+    problemNumberRange: ProblemNumberRange,
+    root = process.env.CODEGATE_APP_ROOT ?? process.cwd()
+): Promise<ProblemCatalogEntry[]> {
+    const manifest = await loadCandidateManifest(root);
+    const allowedDifficulties = new Set(leetcodeDifficulties);
+    return Object.entries(manifest.problems)
+        .flatMap(([frontendId, problem]) => {
+            const number = Number(frontendId);
+            if (!Number.isSafeInteger(number)
+                || !problem.languages[language]
+                || !allowedDifficulties.has(problem.leetcodeDifficulty)
+                || (problemNumberRange.min !== null && number < problemNumberRange.min)
+                || (problemNumberRange.max !== null && number > problemNumberRange.max)) return [];
+            return [{
+                problemId: problem.slug,
+                number,
+                title: titleFromSlug(problem.slug),
+                leetcodeDifficulty: problem.leetcodeDifficulty
+            }];
+        })
+        .sort((left, right) => left.number - right.number);
 }

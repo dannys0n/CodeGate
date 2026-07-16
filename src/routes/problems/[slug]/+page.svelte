@@ -55,6 +55,17 @@
     let problemNumberMax: number | null = data.codegate?.problemNumberRange?.max ?? null;
     let showProblemNumberFilter = false;
     let problemNumberFilterContainer: HTMLElement | null = null;
+    type ProblemCatalogEntry = { problemId: string; number: number; title: string; leetcodeDifficulty: LeetcodeDifficulty };
+    let codegateWorkspaceTab: 'editor' | 'catalogue' = 'editor';
+    let problemCatalog: ProblemCatalogEntry[] = [];
+    let problemCatalogSearch = '';
+    let problemCatalogLoading = false;
+    let problemCatalogError = '';
+    let loadedProblemCatalogKey = '';
+    $: visibleProblemCatalog = problemCatalog.filter((entry) => {
+        const query = problemCatalogSearch.trim().toLowerCase();
+        return !query || String(entry.number).includes(query) || entry.title.toLowerCase().includes(query);
+    });
     let gateSessionId = isCodeGate ? $page.url.searchParams.get('sessionId') ?? '' : '';
     let gateChallengeId = isCodeGate ? $page.url.searchParams.get('challengeId') ?? '' : '';
     let gateActionPending = false;
@@ -844,7 +855,8 @@
     async function updateGateChallenge(
         action: 'refresh' | 'switch-variant',
         requestedLanguage: GateLanguage = language as GateLanguage,
-        requestedDifficulty: DifficultyLevel = difficulty
+        requestedDifficulty: DifficultyLevel = difficulty,
+        requestedProblemId?: string
     ) {
         if (!isCodeGate || gateActionPending) return;
         gateActionPending = true;
@@ -859,7 +871,8 @@
                     language: requestedLanguage,
                     difficulty: requestedDifficulty,
                     leetcodeDifficulties: selectedLeetcodeDifficulties,
-                    problemNumberRange: { min: problemNumberMin, max: problemNumberMax }
+                    problemNumberRange: { min: problemNumberMin, max: problemNumberMax },
+                    problemId: requestedProblemId
                 })
             });
             const session = await response.json();
@@ -913,6 +926,7 @@
             selectedLeetcodeDifficulties = [...selectedLeetcodeDifficulties, value];
         }
         userSettingsStorage.update((settings) => ({ ...settings, leetcodeDifficulties: [...selectedLeetcodeDifficulties] }));
+        if (codegateWorkspaceTab === 'catalogue') void loadProblemCatalog();
     }
 
     function updateProblemNumberRange(bound: 'min' | 'max', event: Event) {
@@ -929,12 +943,58 @@
             else problemNumberMin = problemNumberMax;
         }
         userSettingsStorage.update((settings) => ({ ...settings, problemNumberMin, problemNumberMax }));
+        if (codegateWorkspaceTab === 'catalogue') void loadProblemCatalog();
     }
 
     function clearProblemNumberRange() {
         problemNumberMin = null;
         problemNumberMax = null;
         userSettingsStorage.update((settings) => ({ ...settings, problemNumberMin, problemNumberMax }));
+        if (codegateWorkspaceTab === 'catalogue') void loadProblemCatalog();
+    }
+
+    function problemCatalogKey() {
+        return JSON.stringify([language, selectedLeetcodeDifficulties, problemNumberMin, problemNumberMax]);
+    }
+
+    async function loadProblemCatalog() {
+        showLeetcodeDifficultyFilter = false;
+        showProblemNumberFilter = false;
+        const key = problemCatalogKey();
+        if (loadedProblemCatalogKey === key) return;
+        problemCatalogLoading = true;
+        problemCatalogError = '';
+        problemCatalogSearch = '';
+        try {
+            const query = new URLSearchParams({
+                sessionId: gateSessionId,
+                challengeId: gateChallengeId,
+                language: language as GateLanguage,
+                leetcodeDifficulties: selectedLeetcodeDifficulties.join(',')
+            });
+            if (problemNumberMin !== null) query.set('problemNumberMin', String(problemNumberMin));
+            if (problemNumberMax !== null) query.set('problemNumberMax', String(problemNumberMax));
+            const response = await fetch(`/api/codegate/catalog?${query}`);
+            const body = await response.json();
+            if (!response.ok) throw new Error(body.error ?? 'Unable to load problem catalogue');
+            problemCatalog = body;
+            loadedProblemCatalogKey = key;
+        } catch (error) {
+            problemCatalog = [];
+            problemCatalogError = error instanceof Error ? error.message : String(error);
+        } finally {
+            problemCatalogLoading = false;
+        }
+    }
+
+    function openProblemCatalogue() {
+        codegateWorkspaceTab = 'catalogue';
+        void loadProblemCatalog();
+    }
+
+    function selectCatalogProblem(entry: ProblemCatalogEntry) {
+        codegateWorkspaceTab = 'editor';
+        void updateGateChallenge('refresh', language as GateLanguage, difficulty, entry.problemId);
     }
 
     async function giveUpGate() {
@@ -1017,6 +1077,12 @@
                     {/if}
                 </button>
             </Tooltip>
+            {#if isCodeGate}
+                <div class="codegate-problem-actions">
+                    <button class="btn gate-action" on:click={replaceGateChallenge} disabled={gateActionPending}>Different Problem</button>
+                    <button class="btn gate-give-up" on:click={giveUpGate} disabled={gateActionPending}>Give Up</button>
+                </div>
+            {/if}
             <div class="title-row">
                 <h1>{data.problem.title}</h1>
                 {#if !isGameMode && $userStore && $userStore[fileKey()]}
@@ -1133,6 +1199,35 @@
 
     <!-- Right Pane: Editor and Console -->
     <div class="editor-pane">
+        {#if isCodeGate}
+            <div class="codegate-workspace-tabs" role="tablist" aria-label="Code workspace">
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={codegateWorkspaceTab === 'editor'}
+                    class:active={codegateWorkspaceTab === 'editor'}
+                    on:click={() => codegateWorkspaceTab = 'editor'}
+                >
+                    <svg class="workspace-tab-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path d="m7 5-5 5 5 5M13 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Editor
+                </button>
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={codegateWorkspaceTab === 'catalogue'}
+                    class:active={codegateWorkspaceTab === 'catalogue'}
+                    on:click={openProblemCatalogue}
+                >
+                    <svg class="workspace-tab-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path d="M6.5 5h10M6.5 10h10M6.5 15h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        <circle cx="3" cy="5" r="1" fill="currentColor"/><circle cx="3" cy="10" r="1" fill="currentColor"/><circle cx="3" cy="15" r="1" fill="currentColor"/>
+                    </svg>
+                    Catalogue
+                </button>
+            </div>
+        {/if}
         <div class="editor-header" class:codegate-header={isCodeGate} style="display:flex;flex-wrap:wrap;gap:var(--spacing-2);align-items:center;justify-content:space-between;padding:var(--spacing-2);border-bottom:1px solid var(--color-border);">
             <div class="lang-dropdown-tabs-container">
                 <div style="display:flex;flex-wrap:wrap;gap:var(--spacing-2);align-items:center;">
@@ -1227,8 +1322,6 @@
                                 </div>
                             {/if}
                         </div>
-                        <button class="btn gate-action" on:click={replaceGateChallenge} disabled={gateActionPending}>Different Problem</button>
-                        <button class="btn gate-give-up" on:click={giveUpGate} disabled={gateActionPending}>Give Up</button>
                     {/if}
                 </div>
                 {#if !isCodeGate}<div class="tabs-container">
@@ -1415,6 +1508,7 @@
             </div>
         </div>
 
+        {#if !isCodeGate || codegateWorkspaceTab === 'editor'}
         <div class="editor-container">
             {#if CodeEditor}
                 <svelte:component 
@@ -1453,6 +1547,46 @@
                 showGameResult = true;
             }}
         />
+        {:else}
+            <section class="problem-catalog-pane" aria-label="Problem catalogue">
+                <div class="problem-catalog-heading">
+                    <div>
+                        <h2>Problem catalogue</h2>
+                        <p>Choose a problem matching the active language and filters.</p>
+                    </div>
+                </div>
+                <input
+                    class="problem-catalog-search"
+                    type="search"
+                    placeholder="Search number or title"
+                    aria-label="Search problem catalogue"
+                    bind:value={problemCatalogSearch}
+                />
+                {#if problemCatalogLoading}
+                    <div class="problem-catalog-message">Loading catalogue…</div>
+                {:else if problemCatalogError}
+                    <div class="problem-catalog-message error">{problemCatalogError}</div>
+                {:else}
+                    <div class="problem-catalog-count">{visibleProblemCatalog.length} of {problemCatalog.length} problems</div>
+                    <div class="problem-catalog-list">
+                        {#each visibleProblemCatalog as entry}
+                            <button
+                                type="button"
+                                class:current={entry.problemId === problemId}
+                                disabled={entry.problemId === problemId || gateActionPending}
+                                on:click={() => selectCatalogProblem(entry)}
+                            >
+                                <span>#{entry.number} {entry.title}</span>
+                                <small class="badge {getDifficultyClass(entry.leetcodeDifficulty)}">{entry.leetcodeDifficulty}</small>
+                            </button>
+                        {/each}
+                        {#if visibleProblemCatalog.length === 0}
+                            <div class="problem-catalog-message">No matching problems</div>
+                        {/if}
+                    </div>
+                {/if}
+            </section>
+        {/if}
     </div>
 
     {#if showShareModal}
@@ -1513,6 +1647,95 @@
     .problem-pane {
         padding: var(--spacing-4);
         overflow: auto;
+    }
+
+    .codegate-problem-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--spacing-2);
+        margin-bottom: var(--spacing-3);
+    }
+    .codegate-problem-actions .btn {
+        padding: 7px 11px;
+        border-color: var(--color-border);
+        background: var(--color-bg);
+        color: var(--color-text);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.16);
+    }
+    .codegate-problem-actions .btn:hover:not(:disabled) {
+        border-color: var(--color-border-active);
+        background: color-mix(in srgb, var(--color-bg) 88%, white);
+    }
+    .codegate-problem-actions .btn:disabled {
+        opacity: 0.6;
+        cursor: default;
+    }
+    .problem-catalog-pane {
+        display: grid;
+        grid-template-rows: auto auto auto minmax(0, 1fr);
+        gap: var(--spacing-3);
+        flex: 1;
+        min-height: 0;
+        padding: var(--spacing-4);
+        overflow: hidden;
+    }
+    .problem-catalog-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--spacing-3);
+    }
+    .problem-catalog-heading h2 {
+        margin: 0;
+    }
+    .problem-catalog-heading p {
+        margin: var(--spacing-1) 0 0;
+        color: var(--color-text-secondary);
+        font-size: 0.85rem;
+    }
+
+    .codegate-workspace-tabs {
+        display: flex;
+        gap: 6px;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--color-border);
+        background: color-mix(in srgb, var(--color-surface) 88%, var(--color-bg));
+    }
+    .codegate-workspace-tabs button {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 12px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--color-text-secondary);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+    }
+    .codegate-workspace-tabs button:hover {
+        background: rgba(255,255,255,0.04);
+        color: var(--color-text);
+    }
+    .codegate-workspace-tabs button.active {
+        border-color: var(--color-border-active);
+        background: rgba(255,255,255,0.07);
+        color: var(--color-text);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    .workspace-tab-icon {
+        display: block;
+        width: 18px;
+        height: 18px;
+        flex: 0 0 18px;
+        color: var(--color-text);
+        opacity: 0.9;
+    }
+    .codegate-workspace-tabs button.active .workspace-tab-icon {
+        color: var(--color-border-active);
+        opacity: 1;
     }
 
     /* Prose styling for the dark theme */
@@ -2002,6 +2225,64 @@
         background: transparent;
         color: var(--color-text-secondary);
         cursor: pointer;
+    }
+    .problem-catalog-search {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 7px 9px;
+        border: 1px solid var(--color-border);
+        border-radius: 5px;
+        background: var(--color-bg);
+        color: var(--color-text);
+        font: inherit;
+    }
+    .problem-catalog-count, .problem-catalog-message {
+        color: var(--color-text-secondary);
+        font-size: 0.8rem;
+    }
+    .problem-catalog-message {
+        padding: 8px;
+        text-align: center;
+    }
+    .problem-catalog-message.error {
+        color: var(--color-error, #ef4444);
+    }
+    .problem-catalog-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+        align-content: start;
+        gap: 6px;
+        min-height: 0;
+        overflow-y: auto;
+    }
+    .problem-catalog-list button {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 11px;
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        background: rgba(255,255,255,0.015);
+        color: var(--color-text);
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+    .problem-catalog-list button:hover:not(:disabled) {
+        border-color: var(--color-border-active);
+        background: rgba(255,255,255,0.05);
+    }
+    .problem-catalog-list button.current {
+        color: var(--color-text-secondary);
+        cursor: default;
+    }
+    .problem-catalog-list button span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .problem-catalog-list button small {
+        flex: 0 0 auto;
     }
 
     /* Hints section */

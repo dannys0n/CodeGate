@@ -35,9 +35,10 @@ export const POST: RequestHandler = async ({ request }) => {
             const problemNumberRange = body.problemNumberRange && typeof body.problemNumberRange === 'object'
                 ? { min: problemNumberMin, max: problemNumberMax }
                 : current.problemNumberRange;
+            const requestedProblemId = typeof body.problemId === 'string' && body.problemId.length > 0 ? body.problemId : undefined;
             const prepared = await prepareChallenge(language, difficulty, current.recentProblemIds, body.action === 'switch-variant'
                 ? { problemId: current.challenge.variant.problemId }
-                : { leetcodeDifficulties, problemNumberRange });
+                : { problemId: requestedProblemId, leetcodeDifficulties, problemNumberRange });
             const manifest = { schemaVersion: 1 as const, generatedAt: prepared.preparedAt, sourceRevision: 'runtime', variants: [prepared] };
             return json(body.action === 'refresh'
                 ? refreshGateChallenge(sessionId, challengeId, manifest, prepared.language, prepared.difficulty, Math.random, leetcodeDifficulties, problemNumberRange)
