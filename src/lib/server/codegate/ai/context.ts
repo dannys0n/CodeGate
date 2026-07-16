@@ -20,3 +20,8 @@ export function boundedText(value: unknown, name: string, maximum: number) {
     if (value.length > maximum) throw new Error(`${name} is too large`);
     return value;
 }
+
+export function promptExcerpt(value: unknown, maximum: number) {
+    const text = String(value ?? '');
+    return text.length <= maximum ? text : `${text.slice(0, maximum)}\n[truncated for local AI context]`;
+}

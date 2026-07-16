@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import { eventStream, streamModelText } from '$lib/server/codegate/ai/model-runner';
-import { boundedText, requireAiChallenge } from '$lib/server/codegate/ai/context';
+import { boundedText, promptExcerpt, requireAiChallenge } from '$lib/server/codegate/ai/context';
 
 export const POST: RequestHandler = async ({ request }) => {
     try {
@@ -22,7 +22,7 @@ export const POST: RequestHandler = async ({ request }) => {
                 },
                 {
                     role: 'user',
-                    content: `/no_think\nLanguage: ${variant.language}\nSelected lines: ${startLine}-${endLine}\n<problem>\n${statement}\n</problem>\n<current_source>\n${source}\n</current_source>\n<selected_code>\n${selection}\n</selected_code>\nExplain only the selected code.`
+                    content: `/no_think\nLanguage: ${variant.language}\nSelected lines: ${startLine}-${endLine}\n<problem>\n${promptExcerpt(statement, 4_000)}\n</problem>\n<current_source>\n${promptExcerpt(source, 8_000)}\n</current_source>\n<selected_code>\n${selection}\n</selected_code>\nExplain only the selected code.`
                 }
             ], emit, signal);
         }, request.signal);

@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import { eventStream, streamModelText } from '$lib/server/codegate/ai/model-runner';
-import { requireAiChallenge } from '$lib/server/codegate/ai/context';
+import { promptExcerpt, requireAiChallenge } from '$lib/server/codegate/ai/context';
 
 export const POST: RequestHandler = async ({ request }) => {
     try {
@@ -15,7 +15,7 @@ export const POST: RequestHandler = async ({ request }) => {
                 },
                 {
                     role: 'user',
-                    content: `/no_think\nLanguage: ${variant.language}\n<problem>\n${statement}\n</problem>\n<reference_solution>\n${assets.solution}\n</reference_solution>\nProvide only the constrained algorithm hint.`
+                    content: `/no_think\nLanguage: ${variant.language}\n<problem>\n${promptExcerpt(statement, 6_000)}\n</problem>\n<reference_solution>\n${promptExcerpt(assets.solution, 14_000)}\n</reference_solution>\nProvide only the constrained algorithm hint.`
                 }
             ], emit, signal);
         }, request.signal);
