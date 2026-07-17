@@ -89,10 +89,16 @@ static string display_output(const string &s) { return s; }
 static string display_output(const char *s) { return string(s); }
 static string display_output(int val) { return to_string(val); }
 static string display_output(long long val) { return to_string(val); }
+static string display_output(double val) { ostringstream out; out << setprecision(17) << val; return out.str(); }
 static string display_output(bool val) { return val ? "true" : "false"; }
 static string display_output(const vector<bool> &v) {
     string s = "[";
     for (size_t i = 0; i < v.size(); ++i) { if (i) s += ","; s += v[i] ? "true" : "false"; }
+    return s + "]";
+}
+static string display_output(const vector<double> &v) {
+    string s = "[";
+    for (size_t i = 0; i < v.size(); ++i) { if (i) s += ","; s += display_output(v[i]); }
     return s + "]";
 }
 static string display_output(const vector<int> &v) {
@@ -184,6 +190,15 @@ static vector<bool> to_boolean_array(const string &s) {
         token.erase(remove_if(token.begin(), token.end(), ::isspace), token.end());
         if (!token.empty()) result.push_back(token == "true");
     }
+    return result;
+}
+
+static vector<double> to_float_array(const string &s) {
+    vector<double> result;
+    if (s.empty() || s == "[]") return result;
+    string inner = s.substr(1, s.size() - 2), token;
+    stringstream stream(inner);
+    while (getline(stream, token, ',')) if (!token.empty()) result.push_back(stod(token));
     return result;
 }
 
@@ -529,6 +544,8 @@ export function cppGetFullParam(params: Param[], tc: any): string {
             parts.push(`to_int_array(${cppEscapeStringLiteral(val ?? '[]')})`);
         } else if (p.type === 'boolean_array') {
             parts.push(`to_boolean_array(${cppEscapeStringLiteral(val ?? '[]')})`);
+        } else if (p.type === 'float_array') {
+            parts.push(`to_float_array(${cppEscapeStringLiteral(val ?? '[]')})`);
         } else if (p.type === 'int_array_2d' || p.type === 'int_matrix') {
             let strVal: string;
             if (Array.isArray(val)) {
@@ -546,6 +563,8 @@ export function cppGetFullParam(params: Param[], tc: any): string {
             }
             parts.push(`to_char_array_2d(${cppEscapeStringLiteral(strVal)})`);
         } else if (p.type === 'int') {
+            parts.push(`${val}`);
+        } else if (p.type === 'float') {
             parts.push(`${val}`);
         } else if (p.type === 'boolean') {
             parts.push(String(val) === 'true' ? 'true' : 'false');
@@ -700,6 +719,9 @@ export function generateCppRunner(functionName: string, params: Param[], testCas
                 } else if (p.type === 'boolean_array') {
                     decls.push(`vector<bool> ${vname} = to_boolean_array(${cppEscapeStringLiteral(raw ?? '[]')});`);
                     args.push(vname);
+                } else if (p.type === 'float_array') {
+                    decls.push(`vector<double> ${vname} = to_float_array(${cppEscapeStringLiteral(raw ?? '[]')});`);
+                    args.push(vname);
                 } else if (p.type === 'int_array_2d' || p.type === 'int_matrix') {
                     let strVal: string;
                     if (Array.isArray(raw)) {
@@ -750,6 +772,9 @@ export function generateCppRunner(functionName: string, params: Param[], testCas
                     args.push(vname);
                 } else if (p.type === 'int') {
                     decls.push(`int ${vname} = ${raw};`);
+                    args.push(vname);
+                } else if (p.type === 'float') {
+                    decls.push(`double ${vname} = ${raw};`);
                     args.push(vname);
                 } else if (p.type === 'boolean') {
                     decls.push(`bool ${vname} = ${String(raw) === 'true' ? 'true' : 'false'};`);

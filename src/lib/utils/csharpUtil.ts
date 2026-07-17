@@ -96,6 +96,7 @@ public static class CSharpHelper {
     
     public static string DisplayOutput(string s) { return s; }
     public static string DisplayOutput(int val) { return val.ToString(); }
+    public static string DisplayOutput(double val) { return val.ToString("R", System.Globalization.CultureInfo.InvariantCulture); }
     public static string DisplayOutput(int[] val) { return "[" + string.Join(",", val) + "]"; }
     public static string DisplayOutput(int[][] val) {
         if (val == null || val.Length == 0) return "[]";
@@ -112,6 +113,11 @@ public static class CSharpHelper {
     public static string DisplayOutputBooleanList(IList<bool> values) {
         var parts = new List<string>();
         foreach (bool value in values) parts.Add(value ? "true" : "false");
+        return "[" + string.Join(",", parts) + "]";
+    }
+    public static string DisplayOutputFloatList(IList<double> values) {
+        var parts = new List<string>();
+        foreach (double value in values) parts.Add(value.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
         return "[" + string.Join(",", parts) + "]";
     }
     public static string DisplayOutputStringList(List<string> lst) {
@@ -228,6 +234,12 @@ public static class CSharpHelper {
         if (string.IsNullOrEmpty(s) || s == "[]") return new List<bool>();
         var result = new List<bool>();
         foreach (string value in s.Trim('[', ']').Split(',')) if (!string.IsNullOrWhiteSpace(value)) result.Add(bool.Parse(value.Trim()));
+        return result;
+    }
+    public static List<double> ToFloatList(string s) {
+        if (string.IsNullOrEmpty(s) || s == "[]") return new List<double>();
+        var result = new List<double>();
+        foreach (string value in s.Trim('[', ']').Split(',')) if (!string.IsNullOrWhiteSpace(value)) result.Add(double.Parse(value.Trim(), System.Globalization.CultureInfo.InvariantCulture));
         return result;
     }
     
@@ -477,7 +489,11 @@ export function csharpGetFullParam(params: Param[], tc: any): string {
             fullParam += `CSharpHelper.ToIntArray(${formatAndSplitCSharpString(val)})`;
         } else if (param.type === 'boolean_array') {
             fullParam += `CSharpHelper.ToBooleanList(${formatAndSplitCSharpString(val)})`;
+        } else if (param.type === 'float_array') {
+            fullParam += `CSharpHelper.ToFloatList(${formatAndSplitCSharpString(val)})`;
         } else if (param.type === 'int') {
+            fullParam += `${val}`;
+        } else if (param.type === 'float') {
             fullParam += `${val}`;
         } else if (param.type === 'int_array_2d') {
             fullParam += `CSharpHelper.ToIntArray2d(${formatAndSplitCSharpString(val)})`;
@@ -499,6 +515,7 @@ export function csharpGetFullParam(params: Param[], tc: any): string {
 
 export function getDisplayFuncName(outputType: string): string {
     return outputType === 'boolean_array' ? 'CSharpHelper.DisplayOutputBooleanList' :
+            outputType === 'float_array' ? 'CSharpHelper.DisplayOutputFloatList' :
             outputType === 'string_list' ? 'CSharpHelper.DisplayOutputStringList' :
             outputType === 'string_list_2d' ? 'CSharpHelper.DisplayOutputStringList2d' :
             outputType === 'int_list' ? 'CSharpHelper.DisplayOutputIntList' : 

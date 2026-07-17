@@ -44,6 +44,8 @@ func displayOutput(x interface{}) string {
         return "null"
     case int:
         return strconv.Itoa(v)
+    case float64:
+        return strconv.FormatFloat(v, 'g', 17, 64)
     case bool:
         if v {
             return "true"
@@ -52,6 +54,10 @@ func displayOutput(x interface{}) string {
     case []bool:
         parts := make([]string, len(v))
         for i, value := range v { if value { parts[i] = "true" } else { parts[i] = "false" } }
+        return "[" + strings.Join(parts, ",") + "]"
+    case []float64:
+        parts := make([]string, len(v))
+        for i, value := range v { parts[i] = strconv.FormatFloat(value, 'g', 17, 64) }
         return "[" + strings.Join(parts, ",") + "]"
     case string:
         return v
@@ -193,6 +199,15 @@ func toBooleanArray(s string) []bool {
     parts := strings.Split(s[1:len(s)-1], ",")
     result := make([]bool, 0, len(parts))
     for _, value := range parts { value = strings.TrimSpace(value); if value != "" { result = append(result, value == "true") } }
+    return result
+}
+
+func toFloatArray(s string) []float64 {
+    s = strings.TrimSpace(s)
+    if s == "[]" || s == "" { return []float64{} }
+    parts := strings.Split(s[1:len(s)-1], ",")
+    result := make([]float64, 0, len(parts))
+    for _, value := range parts { if parsed, err := strconv.ParseFloat(strings.TrimSpace(value), 64); err == nil { result = append(result, parsed) } }
     return result
 }
 
@@ -415,9 +430,11 @@ function goFunctionName(name: string): string {
 function goType(typeName: string): string {
     switch (typeName) {
         case "int": return "int";
+        case "float": return "float64";
         case "string": return "string";
         case "boolean": return "bool";
         case "boolean_array": return "[]bool";
+        case "float_array": return "[]float64";
         case "int_array": return "[]int";
         case "int_array_2d":
         case "int_matrix": return "[][]int";
@@ -441,12 +458,16 @@ export function goGetFullParam(params: Param[], tc: any): string {
             parts.push(goEscapeStringLiteral(val ?? ""));
         } else if (p.type === "int") {
             parts.push(`${val}`);
+        } else if (p.type === "float") {
+            parts.push(`${val}`);
         } else if (p.type === "boolean") {
             parts.push(String(val) === "true" ? "true" : "false");
         } else if (p.type === "int_array") {
             parts.push(`toIntArray(${goEscapeStringLiteral(val ?? "[]")})`);
         } else if (p.type === "boolean_array") {
             parts.push(`toBooleanArray(${goEscapeStringLiteral(val ?? "[]")})`);
+        } else if (p.type === "float_array") {
+            parts.push(`toFloatArray(${goEscapeStringLiteral(val ?? "[]")})`);
         } else if (p.type === "int_array_2d" || p.type === "int_matrix") {
             let strVal: string;
             if (Array.isArray(val)) {

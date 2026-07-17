@@ -197,11 +197,11 @@ export function tsGetFullParam(params: Param[], tc: any): string {
         const val = tc[p.name];
         if (p.type === 'string') {
             parts.push(tsEscapeString(val));
-        } else if (p.type === 'int') {
+        } else if (p.type === 'int' || p.type === 'float') {
             parts.push(`${val}`);
         } else if (p.type === 'boolean') {
             parts.push(String(val) === 'true' ? 'true' : 'false');
-        } else if (p.type === 'int_array' || p.type === 'int_list' || p.type === 'boolean_array') {
+        } else if (p.type === 'int_array' || p.type === 'int_list' || p.type === 'boolean_array' || p.type === 'float_array') {
             let strVal: string;
             if (Array.isArray(val)) {
                 try { strVal = JSON.stringify(val); } catch { strVal = '[]'; }
@@ -424,9 +424,11 @@ export class ${className} {
     function tsType(t: string): string {
         switch (t) {
             case 'int': return 'number';
+            case 'float': return 'number';
             case 'string': return 'string';
             case 'boolean': return 'boolean';
             case 'boolean_array': return 'boolean[]';
+            case 'float_array': return 'number[]';
             case 'int_array': return 'number[]';
             case 'int_array_2d':
             case 'int_matrix': return 'number[][]';

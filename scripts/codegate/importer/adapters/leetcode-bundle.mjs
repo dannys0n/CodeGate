@@ -23,12 +23,12 @@ function ambiguousStatement(record) {
 }
 function incorrectPython(signature) {
   const args = signature.params.map((param) => param.name).join(', ');
-  const value = ({ int: '0', boolean: 'False', string: "''", int_array: '[]', int_array_2d: '[]', string_array: '[]', boolean_array: '[]', char_array_2d: '[]', string_list_2d: '[]', tree_node: 'None', list_node: 'None' })[signature.outputType];
+  const value = ({ int: '0', float: '0.0', boolean: 'False', string: "''", int_array: '[]', int_array_2d: '[]', string_array: '[]', boolean_array: '[]', float_array: '[]', char_array_2d: '[]', string_list_2d: '[]', tree_node: 'None', list_node: 'None' })[signature.outputType];
   return `class Solution:\n    def ${signature.functionName}(self, ${args}):\n        return ${value}\n`;
 }
 function incorrectCpp(signature) {
-  const types = { int: 'int', boolean: 'bool', string: 'string', int_array: 'vector<int>&', int_array_2d: 'vector<vector<int>>&', string_array: 'vector<string>&', boolean_array: 'vector<bool>&', char_array_2d: 'vector<vector<char>>&', string_list_2d: 'vector<vector<string>>&', tree_node: 'TreeNode*', list_node: 'ListNode*' };
-  const output = { int: 'int', boolean: 'bool', string: 'string', int_array: 'vector<int>', int_array_2d: 'vector<vector<int>>', string_array: 'vector<string>', boolean_array: 'vector<bool>', char_array_2d: 'vector<vector<char>>', string_list_2d: 'vector<vector<string>>', tree_node: 'TreeNode*', list_node: 'ListNode*' }[signature.outputType];
+  const types = { int: 'int', float: 'double', boolean: 'bool', string: 'string', int_array: 'vector<int>&', int_array_2d: 'vector<vector<int>>&', string_array: 'vector<string>&', boolean_array: 'vector<bool>&', float_array: 'vector<double>&', char_array_2d: 'vector<vector<char>>&', string_list_2d: 'vector<vector<string>>&', tree_node: 'TreeNode*', list_node: 'ListNode*' };
+  const output = { int: 'int', float: 'double', boolean: 'bool', string: 'string', int_array: 'vector<int>', int_array_2d: 'vector<vector<int>>', string_array: 'vector<string>', boolean_array: 'vector<bool>', float_array: 'vector<double>', char_array_2d: 'vector<vector<char>>', string_list_2d: 'vector<vector<string>>', tree_node: 'TreeNode*', list_node: 'ListNode*' }[signature.outputType];
   const params = signature.params.map((param) => `${types[param.type]} ${param.name}`).join(', ');
   return `#include <bits/stdc++.h>\nusing namespace std;\nclass Solution { public: ${output} ${signature.functionName}(${params}) { return {}; } };\n`;
 }

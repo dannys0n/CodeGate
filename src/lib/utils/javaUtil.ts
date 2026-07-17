@@ -90,10 +90,14 @@ export const javaHelperMethods = `
     }
     private static String displayOutput(String s) { return s; }
     private static String displayOutput(int val) { return val+""; }
+    private static String displayOutput(double val) { return Double.toString(val); }
     private static String displayOutput(int[] val) { return Arrays.toString(val); }
     private static String displayOutput(int[][] val) { return Arrays.deepToString(val).replace(" ", ""); }
     private static String displayOutput(boolean val) { return val+""; }
     private static String displayOutputBooleanList(List<Boolean> values) {
+        return values.toString().replace(" ", "");
+    }
+    private static String displayOutputFloatList(List<Double> values) {
         return values.toString().replace(" ", "");
     }
     private static String displayOutputStringList(List<String> lst) {
@@ -138,6 +142,7 @@ export const javaHelperMethods = `
     }
     private static String joinString(String[] s) { return String.join("", s); }
     private static int to_int(String s) { return Integer.parseInt(s); }
+    private static double to_float(String s) { return Double.parseDouble(s); }
     private static String to_string(String s) { return s; }
     private static boolean to_boolean(String s) { return s.equals("true"); }
     // Parse a JSON-like array string to a List<String>, tolerant to single/double quotes and spaces
@@ -190,11 +195,18 @@ export const javaHelperMethods = `
         }
         return res;
     }
-    private static List<Boolean> to_boolean_list(String s) {
+    private static List<Boolean> to_boolean_array(String s) {
         if (s == null || s.length() == 0 || s.equals("[]")) return new ArrayList<>();
         String[] values = s.substring(1, s.length() - 1).split(", *");
         List<Boolean> result = new ArrayList<>();
         for (String value : values) if (!value.isBlank()) result.add(Boolean.parseBoolean(value.trim()));
+        return result;
+    }
+    private static List<Double> to_float_array(String s) {
+        if (s == null || s.length() == 0 || s.equals("[]")) return new ArrayList<>();
+        String[] values = s.substring(1, s.length() - 1).split(", *");
+        List<Double> result = new ArrayList<>();
+        for (String value : values) if (!value.isBlank()) result.add(Double.parseDouble(value.trim()));
         return result;
     }
     private static List<Integer> to_int_list(String s) throws Exception {
@@ -452,8 +464,12 @@ export function javaGetFullParam(params: Param[], tc: any): string {
         } else if (param.type === 'int_array') {
             fullParam += `to_int_array(${formatAndSplitJavaString(val)})`;
         } else if (param.type === 'boolean_array') {
-            fullParam += `to_boolean_list(${formatAndSplitJavaString(val)})`;
+            fullParam += `to_boolean_array(${formatAndSplitJavaString(val)})`;
+        } else if (param.type === 'float_array') {
+            fullParam += `to_float_array(${formatAndSplitJavaString(val)})`;
         } else if (param.type === 'int') {
+            fullParam += `${val}`;
+        } else if (param.type === 'float') {
             fullParam += `${val}`;
         } else if (param.type === 'int_array_2d') {
             fullParam += `to_int_array_2d(${formatAndSplitJavaString(val)})`;
@@ -475,6 +491,7 @@ export function javaGetFullParam(params: Param[], tc: any): string {
 
 export function getDisplayFuncName(outputType: string): string {
     return outputType === 'boolean_array' ? 'displayOutputBooleanList' :
+            outputType === 'float_array' ? 'displayOutputFloatList' :
             outputType === 'string_list' ? 'displayOutputStringList' :
             outputType === 'string_list_2d' ? 'displayOutputStringList2d' :
             outputType === 'int_list' ? 'displayOutputIntList' : 

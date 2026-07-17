@@ -67,6 +67,14 @@ describe('LeetCode source adapters', () => {
     });
   });
 
+  it('normalizes floating-point scalars and arrays', () => {
+    expect(parsePythonSignature('class Solution:\n    def average(self, values: List[float], scale: float) -> float:\n        pass')).toEqual({
+      functionName: 'average',
+      params: [{ name: 'values', type: 'float_array' }, { name: 'scale', type: 'float' }],
+      outputType: 'float'
+    });
+  });
+
   it('generates a deterministic exact-output Marker.java', () => {
     const metadata = { functionName: 'answer', params: [{ name: 'value', type: 'int' }], outputType: 'int' };
     const marker = generateExactMarker(metadata, [{ input: { value: 2 }, output: 4 }]);
@@ -93,6 +101,13 @@ describe('LeetCode source adapters', () => {
     );
     expect(booleanMarker).toContain('List<Boolean> flags');
     expect(booleanMarker).toContain('Arrays.asList(true,false)');
+
+    const floatMarker = generateExactMarker(
+      { functionName: 'average', params: [{ name: 'scale', type: 'float' }], outputType: 'float_array' },
+      [{ input: { scale: 0.5 }, output: [0.25, 1] }]
+    );
+    expect(floatMarker).toContain('closeList');
+    expect(floatMarker).toContain('Arrays.asList(0.25,1.0)');
   });
 
   it('adds only the wrappers required by existing judge runners', () => {

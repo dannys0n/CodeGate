@@ -182,6 +182,8 @@ export function pyGetFullParam(params: Param[], tc: any): string {
             parts.push(str);
         } else if (param.type === 'int') {
             parts.push(`${val}`);
+        } else if (param.type === 'float') {
+            parts.push(`${val}`);
         } else if (param.type === 'boolean') {
             parts.push(String(val) === 'true' ? 'True' : 'False');
         } else if (param.type === 'list_node') {
@@ -201,11 +203,11 @@ export function pyGetFullParam(params: Param[], tc: any): string {
             const str = Array.isArray(raw) ? JSON.stringify(raw): String(raw);
             const escaped = str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
             parts.push(`literal_eval('${escaped}')`);
-        } else if (param.type === 'int_array_2d' || param.type === 'int_matrix' || param.type === 'char_array_2d' || param.type === 'string_list_2d' || param.type === 'boolean_array') {
+        } else if (param.type === 'int_array_2d' || param.type === 'int_matrix' || param.type === 'char_array_2d' || param.type === 'string_list_2d' || param.type === 'boolean_array' || param.type === 'float_array') {
             const raw = val ?? '[]';
             const str = Array.isArray(raw) ? JSON.stringify(raw): String(raw);
             const escaped = str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            parts.push(param.type === 'boolean_array' ? `json.loads('${escaped}')` : `literal_eval('${escaped}')`);
+            parts.push(param.type === 'boolean_array' || param.type === 'float_array' ? `json.loads('${escaped}')` : `literal_eval('${escaped}')`);
         } else {
             // default: pass as string literal
             const escaped = String(val ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");

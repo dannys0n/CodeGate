@@ -3,10 +3,11 @@ import path from 'node:path';
 import { splitTopLevel } from '../../../../src/lib/codegate/python-literal.mjs';
 
 const typeMap = new Map([
-  ['int', 'int'], ['str', 'string'], ['bool', 'boolean'],
+  ['int', 'int'], ['str', 'string'], ['bool', 'boolean'], ['float', 'float'],
   ['List[int]', 'int_array'], ['list[int]', 'int_array'],
   ['List[str]', 'string_array'], ['list[str]', 'string_array'],
   ['List[bool]', 'boolean_array'], ['list[bool]', 'boolean_array'],
+  ['List[float]', 'float_array'], ['list[float]', 'float_array'],
   ['List[List[int]]', 'int_array_2d'], ['list[list[int]]', 'int_array_2d'],
   ['TreeNode', 'tree_node'], ['Optional[TreeNode]', 'tree_node'], ["'TreeNode'", 'tree_node'],
   ['ListNode', 'list_node'], ['Optional[ListNode]', 'list_node'], ["'ListNode'", 'list_node']

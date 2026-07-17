@@ -3,11 +3,13 @@ import { parseKeywordArguments, parsePythonLiteral } from './python-literal.mjs'
 
 function matchesType(value, type) {
   if (type === 'int') return Number.isInteger(value) && value >= -2147483648 && value <= 2147483647;
+  if (type === 'float') return typeof value === 'number' && Number.isFinite(value);
   if (type === 'boolean') return typeof value === 'boolean';
   if (type === 'string') return typeof value === 'string' && !/[\x00-\x1f\x7f]/.test(value);
   if (type === 'int_array') return Array.isArray(value) && value.every((item) => matchesType(item, 'int'));
   if (type === 'string_array') return Array.isArray(value) && value.every((item) => matchesType(item, 'string'));
   if (type === 'boolean_array') return Array.isArray(value) && value.every((item) => matchesType(item, 'boolean'));
+  if (type === 'float_array') return Array.isArray(value) && value.every((item) => matchesType(item, 'float'));
   if (type === 'int_array_2d') return Array.isArray(value) && value.every((row) => matchesType(row, 'int_array'));
   if (type === 'char_array_2d') return Array.isArray(value) && value.every((row) => Array.isArray(row) && row.every((item) => matchesType(item, 'string') && [...item].length === 1));
   if (type === 'string_list_2d') return Array.isArray(value) && value.every((row) => matchesType(row, 'string_array'));
@@ -15,7 +17,7 @@ function matchesType(value, type) {
   if (type === 'tree_node') return Array.isArray(value) && value.every((item) => item === null || matchesType(item, 'int'));
   return false;
 }
-function storedInput(value, type) { return ['int_array', 'int_array_2d', 'string_array', 'boolean_array', 'char_array_2d', 'string_list_2d', 'list_node', 'tree_node'].includes(type) ? JSON.stringify(value) : value; }
+function storedInput(value, type) { return ['int_array', 'int_array_2d', 'string_array', 'boolean_array', 'float_array', 'char_array_2d', 'string_list_2d', 'list_node', 'tree_node'].includes(type) ? JSON.stringify(value) : value; }
 
 export function extractExactCases(dataset, metadata) {
   const cases = [];

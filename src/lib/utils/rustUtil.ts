@@ -51,11 +51,21 @@ impl CojudgeDisplay for i32 {
     fn to_cojudge_string(&self) -> String { self.to_string() }
 }
 
+impl CojudgeDisplay for f64 {
+    fn to_cojudge_string(&self) -> String { self.to_string() }
+}
+
 impl CojudgeDisplay for bool {
     fn to_cojudge_string(&self) -> String { self.to_string() }
 }
 
 impl CojudgeDisplay for Vec<bool> {
+    fn to_cojudge_string(&self) -> String {
+        format!("[{}]", self.iter().map(|value| value.to_string()).collect::<Vec<_>>().join(","))
+    }
+}
+
+impl CojudgeDisplay for Vec<f64> {
     fn to_cojudge_string(&self) -> String {
         format!("[{}]", self.iter().map(|value| value.to_string()).collect::<Vec<_>>().join(","))
     }
@@ -291,6 +301,13 @@ pub fn to_boolean_array(s: &str) -> Vec<bool> {
         .split(',').filter_map(|value| match value.trim() { "true" => Some(true), "false" => Some(false), _ => None }).collect()
 }
 
+pub fn to_float_array(s: &str) -> Vec<f64> {
+    let s = s.trim();
+    if s == "[]" || s.is_empty() { return vec![]; }
+    s.strip_prefix('[').unwrap_or(s).strip_suffix(']').unwrap_or(s)
+        .split(',').filter_map(|value| value.trim().parse::<f64>().ok()).collect()
+}
+
 pub fn to_int_array_2d(s: &str) -> Vec<Vec<i32>> {
     let s = s.trim();
     if s == "[]" || s.is_empty() { return vec![]; }
@@ -400,7 +417,11 @@ export function rustGetFullParam(params: Param[], tc: any): string {
       parts.push(`to_int_array(${rustEscapeStringLiteral(val ?? "[]")})`);
     } else if (p.type === "boolean_array") {
       parts.push(`to_boolean_array(${rustEscapeStringLiteral(val ?? "[]")})`);
+    } else if (p.type === "float_array") {
+      parts.push(`to_float_array(${rustEscapeStringLiteral(val ?? "[]")})`);
     } else if (p.type === "int") {
+      parts.push(`${val}`);
+    } else if (p.type === "float") {
       parts.push(`${val}`);
     } else if (p.type === "boolean") {
       parts.push(String(val) === "true" ? "true" : "false");
