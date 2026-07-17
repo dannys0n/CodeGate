@@ -20,6 +20,11 @@ export const load: PageServerLoad = async ({ params, url }) => {
         const problemPath = resolveProblemFile(params.slug, 'metadata.json');
         const content = await fs.readFile(problemPath, 'utf-8');
         const problem = JSON.parse(content);
+        if (selectedSession) {
+            const selected = selectedSession.challenge.variant;
+            problem.title = selected.title;
+            problem.difficulty = selected.leetcodeDifficulty || problem.difficulty;
+        }
 
         // Load statement.md if present and attach as problem.statement
         const statementPath = resolveProblemFile(params.slug, 'statement.md');
