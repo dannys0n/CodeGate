@@ -1,5 +1,5 @@
 // @ts-nocheck
-export const sourceTransformVersion = 1;
+export const sourceTransformVersion = 2;
 
 const starterFields = Object.freeze({
   java: 'java',
@@ -21,6 +21,67 @@ function functionNameFor(language, functionName) {
   return functionName;
 }
 
+const goStandardImports = Object.freeze([
+  ['heap', 'container/heap'],
+  ['math', 'math'],
+  ['slices', 'slices'],
+  ['sort', 'sort'],
+  ['strconv', 'strconv'],
+  ['strings', 'strings']
+]);
+
+function inferredGoImports(source) {
+  return goStandardImports
+    .filter(([identifier, module]) => new RegExp(`\\b${identifier}\\s*\\.`).test(source) && !source.includes(`"${module}"`))
+    .map(([, module]) => `import "${module}"`)
+    .join('\n');
+}
+
+const typescriptPriorityQueue = `class PriorityQueue<T> {
+  private heap: T[] = [];
+  private compare: (left: T, right: T) => number;
+  constructor(options?: ((left: T, right: T) => number) | { compare: (left: T, right: T) => number }) {
+    this.compare = typeof options === 'function' ? options : options?.compare ?? ((left: any, right: any) => left - right);
+  }
+  size(): number { return this.heap.length; }
+  isEmpty(): boolean { return this.heap.length === 0; }
+  front(): T { return this.heap[0]; }
+  back(): T { return this.heap.reduce((worst, value) => this.compare(worst, value) < 0 ? value : worst); }
+  enqueue(value: T): this {
+    this.heap.push(value);
+    for (let child = this.heap.length - 1; child > 0;) {
+      const parent = (child - 1) >> 1;
+      if (this.compare(this.heap[parent], this.heap[child]) <= 0) break;
+      [this.heap[parent], this.heap[child]] = [this.heap[child], this.heap[parent]];
+      child = parent;
+    }
+    return this;
+  }
+  dequeue(): T {
+    if (this.heap.length === 0) throw new Error('PriorityQueue is empty');
+    const first = this.heap[0], last = this.heap.pop()!;
+    if (this.heap.length > 0) {
+      this.heap[0] = last;
+      for (let parent = 0;;) {
+        let child = parent * 2 + 1;
+        if (child >= this.heap.length) break;
+        if (child + 1 < this.heap.length && this.compare(this.heap[child + 1], this.heap[child]) < 0) child++;
+        if (this.compare(this.heap[parent], this.heap[child]) <= 0) break;
+        [this.heap[parent], this.heap[child]] = [this.heap[child], this.heap[parent]];
+        parent = child;
+      }
+    }
+    return first;
+  }
+  toArray(): T[] { return [...this.heap].sort(this.compare); }
+}
+class MinPriorityQueue<T> extends PriorityQueue<T> {
+  constructor() { super((left: any, right: any) => left - right); }
+}
+class MaxPriorityQueue<T> extends PriorityQueue<T> {
+  constructor() { super((left: any, right: any) => right - left); }
+}`;
+
 export function starterField(language) {
   return starterFields[language];
 }
@@ -37,16 +98,21 @@ export function normalizeSource(language, source, functionName, kind = 'solution
     return `#include <bits/stdc++.h>\nusing namespace std;\n\n${source}\n`;
   }
   if (language === 'java') return `import java.util.*;\n\n${source}\n`;
-  if (language === 'csharp') return `using System;\nusing System.Collections.Generic;\nusing System.Linq;\n\n${source}\n`;
+  if (language === 'csharp') return `using System;\nusing System.Collections.Generic;\nusing System.Linq;\nusing System.Text;\n\n${source}\n`;
   if (language === 'rust') return `${source}\n`;
   if (language === 'go') {
     const expected = functionNameFor(language, functionName);
     const renamed = source.replace(new RegExp(`\\bfunc\\s+${functionName}\\s*\\(`), `func ${expected}(`);
-    return `package main\n\n${renamed}\n`;
+    const withoutPackage = renamed.replace(/^\s*package\s+main\s*/m, '');
+    const imports = inferredGoImports(withoutPackage);
+    return `package main\n${imports ? `\n${imports}\n` : ''}\n${withoutPackage.trim()}\n`;
   }
   if (language === 'typescript') {
     const exported = source.replace(new RegExp(`(^|\\n)function\\s+${functionName}\\s*\\(`), `$1export function ${functionName}(`);
-    return `${exported}\n`;
+    const queueCompatibility = /\b(?:MinPriorityQueue|MaxPriorityQueue|PriorityQueue)\s*(?:<|\()/.test(exported)
+      ? `${typescriptPriorityQueue}\n\n`
+      : '';
+    return `${queueCompatibility}${exported}\n`;
   }
   return `${source}\n`;
 }

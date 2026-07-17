@@ -109,7 +109,7 @@ public static class CSharpHelper {
         sb.Append("]");
         return sb.ToString();
     }
-    public static string DisplayOutput(bool val) { return val.ToString(); }
+    public static string DisplayOutput(bool val) { return val ? "true" : "false"; }
     public static string DisplayOutputBooleanList(IList<bool> values) {
         var parts = new List<string>();
         foreach (bool value in values) parts.Add(value ? "true" : "false");

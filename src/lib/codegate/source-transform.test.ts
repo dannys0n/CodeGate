@@ -32,6 +32,25 @@ describe('CodeGate in-memory source transforms', () => {
         expect(normalizeSource('typescript', 'function twoSum(): number[] { return []; }', 'twoSum')).toContain('export function twoSum(');
     });
 
+    it('adds only the Go standard-library imports referenced by a solution', () => {
+        const transformed = normalizeSource('go', 'func answer(a []int) { sort.Ints(a); _ = strings.Join(nil, "") }', 'answer');
+        expect(transformed).toContain('import "sort"');
+        expect(transformed).toContain('import "strings"');
+        expect(transformed).not.toContain('import "math"');
+    });
+
+    it('provides StringBuilder to imported C# solutions', () => {
+        expect(normalizeSource('csharp', 'class Solution { StringBuilder value = new(); }', 'answer')).toContain('using System.Text;');
+    });
+
+    it('provides the LeetCode priority queue API only when TypeScript uses it', () => {
+        const withQueue = normalizeSource('typescript', 'function answer() { return new MinPriorityQueue<number>(); }', 'answer');
+        const withoutQueue = normalizeSource('typescript', 'function answer() { return 1; }', 'answer');
+        expect(withQueue).toContain('class MinPriorityQueue<T>');
+        expect(withQueue).toContain('dequeue(): T');
+        expect(withoutQueue).not.toContain('class PriorityQueue<T>');
+    });
+
     it('removes exactly one implementation line at 99% regardless of solution length', () => {
         const implementation = Array.from({ length: 120 }, (_, index) => `        value += ${index}`);
         const source = ['class Solution:', '    def answer(self, value: int) -> int:', ...implementation, '        return value'].join('\n');

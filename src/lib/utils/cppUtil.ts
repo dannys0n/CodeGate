@@ -89,7 +89,10 @@ static string quote_json_string(const string &value);
 static string display_output(const string &s) { return quote_json_string(s); }
 static string display_output(const char *s) { return quote_json_string(string(s)); }
 static string display_output(int val) { return to_string(val); }
+static string display_output(unsigned int val) { return to_string(val); }
 static string display_output(long long val) { return to_string(val); }
+static string display_output(unsigned long val) { return to_string(val); }
+static string display_output(unsigned long long val) { return to_string(val); }
 static string display_output(double val) { ostringstream out; out << setprecision(17) << val; return out.str(); }
 static string display_output(bool val) { return val ? "true" : "false"; }
 static string display_output(const vector<bool> &v) {
@@ -140,6 +143,19 @@ static string display_output(const vector<vector<char>> &vv) {
     }
     s += "]";
     return s;
+}
+
+static string display_output(const pair<int, int> &value) {
+    return "[" + display_output(value.first) + "," + display_output(value.second) + "]";
+}
+
+static string display_output(const vector<pair<int, int>> &values) {
+    string s = "[";
+    for (size_t i = 0; i < values.size(); ++i) {
+        if (i) s += ",";
+        s += display_output(values[i]);
+    }
+    return s + "]";
 }
 
 static string quote_json_string(const string &value) {

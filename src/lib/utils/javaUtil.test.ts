@@ -82,6 +82,6 @@ describe('formatAndSplitJavaString', () => {
   it('preserves and unescapes whitespace-sensitive marker strings', () => {
     expect(javaHelperMethods).toContain('quotedToken ? cur.toString()');
     expect(javaHelperMethods).toContain("else if (c == 'u'");
-    expect(javaHelperMethods).toContain('quoteJsonString(s)');
+    expect(javaHelperMethods).toContain('sb.append(quoteJsonString(s))');
   });
 });

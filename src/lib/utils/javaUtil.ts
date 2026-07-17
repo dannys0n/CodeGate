@@ -105,7 +105,7 @@ export const javaHelperMethods = `
         sb.append("[");
         int sz = lst.size(), idx = 0;
         for (String s : lst) {
-            sb.append(s);
+            sb.append(quoteJsonString(s));
             boolean isLast = idx == sz - 1;
             if (!isLast) {
                 sb.append(",");
