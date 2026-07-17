@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { parseKeywordArguments, parsePythonLiteral } from '../../../../src/lib/codegate/python-literal.mjs';
 import { parsePythonSignature } from './neenza.mjs';
+import { canUseExactCases } from './leetcode-bundle.mjs';
 import { generateExactMarker } from '../../../../src/lib/codegate/exact-marker.mjs';
 import { normalizeForRunner } from './solutions.mjs';
+import { extractExactCases } from '../../../../src/lib/codegate/test-vectors.mjs';
 
 describe('LeetCode source adapters', () => {
   it('parses restricted Python literals without evaluating code', () => {
@@ -73,6 +75,25 @@ describe('LeetCode source adapters', () => {
       params: [{ name: 'values', type: 'float_array' }, { name: 'scale', type: 'float' }],
       outputType: 'float'
     });
+  });
+
+  it('accepts unquoted string outputs without accepting dataset errors', () => {
+    const metadata = { params: [{ name: 'value', type: 'int' }], outputType: 'string' };
+    expect(extractExactCases({ input_output: [
+      { input: 'value = 1', output: 'XLIV' },
+      { input: 'value = 2', output: 'None' },
+      { input: 'value = 3', output: 'Error: reference solution failed' }
+    ] }, metadata)).toEqual([
+      { input: { value: 1 }, output: 'XLIV' },
+      { input: { value: 2 }, output: 'None' }
+    ]);
+  });
+
+  it('keeps exact cases for deterministic scalar outputs despite order wording', () => {
+    const record = { description: 'Process the values in any order.' };
+    expect(canUseExactCases(record, 'int')).toBe(true);
+    expect(canUseExactCases(record, 'boolean')).toBe(true);
+    expect(canUseExactCases(record, 'int_array')).toBe(false);
   });
 
   it('generates a deterministic exact-output Marker.java', () => {

@@ -21,6 +21,9 @@ async function sourceRoot(source, key, context) {
 function ambiguousStatement(record) {
   return /\b(any order|any valid|multiple answers|arbitrary order|return the answer in any|order does not matter|regardless of order|any permutation|any arrangement|any topological)\b/i.test(`${record.description ?? ''}`);
 }
+export function canUseExactCases(record, outputType) {
+  return outputType === 'int' || outputType === 'boolean' || !ambiguousStatement(record);
+}
 function incorrectPython(signature) {
   const args = signature.params.map((param) => param.name).join(', ');
   const value = ({ int: '0', float: '0.0', boolean: 'False', string: "''", int_array: '[]', int_array_2d: '[]', string_array: '[]', boolean_array: '[]', float_array: '[]', char_array_2d: '[]', string_list_2d: '[]', tree_node: 'None', list_node: 'None' })[signature.outputType];
@@ -96,7 +99,7 @@ export async function loadLeetcodeBundle(source, context) {
         if (!dataset?.starter_code) throw primaryError;
         signature = parsePythonSignature(dataset.starter_code, problem.starters);
       }
-      const exactCases = dataset && !ambiguousStatement(problem) ? extractExactCases(dataset, signature) : [];
+      const exactCases = dataset && canUseExactCases(problem, signature.outputType) ? extractExactCases(dataset, signature) : [];
       const solutions = await selectSolutions({ frontendId: problem.frontendId, slug: problem.slug, functionName: signature.functionName, doocs, kamyuRoot });
       const languages = {};
       const normalizedStarters = {};

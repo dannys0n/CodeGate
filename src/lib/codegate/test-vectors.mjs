@@ -25,7 +25,14 @@ export function extractExactCases(dataset, metadata) {
     try {
       const input = parseKeywordArguments(vector.input);
       if (!metadata.params.every((param) => Object.hasOwn(input, param.name) && matchesType(input[param.name], param.type))) continue;
-      const output = parsePythonLiteral(vector.output);
+      let output;
+      try {
+        output = parsePythonLiteral(vector.output);
+      } catch {
+        if (metadata.outputType !== 'string' || typeof vector.output !== 'string' || /^Error:/i.test(vector.output)) continue;
+        output = vector.output;
+      }
+      if (metadata.outputType === 'string' && !matchesType(output, 'string') && typeof vector.output === 'string' && !/^Error:/i.test(vector.output)) output = vector.output;
       if (!matchesType(output, metadata.outputType)) continue;
       cases.push({ input, output });
     } catch { /* malformed generated vector */ }
