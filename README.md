@@ -151,12 +151,9 @@ Windows releases are built by GitHub Actions from version tags. Run the interact
 
 Choose a patch, minor, or major increment. The script previews the files being released, asks for
 confirmation, runs the type checks and test suite, updates both package version files, creates the
-release commit and matching annotated local tag. It does not push, require the GitHub CLI, or build
-the installer locally. Review the resulting commit, then publish it when ready:
-
-```powershell
-git push origin main --follow-tags
-```
+release commit and matching annotated tag, then atomically pushes `main` and that tag to `origin`.
+The tag push triggers GitHub Actions. The script does not require the GitHub CLI or build the
+installer locally.
 
 The `Publish Windows Release` workflow restores the pinned problem sources, validates and builds the
 application on Windows, and creates a GitHub Release containing the installer and its SHA-256 file.
@@ -173,12 +170,12 @@ builds. For signed installers, add the certificate and password as Actions secre
 | `setup.bat` | Prepare a fresh checkout for development |
 | `quick-test.bat` | Build and launch a disposable local desktop test |
 | `build-release.bat` | Produce the Windows installer and unpacked release app |
-| `commit-release.bat` | Validate, version, commit, and locally tag a release |
+| `commit-release.bat` | Validate, version, commit, tag, and publish a GitHub release |
 
 Run `setup.bat` once after cloning, `quick-test.bat` while developing, and `build-release.bat` when
-you need local distributable artifacts. Use `commit-release.bat` to prepare a reviewed release
-commit before manually pushing it to trigger GitHub Actions. Setup's implementation lives under
-`scripts/` to keep the repository root entry points simple.
+you need local distributable artifacts. Use `commit-release.bat` when the current changes are ready
+to push and publish through GitHub Actions. Setup's implementation lives under `scripts/` to keep
+the repository root entry points simple.
 
 ## Problem catalog
 

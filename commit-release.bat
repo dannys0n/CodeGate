@@ -62,7 +62,8 @@ if errorlevel 1 set "BUMP=patch"
 
 echo.
 echo This will include ALL files shown above, increment the %BUMP% version,
-echo create a release commit, and create an annotated local tag.
+echo create a release commit and annotated tag, then push both to origin.
+echo Pushing the tag will trigger the GitHub Actions release build.
 choice /C YN /N /M "Continue? [Y/N]: "
 if errorlevel 2 exit /b 0
 
@@ -122,8 +123,15 @@ if errorlevel 1 (
 )
 
 echo.
-echo Created the local release commit and tag %RELEASE_TAG%.
-echo Nothing was pushed. When ready, publish both with:
-echo   git push origin main --follow-tags
-echo That push will trigger the GitHub Actions release build.
+echo Pushing main and %RELEASE_TAG% to origin...
+git push --atomic origin main "%RELEASE_TAG%"
+if errorlevel 1 (
+    echo Push failed. The release commit and tag remain local and can be retried with:
+    echo   git push --atomic origin main %RELEASE_TAG%
+    exit /b 1
+)
+
+echo.
+echo Published %RELEASE_TAG%.
+echo GitHub Actions will now build and publish the Windows release.
 exit /b 0
