@@ -21,8 +21,19 @@ async function sourceRoot(source, key, context) {
 function ambiguousStatement(record) {
   return /\b(any order|any valid|multiple answers|arbitrary order|return the answer in any|order does not matter|regardless of order|any permutation|any arrangement|any topological)\b/i.test(`${record.description ?? ''}`);
 }
-export function canUseExactCases(record, outputType) {
-  return outputType === 'int' || outputType === 'boolean' || !ambiguousStatement(record);
+export function comparisonModeFor(record, outputType) {
+  if (outputType !== 'int_array' && outputType !== 'string_array') return 'exact';
+  const description = `${record.description ?? ''}`;
+  const explicitlyUnordered = description.split(/[.!?](?:\s+|$)/).some((sentence) =>
+    /\breturn(?:ed)?\b/i.test(sentence)
+    && (/\b(?:in|with) any (?:arbitrary )?order\b/i.test(sentence) || /\bany order you want\b/i.test(sentence) || /\bmay be in any order\b/i.test(sentence))
+    && !/\bany order that\b/i.test(sentence)
+  );
+  const exhaustiveResult = /\breturn all\b|\breturn (?:an? )?(?:array|list)[^.]{0,100}\ball\b|\breturn the two\b|\bfind the two elements\b|\btheir intersection\b/i.test(description);
+  return explicitlyUnordered && exhaustiveResult ? 'unordered-flat' : 'exact';
+}
+export function canUseExactCases(record, outputType, comparisonMode = comparisonModeFor(record, outputType)) {
+  return comparisonMode === 'unordered-flat' || outputType === 'int' || outputType === 'boolean' || !ambiguousStatement(record);
 }
 function incorrectPython(signature) {
   const args = signature.params.map((param) => param.name).join(', ');
@@ -99,7 +110,8 @@ export async function loadLeetcodeBundle(source, context) {
         if (!dataset?.starter_code) throw primaryError;
         signature = parsePythonSignature(dataset.starter_code, problem.starters);
       }
-      const exactCases = dataset && canUseExactCases(problem, signature.outputType) ? extractExactCases(dataset, signature) : [];
+      const comparisonMode = comparisonModeFor(problem, signature.outputType);
+      const exactCases = dataset && canUseExactCases(problem, signature.outputType, comparisonMode) ? extractExactCases(dataset, signature) : [];
       const solutions = await selectSolutions({ frontendId: problem.frontendId, slug: problem.slug, functionName: signature.functionName, doocs, kamyuRoot });
       const languages = {};
       const normalizedStarters = {};
@@ -139,6 +151,7 @@ export async function loadLeetcodeBundle(source, context) {
         })),
         starterCode: normalizedStarters,
         testCases: tests.slice(0, 3),
+        ...(comparisonMode !== 'exact' ? { comparisonMode } : {}),
         ...signature,
         hints: problem.hints ?? []
       };

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseKeywordArguments, parsePythonLiteral } from '../../../../src/lib/codegate/python-literal.mjs';
 import { parsePythonSignature } from './neenza.mjs';
-import { canUseExactCases } from './leetcode-bundle.mjs';
+import { canUseExactCases, comparisonModeFor } from './leetcode-bundle.mjs';
 import { generateExactMarker } from '../../../../src/lib/codegate/exact-marker.mjs';
 import { normalizeForRunner } from './solutions.mjs';
 import { extractExactCases } from '../../../../src/lib/codegate/test-vectors.mjs';
@@ -96,6 +96,15 @@ describe('LeetCode source adapters', () => {
     expect(canUseExactCases(record, 'int_array')).toBe(false);
   });
 
+  it('uses unordered comparison only for exhaustive flat result collections', () => {
+    const exhaustive = { description: 'Return all matching indices. You may return the answer in any order.' };
+    const arbitrary = { description: 'Return any valid arrangement. You may return the answer in any order.' };
+    expect(comparisonModeFor(exhaustive, 'int_array')).toBe('unordered-flat');
+    expect(canUseExactCases(exhaustive, 'int_array')).toBe(true);
+    expect(comparisonModeFor(exhaustive, 'int_array_2d')).toBe('exact');
+    expect(comparisonModeFor(arbitrary, 'int_array')).toBe('exact');
+  });
+
   it('generates a deterministic exact-output Marker.java', () => {
     const metadata = { functionName: 'answer', params: [{ name: 'value', type: 'int' }], outputType: 'int' };
     const marker = generateExactMarker(metadata, [{ input: { value: 2 }, output: 4 }]);
@@ -129,6 +138,13 @@ describe('LeetCode source adapters', () => {
     );
     expect(floatMarker).toContain('closeList');
     expect(floatMarker).toContain('Arrays.asList(0.25,1.0)');
+
+    const unorderedMarker = generateExactMarker(
+      { functionName: 'matches', params: [{ name: 'value', type: 'int' }], outputType: 'string_array', comparisonMode: 'unordered-flat' },
+      [{ input: { value: 1 }, output: ['b', 'a', 'a'] }]
+    );
+    expect(unorderedMarker).toContain('sameUnordered(String[] left, String[] right)');
+    expect(unorderedMarker).toContain('sameUnordered(matches(value), output)');
   });
 
   it('adds only the wrappers required by existing judge runners', () => {

@@ -21,7 +21,8 @@ function javaLiteral(value, type) {
   if (type === 'tree_node') return `tree(new Integer[] {${value.map((item) => item === null ? 'null' : String(item)).join(',')}})`;
   throw new Error(`cannot generate Java literal for ${type}`);
 }
-function equal(left, right, type) {
+function equal(left, right, type, comparisonMode = 'exact') {
+  if (comparisonMode === 'unordered-flat' && (type === 'int_array' || type === 'string_array')) return `sameUnordered(${left}, ${right})`;
   if (type === 'int_array') return `Arrays.equals(${left}, ${right})`;
   if (type === 'int_array_2d') return `Arrays.deepEquals(${left}, ${right})`;
   if (type === 'string_array') return `Arrays.equals(${left}, ${right})`;
@@ -46,6 +47,20 @@ const floatHelpers = `    private boolean close(double left, double right) {
         if (left == null || right == null || left.size() != right.size()) return left == right;
         for (int index = 0; index < left.size(); index++) if (!close(left.get(index), right.get(index))) return false;
         return true;
+    }
+`;
+
+const unorderedHelpers = `    private boolean sameUnordered(int[] left, int[] right) {
+        if (left == null || right == null || left.length != right.length) return left == right;
+        int[] sortedLeft = left.clone(), sortedRight = right.clone();
+        Arrays.sort(sortedLeft); Arrays.sort(sortedRight);
+        return Arrays.equals(sortedLeft, sortedRight);
+    }
+    private boolean sameUnordered(String[] left, String[] right) {
+        if (left == null || right == null || left.length != right.length) return left == right;
+        String[] sortedLeft = left.clone(), sortedRight = right.clone();
+        Arrays.sort(sortedLeft); Arrays.sort(sortedRight);
+        return Arrays.equals(sortedLeft, sortedRight);
     }
 `;
 
@@ -92,6 +107,6 @@ export function generateExactMarker(metadata, cases) {
   const argumentsList = metadata.params.map((param) => param.name).join(', ');
   const outputType = javaType(metadata.outputType);
   const types = new Set([...metadata.params.map((param) => param.type), metadata.outputType]);
-  const helpers = `${types.has('float') || types.has('float_array') ? floatHelpers : ''}${types.has('list_node') ? listHelpers : ''}${types.has('tree_node') ? treeHelpers : ''}`;
-  return `import java.util.*;\nclass Marker {\n${helpers}    public ${outputType} ${metadata.functionName}(${params}) {\n${branches}\n        return ${defaultValue(metadata.outputType)};\n    }\n    public boolean isCorrect(${params}, ${outputType} output) {\n        return ${equal(`${metadata.functionName}(${argumentsList})`, 'output', metadata.outputType)};\n    }\n}\n`;
+  const helpers = `${metadata.comparisonMode === 'unordered-flat' ? unorderedHelpers : ''}${types.has('float') || types.has('float_array') ? floatHelpers : ''}${types.has('list_node') ? listHelpers : ''}${types.has('tree_node') ? treeHelpers : ''}`;
+  return `import java.util.*;\nclass Marker {\n${helpers}    public ${outputType} ${metadata.functionName}(${params}) {\n${branches}\n        return ${defaultValue(metadata.outputType)};\n    }\n    public boolean isCorrect(${params}, ${outputType} output) {\n        return ${equal(`${metadata.functionName}(${argumentsList})`, 'output', metadata.outputType, metadata.comparisonMode)};\n    }\n}\n`;
 }
