@@ -88,7 +88,7 @@ export const javaHelperMethods = `
         sb.append("]");
         return sb.toString();
     }
-    private static String displayOutput(String s) { return s; }
+    private static String displayOutput(String s) { return quoteJsonString(s); }
     private static String displayOutput(int val) { return val+""; }
     private static String displayOutput(double val) { return Double.toString(val); }
     private static String displayOutput(int[] val) { return Arrays.toString(val); }
@@ -143,7 +143,14 @@ export const javaHelperMethods = `
     private static String joinString(String[] s) { return String.join("", s); }
     private static int to_int(String s) { return Integer.parseInt(s); }
     private static double to_float(String s) { return Double.parseDouble(s); }
-    private static String to_string(String s) { return s; }
+    private static String to_string(String s) {
+        String t = s == null ? "" : s.trim();
+        if (t.length() >= 2 && ((t.charAt(0) == 34 && t.charAt(t.length() - 1) == 34) || (t.charAt(0) == 39 && t.charAt(t.length() - 1) == 39))) {
+            List<String> parsed = to_string_list("[" + t + "]");
+            return parsed.isEmpty() ? "" : parsed.get(0);
+        }
+        return s;
+    }
     private static boolean to_boolean(String s) { return s.equals("true"); }
     // Parse a JSON-like array string to a List<String>, tolerant to single/double quotes and spaces
     private static List<String> to_string_list(String s) {
@@ -154,20 +161,37 @@ export const javaHelperMethods = `
         if (t.startsWith("[")) t = t.substring(1);
         if (t.endsWith("]")) t = t.substring(0, t.length()-1);
         StringBuilder cur = new StringBuilder();
-        boolean inDQ = false, inSQ = false;
+        boolean inDQ = false, inSQ = false, escaped = false, quotedToken = false;
         for (int i = 0; i < t.length(); i++) {
             char c = t.charAt(i);
-            if (c == '"' && !inSQ) { inDQ = !inDQ; continue; }
-            if (c == '\\'' && !inDQ) { inSQ = !inSQ; continue; }
+            if (escaped) {
+                if (c == 'n') cur.append((char)10);
+                else if (c == 'r') cur.append((char)13);
+                else if (c == 't') cur.append((char)9);
+                else if (c == 'b') cur.append((char)8);
+                else if (c == 'f') cur.append((char)12);
+                else if (c == 'u' && i + 4 < t.length()) {
+                    cur.append((char)Integer.parseInt(t.substring(i + 1, i + 5), 16));
+                    i += 4;
+                }
+                else cur.append(c);
+                escaped = false;
+                continue;
+            }
+            if (c == 92 && (inDQ || inSQ)) { escaped = true; continue; }
+            if (c == '"' && !inSQ) { inDQ = !inDQ; quotedToken = true; continue; }
+            if (c == '\\'' && !inDQ) { inSQ = !inSQ; quotedToken = true; continue; }
+            if (!inDQ && !inSQ && Character.isWhitespace(c) && (cur.length() == 0 || quotedToken)) continue;
             if (c == ',' && !inDQ && !inSQ) {
-                String token = cur.toString().trim();
+                String token = quotedToken ? cur.toString() : cur.toString().trim();
                 res.add(token);
                 cur.setLength(0);
+                quotedToken = false;
             } else {
                 cur.append(c);
             }
         }
-        String last = cur.toString().trim();
+        String last = quotedToken ? cur.toString() : cur.toString().trim();
         res.add(last);
         // unescape wrapping quotes if any remained
         for (int i = 0; i < res.size(); i++) {
@@ -182,6 +206,19 @@ export const javaHelperMethods = `
     }
     private static String[] to_string_array(String s) {
         return to_string_list(s).toArray(new String[0]);
+    }
+    private static String quoteJsonString(String value) {
+        StringBuilder result = new StringBuilder();
+        result.append((char)34);
+        for (char c : value.toCharArray()) {
+            if (c == 34 || c == 92) result.append((char)92).append(c);
+            else if (c == 10) result.append((char)92).append('n');
+            else if (c == 13) result.append((char)92).append('r');
+            else if (c == 9) result.append((char)92).append('t');
+            else if (c < 32) result.append((char)92).append('u').append(String.format("%04x", (int)c));
+            else result.append(c);
+        }
+        return result.append((char)34).toString();
     }
     private static int[] to_int_array(String s) throws Exception {
         if (s == null || s.length() == 0 || s.equals("[]")) return new int[] {};

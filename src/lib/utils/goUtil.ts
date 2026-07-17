@@ -60,7 +60,7 @@ func displayOutput(x interface{}) string {
         for i, value := range v { parts[i] = strconv.FormatFloat(value, 'g', 17, 64) }
         return "[" + strings.Join(parts, ",") + "]"
     case string:
-        return v
+        return strconv.Quote(v)
     case []int:
         parts := make([]string, len(v))
         for i, n := range v {
@@ -76,7 +76,7 @@ func displayOutput(x interface{}) string {
     case []string:
         quoted := make([]string, len(v))
         for i, s := range v {
-            quoted[i] = "\\"" + s + "\\""
+            quoted[i] = strconv.Quote(s)
         }
         return "[" + strings.Join(quoted, ",") + "]"
     case [][]string:

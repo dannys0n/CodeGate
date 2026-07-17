@@ -43,6 +43,27 @@ impl TreeNode {
 // Note: rustGraphNodeClass not a separate export; GraphNode included in generateRustRunner output
 
 export const rustHelperMethods = `
+fn quote_json_string(value: &str) -> String {
+    let mut result = String::new();
+    result.push(char::from(34));
+    for c in value.chars() {
+        match c as u32 {
+            34 | 92 => { result.push(char::from(92)); result.push(c); },
+            10 => { result.push(char::from(92)); result.push('n'); },
+            13 => { result.push(char::from(92)); result.push('r'); },
+            9 => { result.push(char::from(92)); result.push('t'); },
+            value if value < 32 => {
+                result.push(char::from(92));
+                result.push('u');
+                result.push_str(&format!("{:04x}", value));
+            },
+            _ => result.push(c),
+        }
+    }
+    result.push(char::from(34));
+    result
+}
+
 pub trait CojudgeDisplay {
     fn to_cojudge_string(&self) -> String;
 }
@@ -72,7 +93,7 @@ impl CojudgeDisplay for Vec<f64> {
 }
 
 impl CojudgeDisplay for String {
-    fn to_cojudge_string(&self) -> String { self.clone() }
+    fn to_cojudge_string(&self) -> String { quote_json_string(self) }
 }
 
 impl CojudgeDisplay for Vec<String> {
@@ -80,9 +101,7 @@ impl CojudgeDisplay for Vec<String> {
         let mut res = String::from("[");
         for (i, s) in self.iter().enumerate() {
             if i > 0 { res.push(','); }
-            res.push('"');
-            res.push_str(s);
-            res.push('"');
+            res.push_str(&quote_json_string(s));
         }
         res.push(']');
         res

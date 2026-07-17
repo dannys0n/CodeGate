@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatAndSplitJavaString } from './javaUtil';
+import { formatAndSplitJavaString, javaHelperMethods } from './javaUtil';
 import { javaGetFullParam } from './javaUtil';
 
 describe('formatAndSplitJavaString', () => {
@@ -77,5 +77,11 @@ describe('formatAndSplitJavaString', () => {
     const tc = { wordDict: "['apple','pen']" } as any;
     const res = javaGetFullParam(params as any, tc);
     expect(res.startsWith('to_string_array(')).toBe(true);
+  });
+
+  it('preserves and unescapes whitespace-sensitive marker strings', () => {
+    expect(javaHelperMethods).toContain('quotedToken ? cur.toString()');
+    expect(javaHelperMethods).toContain("else if (c == 'u'");
+    expect(javaHelperMethods).toContain('quoteJsonString(s)');
   });
 });

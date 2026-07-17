@@ -42,11 +42,11 @@ function displayOutput(x: any): string {
     if (x === null || x === undefined) return "[]";
     if (typeof x === 'boolean') return x ? 'true' : 'false';
     if (typeof x === 'number') return x.toString();
-    if (typeof x === 'string') return x;
+    if (typeof x === 'string') return JSON.stringify(x);
     if (Array.isArray(x)) {
         if (x.length === 0) return "[]";
         if (typeof x[0] === 'string') {
-            return '[' + x.map((s: string) => '"' + s + '"').join(',') + ']';
+            return '[' + x.map((s: string) => JSON.stringify(s)).join(',') + ']';
         }
         return '[' + x.map((item: any) => displayOutput(item)).join(',') + ']';
     }

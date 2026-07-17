@@ -85,8 +85,9 @@ static string display_output(TreeNode* root) {
     s += "]";
     return s;
 }
-static string display_output(const string &s) { return s; }
-static string display_output(const char *s) { return string(s); }
+static string quote_json_string(const string &value);
+static string display_output(const string &s) { return quote_json_string(s); }
+static string display_output(const char *s) { return quote_json_string(string(s)); }
 static string display_output(int val) { return to_string(val); }
 static string display_output(long long val) { return to_string(val); }
 static string display_output(double val) { ostringstream out; out << setprecision(17) << val; return out.str(); }
@@ -141,11 +142,25 @@ static string display_output(const vector<vector<char>> &vv) {
     return s;
 }
 
+static string quote_json_string(const string &value) {
+    static const char *hex = "0123456789abcdef";
+    string result = "\\\"";
+    for (unsigned char c : value) {
+        if (c == '"' || c == '\\\\') { result += '\\\\'; result += static_cast<char>(c); }
+        else if (c == '\\n') result += "\\\\n";
+        else if (c == '\\r') result += "\\\\r";
+        else if (c == '\\t') result += "\\\\t";
+        else if (c < 0x20) { result += "\\\\u00"; result += hex[c >> 4]; result += hex[c & 15]; }
+        else result += static_cast<char>(c);
+    }
+    return result + "\\\"";
+}
+
 static string display_output(const vector<string> &v) {
     string s = "[";
     for (size_t i = 0; i < v.size(); ++i) {
         if (i) s += ", ";
-        s += '"' + v[i] + '"';
+        s += quote_json_string(v[i]);
     }
     s += "]";
     return s;

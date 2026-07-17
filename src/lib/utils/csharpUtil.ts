@@ -94,7 +94,7 @@ public static class CSharpHelper {
         return sb.ToString();
     }
     
-    public static string DisplayOutput(string s) { return s; }
+    public static string DisplayOutput(string s) { return QuoteJsonString(s); }
     public static string DisplayOutput(int val) { return val.ToString(); }
     public static string DisplayOutput(double val) { return val.ToString("R", System.Globalization.CultureInfo.InvariantCulture); }
     public static string DisplayOutput(int[] val) { return "[" + string.Join(",", val) + "]"; }
@@ -120,12 +120,25 @@ public static class CSharpHelper {
         foreach (double value in values) parts.Add(value.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
         return "[" + string.Join(",", parts) + "]";
     }
+    private static string QuoteJsonString(string value) {
+        StringBuilder sb = new StringBuilder();
+        sb.Append((char)34);
+        foreach (char c in value) {
+            if (c == 34 || c == 92) sb.Append((char)92).Append(c);
+            else if (c == 10) sb.Append((char)92).Append('n');
+            else if (c == 13) sb.Append((char)92).Append('r');
+            else if (c == 9) sb.Append((char)92).Append('t');
+            else if (c < 32) sb.Append((char)92).Append('u').Append(((int)c).ToString("x4"));
+            else sb.Append(c);
+        }
+        return sb.Append((char)34).ToString();
+    }
     public static string DisplayOutputStringList(List<string> lst) {
         StringBuilder sb = new StringBuilder();
         sb.Append("[");
         int sz = lst.Count, idx = 0;
         foreach (string s in lst) {
-            sb.Append('"').Append(s).Append('"');
+            sb.Append(QuoteJsonString(s));
             bool isLast = idx == sz - 1;
             if (!isLast) {
                 sb.Append(",");

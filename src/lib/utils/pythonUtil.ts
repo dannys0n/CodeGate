@@ -85,6 +85,8 @@ def display_graph_node(node: Optional['GraphNode']) -> str:
 def display_output(x: Any) -> str:
     if isinstance(x, bool):
         return 'true' if x else 'false'
+    if isinstance(x, str):
+        return json.dumps(x)
     if isinstance(x, list):
         return '[' + ','.join('null' if item is None else json.dumps(item) if isinstance(item, str) else display_output(item) for item in x) + ']'
     # Duck-typing for ListNode / TreeNode / GraphNode to avoid module identity issues
