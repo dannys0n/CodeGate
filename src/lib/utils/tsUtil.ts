@@ -201,7 +201,7 @@ export function tsGetFullParam(params: Param[], tc: any): string {
             parts.push(`${val}`);
         } else if (p.type === 'boolean') {
             parts.push(String(val) === 'true' ? 'true' : 'false');
-        } else if (p.type === 'int_array' || p.type === 'int_list') {
+        } else if (p.type === 'int_array' || p.type === 'int_list' || p.type === 'boolean_array') {
             let strVal: string;
             if (Array.isArray(val)) {
                 try { strVal = JSON.stringify(val); } catch { strVal = '[]'; }
@@ -426,6 +426,7 @@ export class ${className} {
             case 'int': return 'number';
             case 'string': return 'string';
             case 'boolean': return 'boolean';
+            case 'boolean_array': return 'boolean[]';
             case 'int_array': return 'number[]';
             case 'int_array_2d':
             case 'int_matrix': return 'number[][]';

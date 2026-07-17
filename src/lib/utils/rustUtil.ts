@@ -55,6 +55,12 @@ impl CojudgeDisplay for bool {
     fn to_cojudge_string(&self) -> String { self.to_string() }
 }
 
+impl CojudgeDisplay for Vec<bool> {
+    fn to_cojudge_string(&self) -> String {
+        format!("[{}]", self.iter().map(|value| value.to_string()).collect::<Vec<_>>().join(","))
+    }
+}
+
 impl CojudgeDisplay for String {
     fn to_cojudge_string(&self) -> String { self.clone() }
 }
@@ -278,6 +284,13 @@ pub fn to_int_array(s: &str) -> Vec<i32> {
         .collect()
 }
 
+pub fn to_boolean_array(s: &str) -> Vec<bool> {
+    let s = s.trim();
+    if s == "[]" || s.is_empty() { return vec![]; }
+    s.strip_prefix('[').unwrap_or(s).strip_suffix(']').unwrap_or(s)
+        .split(',').filter_map(|value| match value.trim() { "true" => Some(true), "false" => Some(false), _ => None }).collect()
+}
+
 pub fn to_int_array_2d(s: &str) -> Vec<Vec<i32>> {
     let s = s.trim();
     if s == "[]" || s.is_empty() { return vec![]; }
@@ -339,6 +352,24 @@ pub fn to_string_array(s: &str) -> Vec<String> {
     res.push(current.trim().trim_matches('"').to_string());
     res
 }
+
+pub fn to_string_array_2d(s: &str) -> Vec<Vec<String>> {
+    let s = s.trim();
+    if s == "[]" || s.is_empty() { return vec![]; }
+    let s = s.strip_prefix('[').unwrap_or(s).strip_suffix(']').unwrap_or(s);
+    let mut result = vec![];
+    let mut depth = 0i32;
+    let mut start = 0usize;
+    for (index, value) in s.char_indices() {
+        if value == '[' { if depth == 0 { start = index; } depth += 1; }
+        else if value == ']' { depth -= 1; if depth == 0 { result.push(to_string_array(&s[start..=index])); } }
+    }
+    result
+}
+
+pub fn to_char_array_2d(s: &str) -> Vec<Vec<char>> {
+    to_string_array_2d(s).into_iter().map(|row| row.into_iter().filter_map(|value| value.chars().next()).collect()).collect()
+}
 `;
 
 export const rustListNodeMain = `
@@ -367,6 +398,8 @@ export function rustGetFullParam(params: Param[], tc: any): string {
       parts.push(`${rustEscapeStringLiteral(val ?? "")}.to_string()`);
     } else if (p.type === "int_array") {
       parts.push(`to_int_array(${rustEscapeStringLiteral(val ?? "[]")})`);
+    } else if (p.type === "boolean_array") {
+      parts.push(`to_boolean_array(${rustEscapeStringLiteral(val ?? "[]")})`);
     } else if (p.type === "int") {
       parts.push(`${val}`);
     } else if (p.type === "boolean") {
@@ -389,6 +422,15 @@ export function rustGetFullParam(params: Param[], tc: any): string {
         strVal = String(val ?? '[]');
       }
       parts.push(`to_int_array_2d(${rustEscapeStringLiteral(strVal)})`);
+    } else if (p.type === "string_list_2d" || p.type === "char_array_2d") {
+      let strVal: string;
+      if (Array.isArray(val)) {
+        try { strVal = JSON.stringify(val); } catch { strVal = '[]'; }
+      } else {
+        strVal = String(val ?? '[]');
+      }
+      const parser = p.type === "char_array_2d" ? "to_char_array_2d" : "to_string_array_2d";
+      parts.push(`${parser}(${rustEscapeStringLiteral(strVal)})`);
     } else if (p.type === "list_node") {
       parts.push(
         `to_list_node(${rustEscapeStringLiteral(String(val ?? "[]"))})`,

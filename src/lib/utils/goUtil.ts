@@ -49,6 +49,10 @@ func displayOutput(x interface{}) string {
             return "true"
         }
         return "false"
+    case []bool:
+        parts := make([]string, len(v))
+        for i, value := range v { if value { parts[i] = "true" } else { parts[i] = "false" } }
+        return "[" + strings.Join(parts, ",") + "]"
     case string:
         return v
     case []int:
@@ -181,6 +185,15 @@ func toIntArray(s string) []int {
         res = append(res, n)
     }
     return res
+}
+
+func toBooleanArray(s string) []bool {
+    s = strings.TrimSpace(s)
+    if s == "[]" || s == "" { return []bool{} }
+    parts := strings.Split(s[1:len(s)-1], ",")
+    result := make([]bool, 0, len(parts))
+    for _, value := range parts { value = strings.TrimSpace(value); if value != "" { result = append(result, value == "true") } }
+    return result
 }
 
 func toIntArray2d(s string) [][]int {
@@ -404,6 +417,7 @@ function goType(typeName: string): string {
         case "int": return "int";
         case "string": return "string";
         case "boolean": return "bool";
+        case "boolean_array": return "[]bool";
         case "int_array": return "[]int";
         case "int_array_2d":
         case "int_matrix": return "[][]int";
@@ -431,6 +445,8 @@ export function goGetFullParam(params: Param[], tc: any): string {
             parts.push(String(val) === "true" ? "true" : "false");
         } else if (p.type === "int_array") {
             parts.push(`toIntArray(${goEscapeStringLiteral(val ?? "[]")})`);
+        } else if (p.type === "boolean_array") {
+            parts.push(`toBooleanArray(${goEscapeStringLiteral(val ?? "[]")})`);
         } else if (p.type === "int_array_2d" || p.type === "int_matrix") {
             let strVal: string;
             if (Array.isArray(val)) {

@@ -28,6 +28,7 @@ class GraphNode:
 export const pythonHelperMethods = `# helper display to normalize outputs
 from typing import Any, Optional, List
 from ast import literal_eval
+import json
 
 def display_list_node(node: ListNode) -> str:
     cur = node
@@ -85,7 +86,7 @@ def display_output(x: Any) -> str:
     if isinstance(x, bool):
         return 'true' if x else 'false'
     if isinstance(x, list):
-        return str(x)
+        return '[' + ','.join('null' if item is None else json.dumps(item) if isinstance(item, str) else display_output(item) for item in x) + ']'
     # Duck-typing for ListNode / TreeNode / GraphNode to avoid module identity issues
     if hasattr(x, 'val') and hasattr(x, 'next') and type(x).__name__ == 'ListNode':
         return display_list_node(x)  # type: ignore
@@ -200,11 +201,11 @@ export function pyGetFullParam(params: Param[], tc: any): string {
             const str = Array.isArray(raw) ? JSON.stringify(raw): String(raw);
             const escaped = str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
             parts.push(`literal_eval('${escaped}')`);
-        } else if (param.type === 'int_array_2d' || param.type === 'int_matrix' || param.type === 'char_array_2d') {
+        } else if (param.type === 'int_array_2d' || param.type === 'int_matrix' || param.type === 'char_array_2d' || param.type === 'string_list_2d' || param.type === 'boolean_array') {
             const raw = val ?? '[]';
             const str = Array.isArray(raw) ? JSON.stringify(raw): String(raw);
             const escaped = str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            parts.push(`literal_eval('${escaped}')`);
+            parts.push(param.type === 'boolean_array' ? `json.loads('${escaped}')` : `literal_eval('${escaped}')`);
         } else {
             // default: pass as string literal
             const escaped = String(val ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");

@@ -93,6 +93,9 @@ export const javaHelperMethods = `
     private static String displayOutput(int[] val) { return Arrays.toString(val); }
     private static String displayOutput(int[][] val) { return Arrays.deepToString(val).replace(" ", ""); }
     private static String displayOutput(boolean val) { return val+""; }
+    private static String displayOutputBooleanList(List<Boolean> values) {
+        return values.toString().replace(" ", "");
+    }
     private static String displayOutputStringList(List<String> lst) {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
@@ -186,6 +189,13 @@ export const javaHelperMethods = `
             res[i] = Integer.parseInt(token);
         }
         return res;
+    }
+    private static List<Boolean> to_boolean_list(String s) {
+        if (s == null || s.length() == 0 || s.equals("[]")) return new ArrayList<>();
+        String[] values = s.substring(1, s.length() - 1).split(", *");
+        List<Boolean> result = new ArrayList<>();
+        for (String value : values) if (!value.isBlank()) result.add(Boolean.parseBoolean(value.trim()));
+        return result;
     }
     private static List<Integer> to_int_list(String s) throws Exception {
         if (s == null || s.length() == 0 || s.equals("[]")) return new ArrayList<Integer>();
@@ -441,6 +451,8 @@ export function javaGetFullParam(params: Param[], tc: any): string {
             fullParam += `to_string_array(${formatAndSplitJavaString(strVal)})`;
         } else if (param.type === 'int_array') {
             fullParam += `to_int_array(${formatAndSplitJavaString(val)})`;
+        } else if (param.type === 'boolean_array') {
+            fullParam += `to_boolean_list(${formatAndSplitJavaString(val)})`;
         } else if (param.type === 'int') {
             fullParam += `${val}`;
         } else if (param.type === 'int_array_2d') {
@@ -462,7 +474,8 @@ export function javaGetFullParam(params: Param[], tc: any): string {
 }
 
 export function getDisplayFuncName(outputType: string): string {
-    return outputType === 'string_list' ? 'displayOutputStringList' :
+    return outputType === 'boolean_array' ? 'displayOutputBooleanList' :
+            outputType === 'string_list' ? 'displayOutputStringList' :
             outputType === 'string_list_2d' ? 'displayOutputStringList2d' :
             outputType === 'int_list' ? 'displayOutputIntList' : 
             outputType === 'int_list_2d' ? 'displayOutputIntList2d' : 

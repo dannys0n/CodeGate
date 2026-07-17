@@ -90,6 +90,11 @@ static string display_output(const char *s) { return string(s); }
 static string display_output(int val) { return to_string(val); }
 static string display_output(long long val) { return to_string(val); }
 static string display_output(bool val) { return val ? "true" : "false"; }
+static string display_output(const vector<bool> &v) {
+    string s = "[";
+    for (size_t i = 0; i < v.size(); ++i) { if (i) s += ","; s += v[i] ? "true" : "false"; }
+    return s + "]";
+}
 static string display_output(const vector<int> &v) {
     string s = "[";
     for (size_t i = 0; i < v.size(); ++i) {
@@ -168,6 +173,18 @@ static vector<int> to_int_array(const string &s) {
         if (!t.empty()) res.push_back(stoi(t));
     }
     return res;
+}
+
+static vector<bool> to_boolean_array(const string &s) {
+    vector<bool> result;
+    if (s.empty() || s == "[]") return result;
+    string inner = s.substr(1, s.size() - 2), token;
+    stringstream stream(inner);
+    while (getline(stream, token, ',')) {
+        token.erase(remove_if(token.begin(), token.end(), ::isspace), token.end());
+        if (!token.empty()) result.push_back(token == "true");
+    }
+    return result;
 }
 
 static vector<vector<int>> to_int_array_2d(const string &s) {
@@ -510,6 +527,8 @@ export function cppGetFullParam(params: Param[], tc: any): string {
             parts.push(`to_string_array(${cppEscapeStringLiteral(strVal)})`);
         } else if (p.type === 'int_array') {
             parts.push(`to_int_array(${cppEscapeStringLiteral(val ?? '[]')})`);
+        } else if (p.type === 'boolean_array') {
+            parts.push(`to_boolean_array(${cppEscapeStringLiteral(val ?? '[]')})`);
         } else if (p.type === 'int_array_2d' || p.type === 'int_matrix') {
             let strVal: string;
             if (Array.isArray(val)) {
@@ -677,6 +696,9 @@ export function generateCppRunner(functionName: string, params: Param[], testCas
                 const raw = tc[p.name];
                 if (p.type === 'int_array') {
                     decls.push(`vector<int> ${vname} = to_int_array(${cppEscapeStringLiteral(raw ?? '[]')});`);
+                    args.push(vname);
+                } else if (p.type === 'boolean_array') {
+                    decls.push(`vector<bool> ${vname} = to_boolean_array(${cppEscapeStringLiteral(raw ?? '[]')});`);
                     args.push(vname);
                 } else if (p.type === 'int_array_2d' || p.type === 'int_matrix') {
                     let strVal: string;

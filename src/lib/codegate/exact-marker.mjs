@@ -1,8 +1,9 @@
 // @ts-nocheck
 function javaType(type) {
-  return ({ int: 'int', boolean: 'boolean', string: 'String', int_array: 'int[]', int_array_2d: 'int[][]', string_array: 'String[]', list_node: 'ListNode', tree_node: 'TreeNode' })[type];
+  return ({ int: 'int', boolean: 'boolean', string: 'String', int_array: 'int[]', int_array_2d: 'int[][]', string_array: 'String[]', boolean_array: 'List<Boolean>', char_array_2d: 'char[][]', string_list_2d: 'List<List<String>>', list_node: 'ListNode', tree_node: 'TreeNode' })[type];
 }
 function quote(value) { return JSON.stringify(String(value)).replaceAll("'", "\\'"); }
+function quoteChar(value) { return `'${JSON.stringify(String(value)).slice(1, -1).replaceAll("'", "\\'")}'`; }
 function javaLiteral(value, type) {
   if (type === 'int') return String(value);
   if (type === 'boolean') return value ? 'true' : 'false';
@@ -10,6 +11,9 @@ function javaLiteral(value, type) {
   if (type === 'int_array') return `new int[] {${value.map(String).join(',')}}`;
   if (type === 'int_array_2d') return `new int[][] {${value.map((row) => javaLiteral(row, 'int_array')).join(',')}}`;
   if (type === 'string_array') return `new String[] {${value.map(quote).join(',')}}`;
+  if (type === 'boolean_array') return `Arrays.asList(${value.map((item) => item ? 'true' : 'false').join(',')})`;
+  if (type === 'char_array_2d') return `new char[][] {${value.map((row) => `new char[] {${row.map(quoteChar).join(',')}}`).join(',')}}`;
+  if (type === 'string_list_2d') return `Arrays.asList(${value.map((row) => `Arrays.asList(${row.map(quote).join(',')})`).join(',')})`;
   if (type === 'list_node') return `list(new int[] {${value.map(String).join(',')}})`;
   if (type === 'tree_node') return `tree(new Integer[] {${value.map((item) => item === null ? 'null' : String(item)).join(',')}})`;
   throw new Error(`cannot generate Java literal for ${type}`);
@@ -18,13 +22,16 @@ function equal(left, right, type) {
   if (type === 'int_array') return `Arrays.equals(${left}, ${right})`;
   if (type === 'int_array_2d') return `Arrays.deepEquals(${left}, ${right})`;
   if (type === 'string_array') return `Arrays.equals(${left}, ${right})`;
+  if (type === 'boolean_array') return `Objects.equals(${left}, ${right})`;
+  if (type === 'char_array_2d') return `Arrays.deepEquals(${left}, ${right})`;
+  if (type === 'string_list_2d') return `Objects.equals(${left}, ${right})`;
   if (type === 'string') return `Objects.equals(${left}, ${right})`;
   if (type === 'list_node') return `sameList(${left}, ${right})`;
   if (type === 'tree_node') return `sameTree(${left}, ${right})`;
   return `${left} == ${right}`;
 }
 function defaultValue(type) {
-  return ({ int: '0', boolean: 'false', string: '""', int_array: 'new int[0]', int_array_2d: 'new int[0][]', string_array: 'new String[0]', list_node: 'null', tree_node: 'null' })[type];
+  return ({ int: '0', boolean: 'false', string: '""', int_array: 'new int[0]', int_array_2d: 'new int[0][]', string_array: 'new String[0]', boolean_array: 'new ArrayList<>()', char_array_2d: 'new char[0][]', string_list_2d: 'new ArrayList<>()', list_node: 'null', tree_node: 'null' })[type];
 }
 
 const listHelpers = `    private ListNode list(int[] values) {

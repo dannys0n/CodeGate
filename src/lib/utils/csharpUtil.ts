@@ -109,6 +109,11 @@ public static class CSharpHelper {
         return sb.ToString();
     }
     public static string DisplayOutput(bool val) { return val.ToString(); }
+    public static string DisplayOutputBooleanList(IList<bool> values) {
+        var parts = new List<string>();
+        foreach (bool value in values) parts.Add(value ? "true" : "false");
+        return "[" + string.Join(",", parts) + "]";
+    }
     public static string DisplayOutputStringList(List<string> lst) {
         StringBuilder sb = new StringBuilder();
         sb.Append("[");
@@ -218,6 +223,12 @@ public static class CSharpHelper {
             }
         }
         return result.ToArray();
+    }
+    public static List<bool> ToBooleanList(string s) {
+        if (string.IsNullOrEmpty(s) || s == "[]") return new List<bool>();
+        var result = new List<bool>();
+        foreach (string value in s.Trim('[', ']').Split(',')) if (!string.IsNullOrWhiteSpace(value)) result.Add(bool.Parse(value.Trim()));
+        return result;
     }
     
     public static List<int> ToIntList(string s) {
@@ -464,6 +475,8 @@ export function csharpGetFullParam(params: Param[], tc: any): string {
             fullParam += `CSharpHelper.ToStringArray(${formatAndSplitCSharpString(strVal)})`;
         } else if (param.type === 'int_array') {
             fullParam += `CSharpHelper.ToIntArray(${formatAndSplitCSharpString(val)})`;
+        } else if (param.type === 'boolean_array') {
+            fullParam += `CSharpHelper.ToBooleanList(${formatAndSplitCSharpString(val)})`;
         } else if (param.type === 'int') {
             fullParam += `${val}`;
         } else if (param.type === 'int_array_2d') {
@@ -485,7 +498,8 @@ export function csharpGetFullParam(params: Param[], tc: any): string {
 }
 
 export function getDisplayFuncName(outputType: string): string {
-    return outputType === 'string_list' ? 'CSharpHelper.DisplayOutputStringList' :
+    return outputType === 'boolean_array' ? 'CSharpHelper.DisplayOutputBooleanList' :
+            outputType === 'string_list' ? 'CSharpHelper.DisplayOutputStringList' :
             outputType === 'string_list_2d' ? 'CSharpHelper.DisplayOutputStringList2d' :
             outputType === 'int_list' ? 'CSharpHelper.DisplayOutputIntList' : 
             outputType === 'int_list_2d' ? 'CSharpHelper.DisplayOutputIntList2d' : 

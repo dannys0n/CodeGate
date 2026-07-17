@@ -23,12 +23,12 @@ function ambiguousStatement(record) {
 }
 function incorrectPython(signature) {
   const args = signature.params.map((param) => param.name).join(', ');
-  const value = ({ int: '0', boolean: 'False', string: "''", int_array: '[]', int_array_2d: '[]', string_array: '[]', tree_node: 'None', list_node: 'None' })[signature.outputType];
+  const value = ({ int: '0', boolean: 'False', string: "''", int_array: '[]', int_array_2d: '[]', string_array: '[]', boolean_array: '[]', char_array_2d: '[]', string_list_2d: '[]', tree_node: 'None', list_node: 'None' })[signature.outputType];
   return `class Solution:\n    def ${signature.functionName}(self, ${args}):\n        return ${value}\n`;
 }
 function incorrectCpp(signature) {
-  const types = { int: 'int', boolean: 'bool', string: 'string', int_array: 'vector<int>&', int_array_2d: 'vector<vector<int>>&', string_array: 'vector<string>&', tree_node: 'TreeNode*', list_node: 'ListNode*' };
-  const output = { int: 'int', boolean: 'bool', string: 'string', int_array: 'vector<int>', int_array_2d: 'vector<vector<int>>', string_array: 'vector<string>', tree_node: 'TreeNode*', list_node: 'ListNode*' }[signature.outputType];
+  const types = { int: 'int', boolean: 'bool', string: 'string', int_array: 'vector<int>&', int_array_2d: 'vector<vector<int>>&', string_array: 'vector<string>&', boolean_array: 'vector<bool>&', char_array_2d: 'vector<vector<char>>&', string_list_2d: 'vector<vector<string>>&', tree_node: 'TreeNode*', list_node: 'ListNode*' };
+  const output = { int: 'int', boolean: 'bool', string: 'string', int_array: 'vector<int>', int_array_2d: 'vector<vector<int>>', string_array: 'vector<string>', boolean_array: 'vector<bool>', char_array_2d: 'vector<vector<char>>', string_list_2d: 'vector<vector<string>>', tree_node: 'TreeNode*', list_node: 'ListNode*' }[signature.outputType];
   const params = signature.params.map((param) => `${types[param.type]} ${param.name}`).join(', ');
   return `#include <bits/stdc++.h>\nusing namespace std;\nclass Solution { public: ${output} ${signature.functionName}(${params}) { return {}; } };\n`;
 }
@@ -36,6 +36,46 @@ function markdown(record) {
   const constraints = (record.constraints ?? []).map((value) => `- ${value}`).join('\n');
   const followups = (record.follow_ups ?? []).map((value) => `- ${value}`).join('\n');
   return `# ${record.frontend_id}. ${record.title}\n\n${record.description ?? ''}\n\n${constraints ? `## Constraints\n\n${constraints}\n\n` : ''}${followups ? `## Follow-ups\n\n${followups}\n` : ''}`;
+}
+
+async function localPackRecord(problem, error, context, doocs, kamyuRoot) {
+  const problemRoot = path.join(context.repositoryRoot, 'problems', problem.slug);
+  const required = ['metadata.json', 'official-tests.json', 'Marker.java'];
+  const complete = await Promise.all(required.map((name) => fs.access(path.join(problemRoot, name)).then(() => true).catch(() => false)));
+  if (!complete.every(Boolean)) return undefined;
+
+  const metadata = JSON.parse(await fs.readFile(path.join(problemRoot, 'metadata.json'), 'utf8'));
+  if (typeof metadata.functionName !== 'string' || !metadata.functionName) return undefined;
+  const solutions = await selectSolutions({
+    frontendId: problem.frontendId,
+    slug: problem.slug,
+    functionName: metadata.functionName,
+    doocs,
+    kamyuRoot
+  });
+  const languages = {};
+  for (const language of ['python', 'cpp', 'java', 'csharp', 'rust', 'go', 'typescript']) {
+    if (!problem.starters[language] || !solutions[language] || !solutions.paths[language]) continue;
+    languages[language] = {
+      provenance: solutions.provenance[language],
+      solutionSource: { path: path.relative(context.repositoryRoot, solutions.paths[language]).replaceAll(path.sep, '/') }
+    };
+  }
+  if (!Object.keys(languages).length) return undefined;
+  return {
+    frontendId: problem.frontendId,
+    slug: problem.slug,
+    difficulty: problem.difficulty,
+    shape: metadata.classProblem ? 'class' : 'function',
+    endpointOnly: true,
+    slimSources: true,
+    languages,
+    source: { name: 'existing-cojudge-pack', revision: 'local' },
+    sourceDirectory: context.repositoryRoot,
+    sourceRecord: `sources/leetcode-problems/problems/${String(problem.frontendId).padStart(4, '0')}-${problem.slug}.json`,
+    testSource: 'existing-cojudge',
+    recoveredFrom: error instanceof Error ? error.message : String(error)
+  };
 }
 
 export async function loadLeetcodeBundle(source, context) {
@@ -51,10 +91,10 @@ export async function loadLeetcodeBundle(source, context) {
       const dataset = newfacade.get(problem.frontendId);
       let signature;
       try {
-        signature = parsePythonSignature(problem.starters.python);
+        signature = parsePythonSignature(problem.starters.python, problem.starters);
       } catch (primaryError) {
         if (!dataset?.starter_code) throw primaryError;
-        signature = parsePythonSignature(dataset.starter_code);
+        signature = parsePythonSignature(dataset.starter_code, problem.starters);
       }
       const exactCases = dataset && !ambiguousStatement(problem) ? extractExactCases(dataset, signature) : [];
       const solutions = await selectSolutions({ frontendId: problem.frontendId, slug: problem.slug, functionName: signature.functionName, doocs, kamyuRoot });
@@ -119,7 +159,8 @@ export async function loadLeetcodeBundle(source, context) {
         testLocator: exactCases.length >= (source.minimumTests ?? 3) ? dataset._locator : undefined
       });
     } catch (error) {
-      records.push({ frontendId: problem.frontendId, slug: problem.slug, adapterError: error instanceof Error ? error.message : String(error) });
+      records.push(await localPackRecord(problem, error, context, doocs, kamyuRoot)
+        ?? { frontendId: problem.frontendId, slug: problem.slug, adapterError: error instanceof Error ? error.message : String(error) });
     }
   }
   return records;

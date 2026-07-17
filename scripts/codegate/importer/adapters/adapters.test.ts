@@ -49,6 +49,24 @@ describe('LeetCode source adapters', () => {
     });
   });
 
+  it('uses companion signatures to distinguish character matrices from nested strings', () => {
+    const python = 'class Solution:\n    def solve(self, board: List[List[str]]) -> bool:\n        pass';
+    expect(parsePythonSignature(python, { cpp: 'bool solve(vector<vector<char>>& board);' })).toEqual({
+      functionName: 'solve', params: [{ name: 'board', type: 'char_array_2d' }], outputType: 'boolean'
+    });
+    expect(parsePythonSignature('class Solution:\n    def solve(self, words: List[str]) -> List[List[str]]:\n        pass', {
+      java: 'List<List<String>> solve(List<String> words);'
+    })).toEqual({
+      functionName: 'solve', params: [{ name: 'words', type: 'string_array' }], outputType: 'string_list_2d'
+    });
+  });
+
+  it('normalizes boolean arrays for the shared judge contract', () => {
+    expect(parsePythonSignature('class Solution:\n    def flags(self, values: List[bool]) -> List[bool]:\n        pass')).toEqual({
+      functionName: 'flags', params: [{ name: 'values', type: 'boolean_array' }], outputType: 'boolean_array'
+    });
+  });
+
   it('generates a deterministic exact-output Marker.java', () => {
     const metadata = { functionName: 'answer', params: [{ name: 'value', type: 'int' }], outputType: 'int' };
     const marker = generateExactMarker(metadata, [{ input: { value: 2 }, output: 4 }]);
@@ -62,6 +80,19 @@ describe('LeetCode source adapters', () => {
     );
     expect(treeMarker).toContain('tree(new Integer[] {1,null,2})');
     expect(treeMarker).toContain('sameTree(root,');
+
+    const matrixMarker = generateExactMarker(
+      { functionName: 'valid', params: [{ name: 'board', type: 'char_array_2d' }], outputType: 'boolean' },
+      [{ input: { board: [['1', '.']] }, output: true }]
+    );
+    expect(matrixMarker).toContain("new char[] {'1','.'}");
+
+    const booleanMarker = generateExactMarker(
+      { functionName: 'flags', params: [{ name: 'values', type: 'boolean_array' }], outputType: 'boolean_array' },
+      [{ input: { values: [true, false] }, output: [false, true] }]
+    );
+    expect(booleanMarker).toContain('List<Boolean> flags');
+    expect(booleanMarker).toContain('Arrays.asList(true,false)');
   });
 
   it('adds only the wrappers required by existing judge runners', () => {
