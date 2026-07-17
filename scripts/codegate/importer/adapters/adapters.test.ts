@@ -13,13 +13,40 @@ describe('LeetCode source adapters', () => {
     expect(() => parsePythonLiteral('__import__("os")')).toThrow();
   });
 
-  it('normalizes supported Neenza signatures and rejects object types', () => {
+  it('normalizes supported Neenza signatures and rejects unsupported object types', () => {
     expect(parsePythonSignature('class Solution:\n    def solve(self, nums: List[int], labels: List[str]) -> bool:\n        ')).toEqual({
       functionName: 'solve',
       params: [{ name: 'nums', type: 'int_array' }, { name: 'labels', type: 'string_array' }],
       outputType: 'boolean'
     });
-    expect(() => parsePythonSignature('class Solution:\n    def solve(self, root: TreeNode) -> int:\n        ')).toThrow(/unsupported/);
+    expect(() => parsePythonSignature('class Solution:\n    def solve(self, node: GraphNode) -> int:\n        ')).toThrow(/unsupported/);
+  });
+
+  it('selects the Solution method instead of helper constructors', () => {
+    const starter = [
+      'class ListNode:',
+      '    def __init__(self, val=0, next=None):',
+      '        self.val = val',
+      '',
+      'class Solution:',
+      '    def solve(self, nums: List[int], target: int = 0) -> int:',
+      '        pass'
+    ].join('\n');
+
+    expect(parsePythonSignature(starter)).toEqual({
+      functionName: 'solve',
+      params: [{ name: 'nums', type: 'int_array' }, { name: 'target', type: 'int' }],
+      outputType: 'int'
+    });
+  });
+
+  it('normalizes standard linked-list and binary-tree nodes', () => {
+    expect(parsePythonSignature('class Solution:\n    def depth(self, root: Optional[TreeNode]) -> int:\n        pass')).toEqual({
+      functionName: 'depth', params: [{ name: 'root', type: 'tree_node' }], outputType: 'int'
+    });
+    expect(parsePythonSignature('class Solution:\n    def reverse(self, head: Optional[ListNode]) -> Optional[ListNode]:\n        pass')).toEqual({
+      functionName: 'reverse', params: [{ name: 'head', type: 'list_node' }], outputType: 'list_node'
+    });
   });
 
   it('generates a deterministic exact-output Marker.java', () => {
@@ -28,6 +55,13 @@ describe('LeetCode source adapters', () => {
     expect(marker).toContain('public int answer(int value)');
     expect(marker).toContain('if (value == 2) return 4;');
     expect(marker).toContain('isCorrect');
+
+    const treeMarker = generateExactMarker(
+      { functionName: 'depth', params: [{ name: 'root', type: 'tree_node' }], outputType: 'int' },
+      [{ input: { root: [1, null, 2] }, output: 2 }]
+    );
+    expect(treeMarker).toContain('tree(new Integer[] {1,null,2})');
+    expect(treeMarker).toContain('sameTree(root,');
   });
 
   it('adds only the wrappers required by existing judge runners', () => {

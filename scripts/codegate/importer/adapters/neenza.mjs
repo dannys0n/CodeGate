@@ -6,15 +6,33 @@ const typeMap = new Map([
   ['int', 'int'], ['str', 'string'], ['bool', 'boolean'],
   ['List[int]', 'int_array'], ['list[int]', 'int_array'],
   ['List[str]', 'string_array'], ['list[str]', 'string_array'],
-  ['List[List[int]]', 'int_array_2d'], ['list[list[int]]', 'int_array_2d']
+  ['List[List[int]]', 'int_array_2d'], ['list[list[int]]', 'int_array_2d'],
+  ['TreeNode', 'tree_node'], ['Optional[TreeNode]', 'tree_node'], ["'TreeNode'", 'tree_node'],
+  ['ListNode', 'list_node'], ['Optional[ListNode]', 'list_node'], ["'ListNode'", 'list_node']
 ]);
 
 function normalizeAnnotation(value) { return String(value ?? '').replace(/\s+/g, ''); }
 function cojudgeType(annotation) { return typeMap.get(normalizeAnnotation(annotation)); }
 function clean(source) { return typeof source === 'string' ? source.replace(/[ \t]+$/gm, '').trimEnd() : source; }
 
+function solutionClassBody(source) {
+  const lines = String(source).split(/\r?\n/);
+  const start = lines.findIndex((line) => /^\s*class\s+Solution\b/.test(line));
+  if (start < 0) return String(source);
+
+  const classIndent = lines[start].match(/^\s*/)?.[0].length ?? 0;
+  const body = [];
+  for (let index = start + 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    const indent = line.match(/^\s*/)?.[0].length ?? 0;
+    if (line.trim() && indent <= classIndent) break;
+    body.push(line);
+  }
+  return body.join('\n');
+}
+
 export function parsePythonSignature(source) {
-  const match = String(source).match(/def\s+([A-Za-z_]\w*)\s*\(\s*self\s*,?([\s\S]*?)\)\s*(?:->\s*([^:\n]+))?\s*:/);
+  const match = solutionClassBody(source).match(/def\s+([A-Za-z_]\w*)\s*\(\s*self\s*,?([\s\S]*?)\)\s*(?:->\s*([^:\n]+))?\s*:/);
   if (!match) throw new Error('Python starter signature was not recognized');
   const params = splitTopLevel(match[2]).map((part) => {
     const parameter = part.trim().match(/^([A-Za-z_]\w*)\s*:\s*(.+?)(?:\s*=.*)?$/);

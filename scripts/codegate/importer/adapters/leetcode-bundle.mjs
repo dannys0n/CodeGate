@@ -23,12 +23,12 @@ function ambiguousStatement(record) {
 }
 function incorrectPython(signature) {
   const args = signature.params.map((param) => param.name).join(', ');
-  const value = ({ int: '0', boolean: 'False', string: "''", int_array: '[]', int_array_2d: '[]', string_array: '[]' })[signature.outputType];
+  const value = ({ int: '0', boolean: 'False', string: "''", int_array: '[]', int_array_2d: '[]', string_array: '[]', tree_node: 'None', list_node: 'None' })[signature.outputType];
   return `class Solution:\n    def ${signature.functionName}(self, ${args}):\n        return ${value}\n`;
 }
 function incorrectCpp(signature) {
-  const types = { int: 'int', boolean: 'bool', string: 'string', int_array: 'vector<int>&', int_array_2d: 'vector<vector<int>>&', string_array: 'vector<string>&' };
-  const output = { int: 'int', boolean: 'bool', string: 'string', int_array: 'vector<int>', int_array_2d: 'vector<vector<int>>', string_array: 'vector<string>' }[signature.outputType];
+  const types = { int: 'int', boolean: 'bool', string: 'string', int_array: 'vector<int>&', int_array_2d: 'vector<vector<int>>&', string_array: 'vector<string>&', tree_node: 'TreeNode*', list_node: 'ListNode*' };
+  const output = { int: 'int', boolean: 'bool', string: 'string', int_array: 'vector<int>', int_array_2d: 'vector<vector<int>>', string_array: 'vector<string>', tree_node: 'TreeNode*', list_node: 'ListNode*' }[signature.outputType];
   const params = signature.params.map((param) => `${types[param.type]} ${param.name}`).join(', ');
   return `#include <bits/stdc++.h>\nusing namespace std;\nclass Solution { public: ${output} ${signature.functionName}(${params}) { return {}; } };\n`;
 }

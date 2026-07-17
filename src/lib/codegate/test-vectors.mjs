@@ -8,9 +8,11 @@ function matchesType(value, type) {
   if (type === 'int_array') return Array.isArray(value) && value.every((item) => matchesType(item, 'int'));
   if (type === 'string_array') return Array.isArray(value) && value.every((item) => matchesType(item, 'string'));
   if (type === 'int_array_2d') return Array.isArray(value) && value.every((row) => matchesType(row, 'int_array'));
+  if (type === 'list_node') return matchesType(value, 'int_array');
+  if (type === 'tree_node') return Array.isArray(value) && value.every((item) => item === null || matchesType(item, 'int'));
   return false;
 }
-function storedInput(value, type) { return ['int_array', 'int_array_2d', 'string_array'].includes(type) ? JSON.stringify(value) : value; }
+function storedInput(value, type) { return ['int_array', 'int_array_2d', 'string_array', 'list_node', 'tree_node'].includes(type) ? JSON.stringify(value) : value; }
 
 export function extractExactCases(dataset, metadata) {
   const cases = [];
