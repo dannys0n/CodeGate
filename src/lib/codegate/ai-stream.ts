@@ -1,4 +1,4 @@
-export type AiStreamEvent = { type: 'status' | 'text' | 'done' | 'error'; text?: string };
+export type AiStreamEvent = { type: 'status' | 'text' | 'reasoning' | 'problem' | 'result' | 'done' | 'error'; text?: string };
 
 export async function consumeAiStream(response: Response, onEvent: (event: AiStreamEvent) => void) {
     if (!response.ok || !response.body) throw new Error((await response.text().catch(() => '')).trim() || `Request failed with ${response.status}`);

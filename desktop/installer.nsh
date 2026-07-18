@@ -55,7 +55,7 @@ Function StartEventsPageCreate
   Pop $StartAtResumeCheckbox
   ${NSD_SetState} $StartAtResumeCheckbox $StartAtResume
 
-  ${NSD_CreateCheckbox} 0 98u 100% 12u "Download and enable the local AI helper (Qwen3 4B)"
+  ${NSD_CreateCheckbox} 0 98u 100% 12u "Download and enable the AI model"
   Pop $InstallAiModelCheckbox
   ${NSD_SetState} $InstallAiModelCheckbox $InstallAiModel
 
@@ -90,7 +90,7 @@ FunctionEnd
   ${EndIf}
 
   ${If} $InstallAiModel == ${BST_CHECKED}
-    DetailPrint "Enabling Docker Model Runner and downloading Qwen3 4B..."
+    DetailPrint "Enabling Docker Model Runner and downloading the AI model..."
     nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -Enable -SettingsPath "$APPDATA\CodeGate\settings.json"'
     Pop $0
     ${If} $0 != 0
@@ -132,7 +132,7 @@ Function un.ImageCleanupPageCreate
   ${NSD_CreateLabel} 16u 58u 94% 34u "Warning: these language images are shared Docker resources and may also be used by other development projects. Leave this unchecked to keep them."
   Pop $0
 
-  ${NSD_CreateCheckbox} 0 100u 100% 12u "Remove the downloaded CodeGate AI model (Qwen3 4B)"
+  ${NSD_CreateCheckbox} 0 100u 100% 12u "Remove the downloaded CodeGate AI model"
   Pop $RemoveAiModelCheckbox
   ${NSD_SetState} $RemoveAiModelCheckbox $RemoveAiModel
 
@@ -181,7 +181,7 @@ FunctionEnd
     nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -Remove'
     Pop $0
     ${If} $0 != 0
-      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker Model Runner could not remove the Qwen3 4B model. Start Docker Desktop and remove it with docker model rm hf.co/Qwen/Qwen3-4B-GGUF:Q4_K_M."
+      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker Model Runner could not remove the AI model. Start Docker Desktop and remove the CodeGate AI model to finish cleanup."
     ${EndIf}
   ${EndIf}
 

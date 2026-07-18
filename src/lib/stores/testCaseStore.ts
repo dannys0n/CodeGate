@@ -5,7 +5,14 @@ import { browser } from '$app/environment';
 const STORAGE_KEY = 'testcases';
 
 const defaultValue: Record<string, any[]> = {};
-const initialValue = browser ? (JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || defaultValue) : defaultValue;
+const storedValue: Record<string, any[]> = browser
+    ? (JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || defaultValue)
+    : defaultValue;
+// Syntax drills are intentionally ephemeral. Remove entries created by older builds
+// that persisted their generated problem IDs alongside algorithm test cases.
+const initialValue = Object.fromEntries(
+    Object.entries(storedValue).filter(([problemId]) => !problemId.startsWith('ai-syntax-'))
+);
 
 const testCaseStore = writable<Record<string, any[]>>(initialValue);
 

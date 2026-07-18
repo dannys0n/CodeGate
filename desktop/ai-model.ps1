@@ -6,7 +6,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$model = 'hf.co/Qwen/Qwen3-4B-GGUF:Q4_K_M'
+$model = 'hf.co/jica98/qwen3.5-4B-super-coder:Q4_0'
 $registryPath = 'HKCU:\Software\CodeGate\AI'
 
 function Set-AiPreference([bool]$Enabled) {
@@ -68,8 +68,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 & $docker.Source model pull $model
-if ($LASTEXITCODE -ne 0) { throw 'The Qwen3 4B model download failed.' }
+if ($LASTEXITCODE -ne 0) { throw 'The AI model download failed.' }
 & $docker.Source model configure --context-size 8192 $model -- --parallel 1 --no-cache-prompt --cache-ram 0 --reasoning-budget 0
-if ($LASTEXITCODE -ne 0) { throw 'The Qwen3 4B model could not be configured for CodeGate.' }
+if ($LASTEXITCODE -ne 0) { throw 'The AI model could not be configured for CodeGate.' }
 & $docker.Source model run --detach $model
-if ($LASTEXITCODE -ne 0) { throw 'The Qwen3 4B model could not be loaded.' }
+if ($LASTEXITCODE -ne 0) { throw 'The AI model could not be loaded.' }

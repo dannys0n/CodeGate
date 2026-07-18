@@ -1,10 +1,11 @@
 import { spawn } from 'node:child_process';
 
-export const codeGateModel = 'hf.co/Qwen/Qwen3-4B-GGUF:Q4_K_M';
+export const codeGateModel = 'hf.co/jica98/qwen3.5-4B-super-coder:Q4_0';
 export const modelRunnerBaseUrl = 'http://127.0.0.1:12434';
 export const codeGateModelContextTokens = 8192;
 
-type StreamEvent = (type: 'status' | 'text', text: string) => void;
+type StreamEvent = (type: 'status' | 'text' | 'reasoning' | 'problem' | 'result', text: string) => void;
+type ModelRequestOptions = { seed?: number; temperature?: number; includeReasoning?: boolean };
 
 function dockerCommand() {
     return process.platform === 'win32' ? 'docker.exe' : 'docker';
@@ -110,7 +111,7 @@ export function extractModelDelta(payload: any) {
     };
 }
 
-export async function streamModelText(messages: ChatMessage[], onEvent: StreamEvent, signal?: AbortSignal) {
+export async function streamModelText(messages: ChatMessage[], onEvent: StreamEvent, signal?: AbortSignal, options: ModelRequestOptions = {}) {
     if (inferenceActive) throw new Error('Another local AI explanation is already running');
     inferenceActive = true;
     try {
@@ -121,7 +122,8 @@ export async function streamModelText(messages: ChatMessage[], onEvent: StreamEv
                 model: codeGateModel,
                 messages,
                 stream: true,
-                temperature: 0.15,
+                temperature: options.temperature ?? 0.15,
+                ...(Number.isInteger(options.seed) ? { seed: options.seed } : {}),
                 chat_template_kwargs: { enable_thinking: false }
             }),
             signal
@@ -153,14 +155,17 @@ export async function streamModelText(messages: ChatMessage[], onEvent: StreamEv
                         emitted = true;
                         onEvent('text', content);
                     }
-                    if (reasoning) reasoningFallback += reasoning;
+                    if (reasoning) {
+                        reasoningFallback += reasoning;
+                        if (options.includeReasoning) onEvent('reasoning', reasoning);
+                    }
                 } catch {
                     // Ignore keepalive and non-chat events from compatible backends.
                 }
             }
             if (done) break;
         }
-        if (!emitted && reasoningFallback.trim()) {
+        if (!emitted && reasoningFallback.trim() && !options.includeReasoning) {
             onEvent('text', reasoningFallback.replace(/<\/?think>/gi, '').trim());
             emitted = true;
         }

@@ -97,7 +97,7 @@ export async function loadCandidateAssets(frontendId: string, language: GateLang
         if (cases.length < 3) throw new Error(`Insufficient valid tests after loading: ${problem.slug}`);
         await materializeGeneratedProblem(problem, record, cases as Array<{ input: Record<string, unknown>; output: unknown }>);
     } else {
-        await deactivateGeneratedProblem();
+        await deactivateGeneratedProblem(problem.slug);
         const metadataContents = await readSafeFile(`problems/${problem.slug}/metadata.json`, root);
         metadata = JSON.parse(metadataContents.toString('utf8'));
         const problemRoot = `problems/${problem.slug}`;

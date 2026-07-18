@@ -20,7 +20,7 @@
     import { onMount, tick } from 'svelte';
     import { v4 as uuidv4 } from 'uuid';
     import gameResultsStore, { computeGameResult } from '$lib/stores/gameResultsStore';
-    import { leetcodeDifficultyLevels, type DifficultyLevel, type GateLanguage, type LeetcodeDifficulty } from '$lib/codegate/types';
+    import { gateLanguages, leetcodeDifficultyLevels, type DifficultyLevel, type GateLanguage, type LeetcodeDifficulty } from '$lib/codegate/types';
     import { consumeAiStream } from '$lib/codegate/ai-stream';
 
     export let data;
@@ -56,7 +56,39 @@
     let showProblemNumberFilter = false;
     let problemNumberFilterContainer: HTMLElement | null = null;
     type ProblemCatalogEntry = { problemId: string; number: number; title: string; leetcodeDifficulty: LeetcodeDifficulty };
-    let codegateWorkspaceTab: 'editor' | 'catalogue' = 'editor';
+    let codegateWorkspaceTab: 'editor' | 'catalogue' | 'ai-drill' = 'editor';
+    type SyntaxDrillPayload = {
+        problem: any;
+        language: GateLanguage;
+        source: string;
+    };
+    let syntaxDrill: SyntaxDrillPayload | null = null;
+    let syntaxDrillCode = '';
+    let syntaxDrillLanguage: GateLanguage = language as GateLanguage;
+    let syntaxDrillState: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
+    let syntaxDrillStatus = '';
+    let syntaxDrillProblemPreview = '';
+    let syntaxDrillController: AbortController | null = null;
+    type SyntaxDrillPreview = { title: string; statement: string; info: string[] };
+    function parseSyntaxDrillPreview(raw: string): SyntaxDrillPreview {
+        const cleaned = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+        const titleMatch = cleaned.match(/^#\s+(.+)$/m);
+        const infoHeading = cleaned.match(/^##\s+Info\s*(?:\r?\n|$)/im);
+        const infoText = infoHeading?.index === undefined
+            ? ''
+            : cleaned.slice(infoHeading.index + infoHeading[0].length);
+        const info = infoText.split(/\r?\n/)
+            .map((line) => line.replace(/^\s*(?:[-*]|\d+[.)])\s*/, '').trim())
+            .filter(Boolean)
+            .slice(0, 2);
+        let statement = cleaned.replace(titleMatch?.[0] ?? '', '').trim();
+        const headingInStatement = statement.search(/^##\s+Info\s*(?:\r?\n|$)/im);
+        if (headingInStatement >= 0) statement = statement.slice(0, headingInStatement).trim();
+        return { title: titleMatch?.[1]?.trim() ?? '', statement, info };
+    }
+    $: syntaxDrillPreview = parseSyntaxDrillPreview(syntaxDrillProblemPreview);
+    $: activeWorkspaceLanguage = codegateWorkspaceTab === 'ai-drill' ? syntaxDrillLanguage : language;
+    $: activeWorkspaceProblem = codegateWorkspaceTab === 'ai-drill' && syntaxDrill ? syntaxDrill.problem : data.problem;
     let problemCatalog: ProblemCatalogEntry[] = [];
     let problemCatalogSearch = '';
     let problemCatalogLoading = false;
@@ -76,6 +108,10 @@
         ? Array.from(new Set((data.codegate?.available ?? []).map((variant: { language: GateLanguage }) => variant.language)))
         : [];
     $: gateBinding = isCodeGate ? { sessionId: gateSessionId, challengeId: gateChallengeId, difficulty } : null;
+    $: activeGateBinding = codegateWorkspaceTab === 'ai-drill' ? null : gateBinding;
+    $: activeSyntaxDrillBinding = codegateWorkspaceTab === 'ai-drill' && syntaxDrill
+        ? { sessionId: gateSessionId, challengeId: gateChallengeId, syntaxDrillId: syntaxDrill.problem.id }
+        : null;
     const fileKey = () => `${problemId}`;
     const codeKey = () => `${problemId}:${language}`;
 
@@ -349,7 +385,7 @@
     function handleDragEnd() {
         draggingId = null;
     }
-    $: if (!suppressSave && code !== undefined) {
+    $: if (!suppressSave && code !== undefined && codegateWorkspaceTab !== 'ai-drill') {
         if (isCodeGate && typeof localStorage !== 'undefined') {
             localStorage.setItem(`codegate:draft:${problemId}:${language}:${difficulty}`, code);
         } else {
@@ -380,7 +416,7 @@
         }
     }
 
-    $: if (language) {
+    $: if (language && codegateWorkspaceTab === 'editor') {
         loadOrInitFile(language);
     }
 
@@ -619,10 +655,12 @@
         userSettingsStorage.update((settings) => ({ ...settings, aiEnabled: enabled }));
         aiHintController?.abort();
         aiExplainController?.abort();
+        syntaxDrillController?.abort();
         if (!enabled) {
             aiHintOpen = false;
             aiHintState = 'idle';
             aiHintText = '';
+            if (codegateWorkspaceTab === 'ai-drill') await openEditorWorkspace();
         }
         await runAiLifecycle(enabled ? 'provision' : 'unload');
     }
@@ -676,7 +714,7 @@
             const response = await fetch('/api/codegate/ai/explain-selection', {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ sessionId: gateSessionId, challengeId: gateChallengeId, source, selection, startLine, endLine }),
+                body: JSON.stringify({ sessionId: gateSessionId, challengeId: gateChallengeId, syntaxDrillId: codegateWorkspaceTab === 'ai-drill' ? syntaxDrill?.problem.id : undefined, source, selection, startLine, endLine }),
                 signal: aiExplainController.signal
             });
             await consumeAiStream(response, (streamEvent) => {
@@ -694,6 +732,7 @@
     }
 
     function saveCurrentViewState() {
+        if (codegateWorkspaceTab === 'ai-drill') return;
         if (!editorComponent || activeTabId < 0 || activeTabId >= tabs.length) return;
         const state = editorComponent.getViewState();
         if (!state) return;
@@ -768,6 +807,11 @@
     function handleResetClick() {
         const confirmed = confirm('Are you sure you want to reset the code for this file? This action cannot be undone.');
         if (!confirmed) return;
+        if (codegateWorkspaceTab === 'ai-drill' && syntaxDrill) {
+            syntaxDrillCode = syntaxDrill.source;
+            code = syntaxDrill.source;
+            return;
+        }
         if (isCodeGate) {
             localStorage.removeItem(`codegate:draft:${problemId}:${language}:${difficulty}`);
             code = data.codegate?.source ?? '';
@@ -904,6 +948,13 @@
     const replaceGateChallenge = () => updateGateChallenge('refresh');
     function handleLanguageChange(event: Event) {
         const requestedLanguage = (event.currentTarget as HTMLSelectElement).value as ProgrammingLanguage;
+        if (codegateWorkspaceTab === 'ai-drill') {
+            syntaxDrillLanguage = requestedLanguage as GateLanguage;
+            syntaxDrill = null;
+            syntaxDrillCode = '';
+            void generateSyntaxDrill();
+            return;
+        }
         saveCurrentViewState();
         if (isCodeGate) {
             void updateGateChallenge('switch-variant', requestedLanguage as GateLanguage, difficulty);
@@ -988,8 +1039,73 @@
     }
 
     function openProblemCatalogue() {
+        if (codegateWorkspaceTab === 'ai-drill') syntaxDrillCode = code;
         codegateWorkspaceTab = 'catalogue';
         void loadProblemCatalog();
+    }
+
+    async function openEditorWorkspace() {
+        if (codegateWorkspaceTab === 'ai-drill') syntaxDrillCode = code;
+        codegateWorkspaceTab = 'editor';
+        await loadOrInitFile(language);
+    }
+
+    async function openSyntaxDrill() {
+        if (!$userSettingsStorage.aiEnabled || aiSettingsBusy) return;
+        codegateWorkspaceTab = 'ai-drill';
+        if (syntaxDrill) {
+            suppressSave = true;
+            code = syntaxDrillCode || syntaxDrill.source;
+            currentViewState = null;
+            await tick();
+            suppressSave = false;
+            return;
+        }
+        void generateSyntaxDrill();
+    }
+
+    async function generateSyntaxDrill() {
+        if (!$userSettingsStorage.aiEnabled || syntaxDrillState === 'loading') return;
+        syntaxDrillController?.abort();
+        syntaxDrillController = new AbortController();
+        syntaxDrillState = 'loading';
+        syntaxDrillStatus = 'Generating a one-minute syntax drill…';
+        syntaxDrillProblemPreview = '';
+        syntaxDrillCode = '';
+        if (codegateWorkspaceTab === 'ai-drill') code = '';
+        let payload = '';
+        try {
+            const response = await fetch('/api/codegate/ai/syntax-drill', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: gateSessionId,
+                    challengeId: gateChallengeId,
+                    language: syntaxDrillLanguage,
+                }),
+                signal: syntaxDrillController.signal
+            });
+            await consumeAiStream(response, (event) => {
+                if (event.type === 'status' && event.text) syntaxDrillStatus = event.text;
+                if (event.type === 'problem' && event.text) syntaxDrillProblemPreview += event.text;
+                if (event.type === 'result' && event.text) payload += event.text;
+            });
+            syntaxDrill = JSON.parse(payload) as SyntaxDrillPayload;
+            syntaxDrillCode = syntaxDrill.source;
+            syntaxDrillState = 'ready';
+            syntaxDrillStatus = '';
+            if (codegateWorkspaceTab === 'ai-drill') {
+                suppressSave = true;
+                code = syntaxDrillCode;
+                currentViewState = null;
+                await tick();
+                suppressSave = false;
+            }
+        } catch (error) {
+            if (syntaxDrillController.signal.aborted) return;
+            syntaxDrillState = 'error';
+            syntaxDrillStatus = error instanceof Error ? error.message : String(error);
+        }
     }
 
     function selectCatalogProblem(entry: ProblemCatalogEntry) {
@@ -1077,6 +1193,54 @@
                     {/if}
                 </button>
             </Tooltip>
+            {#if codegateWorkspaceTab === 'ai-drill'}
+                <div class="codegate-problem-actions">
+                    <button class="btn gate-action" on:click={() => { syntaxDrill = null; syntaxDrillCode = ''; void generateSyntaxDrill(); }} disabled={syntaxDrillState === 'loading' || !$userSettingsStorage.aiEnabled}>New Drill</button>
+                    <button class="btn gate-give-up" on:click={giveUpGate} disabled={gateActionPending}>Give Up</button>
+                </div>
+                {#if syntaxDrillState === 'loading'}
+                    {#if syntaxDrillPreview.title}
+                        <div class="title-row"><h1>{syntaxDrillPreview.title}</h1></div>
+                        <div class="markdown-body">{@html renderMarkdown(syntaxDrillPreview.statement)}</div>
+                        {#each syntaxDrillPreview.info as note, i}
+                            <div class="hint-item">
+                                <button class="hint-header" on:click={() => { const next = new Set(openedHints); if (next.has(i)) next.delete(i); else next.add(i); openedHints = next; }}>
+                                    <span>Info {i + 1}</span><span class="chevron">{openedHints.has(i) ? "▼" : "▶"}</span>
+                                </button>
+                                {#if openedHints.has(i)}<div class="hint-body markdown-body">{@html renderMarkdown(note)}</div>{/if}
+                            </div>
+                        {/each}
+                    {:else}
+                    <div class="syntax-drill-empty syntax-drill-generating">
+                        <h1>AI Syntax Drill ✦</h1>
+                        <p>{syntaxDrillStatus}</p>
+                    </div>
+                    {/if}
+                {:else if syntaxDrillState === 'error'}
+                    <div class="syntax-drill-empty">
+                        <h1>Unable to create a drill</h1>
+                        <p>{syntaxDrillStatus}</p>
+                        <button class="btn" on:click={generateSyntaxDrill}>Retry</button>
+                    </div>
+                {:else if syntaxDrill}
+                    <div class="title-row"><h1>{syntaxDrill.problem.title}</h1></div>
+                    <div class="markdown-body">{@html renderMarkdown(syntaxDrill.problem.statement)}</div>
+                    {#each syntaxDrill.problem.examples as example}
+                        <div class="example">
+                            <pre class="example-input">{example.input}</pre>
+                            <pre class="example-output">{example.output}</pre>
+                        </div>
+                    {/each}
+                    {#each syntaxDrill.problem.info as note, i}
+                        <div class="hint-item">
+                            <button class="hint-header" on:click={() => { const next = new Set(openedHints); if (next.has(i)) next.delete(i); else next.add(i); openedHints = next; }}>
+                                <span>Info {i + 1}</span><span class="chevron">{openedHints.has(i) ? "â–¾" : "â–¸"}</span>
+                            </button>
+                            {#if openedHints.has(i)}<div class="hint-body markdown-body">{@html renderMarkdown(note)}</div>{/if}
+                        </div>
+                    {/each}
+                {/if}
+            {:else}
             {#if isCodeGate}
                 <div class="codegate-problem-actions">
                     <button class="btn gate-action" on:click={replaceGateChallenge} disabled={gateActionPending}>Different Problem</button>
@@ -1192,6 +1356,7 @@
                     </div>
                 {/if}
             {/if}
+            {/if}
         </div>
     </div>
 
@@ -1206,7 +1371,7 @@
                     role="tab"
                     aria-selected={codegateWorkspaceTab === 'editor'}
                     class:active={codegateWorkspaceTab === 'editor'}
-                    on:click={() => codegateWorkspaceTab = 'editor'}
+                    on:click={openEditorWorkspace}
                 >
                     <svg class="workspace-tab-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                         <path d="m7 5-5 5 5 5M13 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1226,6 +1391,19 @@
                     </svg>
                     Catalogue
                 </button>
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={codegateWorkspaceTab === 'ai-drill'}
+                    class:active={codegateWorkspaceTab === 'ai-drill'}
+                    disabled={!$userSettingsStorage.aiEnabled || aiSettingsBusy}
+                    aria-disabled={!$userSettingsStorage.aiEnabled || aiSettingsBusy}
+                    title={$userSettingsStorage.aiEnabled ? 'Open AI Syntax Drill' : 'Enable the local AI helper in Settings first'}
+                    on:click={openSyntaxDrill}
+                >
+                    <span class="workspace-tab-star" aria-hidden="true">✦</span>
+                    AI Syntax Drill
+                </button>
             </div>
         {/if}
         <div class="editor-header" class:codegate-header={isCodeGate} style="display:flex;flex-wrap:wrap;gap:var(--spacing-2);align-items:center;justify-content:space-between;padding:var(--spacing-2);border-bottom:1px solid var(--color-border);">
@@ -1234,7 +1412,7 @@
                     <label for="language-select" style="font-size:0.9rem;color:var(--color-text-secondary);">Language</label>
                     <select
                         id="language-select"
-                        value={language}
+                        value={activeWorkspaceLanguage}
                         disabled={isCodeGate && gateActionPending}
                         on:focus={() => (suppressSave = true)}
                         on:mousedown={() => (suppressSave = true)}
@@ -1243,7 +1421,7 @@
                         on:blur={() => (suppressSave = false)}
                     >
                         {#if isCodeGate}
-                            {#each gateAvailableLanguages as gateLanguage}
+                            {#each codegateWorkspaceTab === 'ai-drill' ? gateLanguages : gateAvailableLanguages as gateLanguage}
                                 <option value={gateLanguage}>{gateLanguageLabels[gateLanguage]}</option>
                             {/each}
                         {:else}
@@ -1256,7 +1434,7 @@
                             <option value="go">Go</option>
                         {/if}
                     </select>
-                    {#if isCodeGate}
+                    {#if isCodeGate && codegateWorkspaceTab !== 'ai-drill'}
                         <label for="difficulty-select" style="font-size:0.9rem;color:var(--color-text-secondary);">Solution difficulty</label>
                         <select id="difficulty-select" value={difficulty} on:change={handleDifficultyChange} disabled={gateActionPending}>
                             <option value="0">Original (0%)</option>
@@ -1470,7 +1648,7 @@
                                         disabled={aiSettingsBusy}
                                         on:change={(event) => void setAiEnabled(event.currentTarget.checked)}
                                     />
-                                    Enable Qwen3 4B hints
+                                    Enable the AI model
                                 </label>
                                 <div class="settings-note">Enabling downloads about 2–3 GB and turns on Docker Model Runner.</div>
                                 {#if aiSettingsBusy || aiSettingsStatus}
@@ -1504,18 +1682,18 @@
                         </div>
                     {/if}
                 </div>
-                <div style="font-size:0.85rem;color:var(--color-text-secondary);">{imageName || language.toUpperCase()}</div>
+                <div style="font-size:0.85rem;color:var(--color-text-secondary);">{codegateWorkspaceTab === 'ai-drill' ? activeWorkspaceLanguage.toUpperCase() : imageName || activeWorkspaceLanguage.toUpperCase()}</div>
             </div>
         </div>
 
-        {#if !isCodeGate || codegateWorkspaceTab === 'editor'}
+        {#if !isCodeGate || codegateWorkspaceTab === 'editor' || (codegateWorkspaceTab === 'ai-drill' && (syntaxDrill || syntaxDrillState === 'loading'))}
         <div class="editor-container">
             {#if CodeEditor}
                 <svelte:component 
                     this={CodeEditor} 
                     bind:this={editorComponent}
                     bind:value={code} 
-                    {language} 
+                    language={activeWorkspaceLanguage}
                     {fontSize} 
                     {theme} 
                     {vimMode} 
@@ -1529,12 +1707,13 @@
         </div>
         <ExecutionPanel
             bind:this={executionPanelComponent}
-            problem={data.problem}
+            problem={activeWorkspaceProblem}
             {code}
-            {language}
+            language={activeWorkspaceLanguage}
             gameMode={isGameMode}
             gameStartTime={gameStartTime}
-            {gateBinding}
+            gateBinding={activeGateBinding}
+            syntaxDrillBinding={activeSyntaxDrillBinding}
             on:gateReleased={handleGateReleased}
             on:gameSubmitSuccess={(e) => {
                 const { runCount, submitCount, timeSpent } = e.detail;
@@ -1547,6 +1726,11 @@
                 showGameResult = true;
             }}
         />
+        {:else if codegateWorkspaceTab === 'ai-drill'}
+            <section class="syntax-drill-editor-empty" aria-live="polite">
+                <span class="workspace-tab-star" aria-hidden="true">✦</span>
+                <p>{syntaxDrillStatus || 'Open the local AI helper to create a syntax drill.'}</p>
+            </section>
         {:else}
             <section class="problem-catalog-pane" aria-label="Problem catalogue">
                 <div class="problem-catalog-heading">
@@ -1733,9 +1917,46 @@
         color: var(--color-text);
         opacity: 0.9;
     }
+    .workspace-tab-star {
+        display: inline-grid;
+        place-items: center;
+        width: 18px;
+        height: 18px;
+        flex: 0 0 18px;
+        font-size: 15px;
+        line-height: 1;
+    }
     .codegate-workspace-tabs button.active .workspace-tab-icon {
         color: var(--color-border-active);
         opacity: 1;
+    }
+    .syntax-drill-empty {
+        display: grid;
+        justify-items: start;
+        gap: var(--spacing-3);
+        padding: var(--spacing-4) 0;
+    }
+    .syntax-drill-empty h1,
+    .syntax-drill-empty p {
+        margin: 0;
+    }
+    .syntax-drill-empty p {
+        color: var(--color-text-secondary);
+    }
+    .syntax-drill-editor-empty {
+        flex: 1;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: var(--spacing-2);
+        color: var(--color-text-secondary);
+        text-align: center;
+        padding: var(--spacing-5);
+    }
+    .syntax-drill-editor-empty .workspace-tab-star {
+        width: 28px;
+        height: 28px;
+        font-size: 24px;
     }
 
     /* Prose styling for the dark theme */

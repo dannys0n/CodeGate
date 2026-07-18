@@ -1,11 +1,22 @@
 import type { RequestHandler } from './$types';
 import { eventStream, streamModelText } from '$lib/server/codegate/ai/model-runner';
 import { boundedText, promptExcerpt, requireAiChallenge } from '$lib/server/codegate/ai/context';
+import { getSyntaxDrill } from '$lib/server/codegate/syntax-drills';
 
 export const POST: RequestHandler = async ({ request }) => {
     try {
         const body = await request.json() as Record<string, unknown>;
-        const { variant, statement } = await requireAiChallenge(body);
+        let language: string;
+        let statement: string;
+        if (typeof body.syntaxDrillId === 'string' && body.syntaxDrillId) {
+            const drill = getSyntaxDrill(body.syntaxDrillId, String(body.sessionId ?? ''), String(body.challengeId ?? ''));
+            language = drill.language;
+            statement = drill.problem.statement;
+        } else {
+            const context = await requireAiChallenge(body);
+            language = context.variant.language;
+            statement = context.statement;
+        }
         const source = boundedText(body.source, 'Source code', 40_000);
         const selection = boundedText(body.selection, 'Selected code', 8_000);
         const startLine = Number(body.startLine);
@@ -22,7 +33,7 @@ export const POST: RequestHandler = async ({ request }) => {
                 },
                 {
                     role: 'user',
-                    content: `/no_think\nLanguage: ${variant.language}\nSelected lines: ${startLine}-${endLine}\n<problem>\n${promptExcerpt(statement, 4_000)}\n</problem>\n<current_source>\n${promptExcerpt(source, 8_000)}\n</current_source>\n<selected_code>\n${selection}\n</selected_code>\nExplain only the selected code.`
+                    content: `/no_think\nLanguage: ${language}\nSelected lines: ${startLine}-${endLine}\n<problem>\n${promptExcerpt(statement, 4_000)}\n</problem>\n<current_source>\n${promptExcerpt(source, 8_000)}\n</current_source>\n<selected_code>\n${selection}\n</selected_code>\nExplain only the selected code.`
                 }
             ], emit, signal);
         }, request.signal);

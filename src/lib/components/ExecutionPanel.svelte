@@ -8,12 +8,14 @@
     import GameModeTimer from "./GameModeTimer.svelte";
     import userStore from "$lib/stores/userStore";
     import type { ProgrammingLanguage } from "$lib/utils/util";
+    import { consumeAiStream } from "$lib/codegate/ai-stream";
     export let problem: any;
     export let code: string;
     export let language: ProgrammingLanguage = "java";
     export let gameMode = false;
     export let gameStartTime = 0;
     export let gateBinding: { sessionId: string; challengeId: string; difficulty: string } | null = null;
+    export let syntaxDrillBinding: { sessionId: string; challengeId: string; syntaxDrillId: string } | null = null;
     let gameRunCount = 0;
     let gameSubmitCount = 0;
     const dispatch = createEventDispatcher();
@@ -41,11 +43,101 @@
     let runningMessage: string = "";
     let aiConsoleTitle = "";
     let aiConsoleOutput = "";
+    let syntaxDrillPassed = false;
+    let approvedSyntaxSource = "";
+    let trackedSyntaxDrillId = "";
+
+    $: {
+        const currentDrillId = syntaxDrillBinding?.syntaxDrillId ?? "";
+        if (currentDrillId !== trackedSyntaxDrillId) {
+            trackedSyntaxDrillId = currentDrillId;
+            syntaxDrillPassed = false;
+            approvedSyntaxSource = "";
+        } else if (syntaxDrillPassed && code !== approvedSyntaxSource) {
+            syntaxDrillPassed = false;
+            status = "no-status";
+        }
+    }
 
     export function showAiConsole(title: string, output: string) {
         aiConsoleTitle = title;
         aiConsoleOutput = output;
         activeMainTab = "console";
+    }
+
+    async function judgeSyntaxDrill() {
+        if (!syntaxDrillBinding || isLoading) return;
+        isLoading = true;
+        status = "running";
+        runningMessage = "Compiling";
+        aiConsoleTitle = "AI Syntax Drill — compile and review";
+        aiConsoleOutput = "[Status] Starting syntax drill review…\n";
+        activeMainTab = "console";
+        let payload = "";
+        let showedReasoning = false;
+        let showedFinal = false;
+        try {
+            const response = await fetch("/api/codegate/ai/syntax-drill/judge", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...syntaxDrillBinding, source: code }),
+            });
+            await consumeAiStream(response, (event) => {
+                if (event.type === "status" && event.text) {
+                    runningMessage = event.text;
+                    aiConsoleOutput += `[Status] ${event.text.trim()}\n`;
+                }
+                if (event.type === "reasoning" && event.text) {
+                    if (!showedReasoning) {
+                        aiConsoleOutput += "\n[Thinking — unexpected]\n";
+                        showedReasoning = true;
+                    }
+                    aiConsoleOutput += event.text;
+                }
+                if (event.type === "text" && event.text) {
+                    if (!showedFinal) {
+                        aiConsoleOutput += "\n[Final]\n";
+                        showedFinal = true;
+                    }
+                    aiConsoleOutput += event.text;
+                }
+                if (event.type === "result" && event.text) payload += event.text;
+            });
+            const result = JSON.parse(payload || "{}") as { compiled?: boolean; approved?: boolean };
+            status = result.compiled && result.approved ? "accepted" : "failed";
+            syntaxDrillPassed = Boolean(result.compiled && result.approved);
+            approvedSyntaxSource = syntaxDrillPassed ? code : "";
+            if (!result.approved && !aiConsoleOutput.trim()) aiConsoleOutput = "The syntax task was not demonstrated clearly.";
+        } catch (error) {
+            status = "failed";
+            syntaxDrillPassed = false;
+            approvedSyntaxSource = "";
+            aiConsoleOutput += `\n[Error]\n${error instanceof Error ? error.message : String(error)}`;
+        } finally {
+            runningMessage = "";
+            isLoading = false;
+        }
+    }
+
+    async function completeSyntaxDrill() {
+        if (!syntaxDrillBinding || !syntaxDrillPassed || code !== approvedSyntaxSource || isLoading) return;
+        isLoading = true;
+        try {
+            const response = await fetch("/api/codegate/ai/syntax-drill/complete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...syntaxDrillBinding, source: code }),
+            });
+            const body = await response.json();
+            if (!response.ok || !body.released) throw new Error(body.error || "Unable to complete syntax drill");
+            dispatch("gateReleased", { outcome: "accepted" });
+        } catch (error) {
+            status = "failed";
+            aiConsoleOutput += `\n[Error]\n${error instanceof Error ? error.message : String(error)}`;
+            activeMainTab = "console";
+        } finally {
+            isLoading = false;
+        }
     }
     // Docker image status for the selected language
     let imageStatus: "unknown" | "present" | "absent" = "unknown";
@@ -332,7 +424,7 @@
         const unsub = testCaseStore.subscribe((v) => (storeSnapshot = v));
         unsub();
 
-        const saved = storeSnapshot?.[problem.id];
+        const saved = syntaxDrillBinding ? undefined : storeSnapshot?.[problem.id];
         const base = saved || problem.testCases;
         testCaseResults = base.map((tc: any) => ({
             ...tc,
@@ -343,7 +435,7 @@
     })();
 
     // Persist changes to testCaseResults to the store (only the input fields; exclude output/error)
-    $: if (testCaseResults) {
+    $: if (testCaseResults && !syntaxDrillBinding) {
         // Build a snapshot suitable for storing
         const toStore = testCaseResults.map((tc: any) => {
             const copy: any = {};
@@ -482,6 +574,10 @@
     }
 
     async function handleRun() {
+        if (syntaxDrillBinding) {
+            await judgeSyntaxDrill();
+            return;
+        }
         isLoading = true;
         if (gameMode) gameRunCount++;
         runningMessage = "";
@@ -618,6 +714,10 @@
     }
 
     async function handleSubmit() {
+        if (syntaxDrillBinding) {
+            await completeSyntaxDrill();
+            return;
+        }
         isLoading = true;
         const submitTime = Date.now();
         if (gameMode) gameSubmitCount++;
@@ -1363,7 +1463,7 @@
                     <button
                         class="btn btn-primary"
                         on:click={handleSubmit}
-                        disabled={isLoading}>Submit</button
+                        disabled={isLoading || Boolean(syntaxDrillBinding && !syntaxDrillPassed)}>{syntaxDrillBinding ? "Solution" : "Submit"}</button
                     >
                 </Tooltip>
             {/if}
