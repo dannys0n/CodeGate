@@ -1404,19 +1404,21 @@
                     </svg>
                     Catalogue
                 </button>
-                <button
-                    type="button"
-                    role="tab"
-                    aria-selected={codegateWorkspaceTab === 'ai-drill'}
-                    class:active={codegateWorkspaceTab === 'ai-drill'}
-                    disabled={!$userSettingsStorage.aiEnabled || aiSettingsBusy}
-                    aria-disabled={!$userSettingsStorage.aiEnabled || aiSettingsBusy}
-                    title={$userSettingsStorage.aiEnabled ? 'Open AI Syntax Drill' : 'Enable the local AI helper in Settings first'}
-                    on:click={openSyntaxDrill}
-                >
-                    <span class="workspace-tab-star" aria-hidden="true">✦</span>
-                    AI Syntax Drill
-                </button>
+                {#if $userSettingsStorage.aiEnabled}
+                    <button
+                        type="button"
+                        role="tab"
+                        aria-selected={codegateWorkspaceTab === 'ai-drill'}
+                        class:active={codegateWorkspaceTab === 'ai-drill'}
+                        disabled={aiSettingsBusy}
+                        aria-disabled={aiSettingsBusy}
+                        title="Open AI Syntax Drill"
+                        on:click={openSyntaxDrill}
+                    >
+                        <span class="workspace-tab-star" aria-hidden="true">✦</span>
+                        AI Syntax Drill
+                    </button>
+                {/if}
             </div>
         {/if}
         <div class="editor-header" class:codegate-header={isCodeGate} style="display:flex;flex-wrap:wrap;gap:var(--spacing-2);align-items:center;justify-content:space-between;padding:var(--spacing-2);border-bottom:1px solid var(--color-border);">
