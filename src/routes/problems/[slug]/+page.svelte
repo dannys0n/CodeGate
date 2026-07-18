@@ -69,10 +69,17 @@
     let syntaxDrillStatus = '';
     let syntaxDrillProblemPreview = '';
     let syntaxDrillController: AbortController | null = null;
-    type SyntaxDrillPreview = { title: string; statement: string; info: string[] };
+    type SyntaxDrillPreview = { title: string; statement: string; exampleCode: string; info: string[] };
     function parseSyntaxDrillPreview(raw: string): SyntaxDrillPreview {
         const cleaned = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
         const titleMatch = cleaned.match(/^#\s+(.+)$/m);
+        const exampleHeading = cleaned.match(/^##\s+Example\s*(?:\r?\n|$)/im);
+        const exampleRemainder = exampleHeading?.index === undefined
+            ? ''
+            : cleaned.slice(exampleHeading.index + exampleHeading[0].length);
+        const exampleEnd = exampleRemainder.search(/^##\s+/im);
+        const exampleText = (exampleEnd < 0 ? exampleRemainder : exampleRemainder.slice(0, exampleEnd)).trim();
+        const exampleCode = (exampleText.match(/```[^\r\n]*\r?\n([\s\S]*?)(?:\r?\n```|$)/)?.[1] ?? exampleText).trim();
         const infoHeading = cleaned.match(/^##\s+Info\s*(?:\r?\n|$)/im);
         const infoText = infoHeading?.index === undefined
             ? ''
@@ -82,9 +89,9 @@
             .filter(Boolean)
             .slice(0, 2);
         let statement = cleaned.replace(titleMatch?.[0] ?? '', '').trim();
-        const headingInStatement = statement.search(/^##\s+Info\s*(?:\r?\n|$)/im);
+        const headingInStatement = statement.search(/^##\s+(?:Example|Info)\s*(?:\r?\n|$)/im);
         if (headingInStatement >= 0) statement = statement.slice(0, headingInStatement).trim();
-        return { title: titleMatch?.[1]?.trim() ?? '', statement, info };
+        return { title: titleMatch?.[1]?.trim() ?? '', statement, exampleCode, info };
     }
     $: syntaxDrillPreview = parseSyntaxDrillPreview(syntaxDrillProblemPreview);
     $: activeWorkspaceLanguage = codegateWorkspaceTab === 'ai-drill' ? syntaxDrillLanguage : language;
@@ -1202,10 +1209,16 @@
                     {#if syntaxDrillPreview.title}
                         <div class="title-row"><h1>{syntaxDrillPreview.title}</h1></div>
                         <div class="markdown-body">{@html renderMarkdown(syntaxDrillPreview.statement)}</div>
+                        {#if syntaxDrillPreview.exampleCode}
+                            <div class="example">
+                                <div class="syntax-example-title">Example</div>
+                                <pre>{syntaxDrillPreview.exampleCode}</pre>
+                            </div>
+                        {/if}
                         {#each syntaxDrillPreview.info as note, i}
                             <div class="hint-item">
                                 <button class="hint-header" on:click={() => { const next = new Set(openedHints); if (next.has(i)) next.delete(i); else next.add(i); openedHints = next; }}>
-                                    <span>Info {i + 1}</span><span class="chevron">{openedHints.has(i) ? "▼" : "▶"}</span>
+                                    <span>Info {i + 1}</span><span class="chevron">{openedHints.has(i) ? "▾" : "▸"}</span>
                                 </button>
                                 {#if openedHints.has(i)}<div class="hint-body markdown-body">{@html renderMarkdown(note)}</div>{/if}
                             </div>
@@ -1225,16 +1238,16 @@
                 {:else if syntaxDrill}
                     <div class="title-row"><h1>{syntaxDrill.problem.title}</h1></div>
                     <div class="markdown-body">{@html renderMarkdown(syntaxDrill.problem.statement)}</div>
-                    {#each syntaxDrill.problem.examples as example}
+                    {#if syntaxDrill.problem.exampleCode}
                         <div class="example">
-                            <pre class="example-input">{example.input}</pre>
-                            <pre class="example-output">{example.output}</pre>
+                            <div class="syntax-example-title">Example</div>
+                            <pre>{syntaxDrill.problem.exampleCode}</pre>
                         </div>
-                    {/each}
+                    {/if}
                     {#each syntaxDrill.problem.info as note, i}
                         <div class="hint-item">
                             <button class="hint-header" on:click={() => { const next = new Set(openedHints); if (next.has(i)) next.delete(i); else next.add(i); openedHints = next; }}>
-                                <span>Info {i + 1}</span><span class="chevron">{openedHints.has(i) ? "â–¾" : "â–¸"}</span>
+                                <span>Info {i + 1}</span><span class="chevron">{openedHints.has(i) ? "▾" : "▸"}</span>
                             </button>
                             {#if openedHints.has(i)}<div class="hint-body markdown-body">{@html renderMarkdown(note)}</div>{/if}
                         </div>
@@ -2265,6 +2278,10 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace;
         font-size: 0.9rem;
         margin: var(--spacing-2) 0;
+    }
+
+    .syntax-example-title {
+        font-weight: 700;
     }
 
     .example-input::before { content: 'Input: '; font-weight: 700; }

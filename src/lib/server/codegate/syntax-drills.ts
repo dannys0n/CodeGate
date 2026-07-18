@@ -9,7 +9,7 @@ export type SyntaxDrillProblem = {
     id: string;
     title: string;
     statement: string;
-    examples: never[];
+    exampleCode: string;
     info: string[];
     functionName: string;
     params: never[];
@@ -28,34 +28,69 @@ export type StoredSyntaxDrill = {
 
 function cleanText(value: string, maximum: number): string {
     const cleaned = value.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-    if (!cleaned || cleaned.length > maximum) throw new Error('Invalid generated syntax drill');
-    return cleaned;
+    if (!cleaned) throw new Error('The AI model returned an empty syntax drill');
+    return cleaned.slice(0, maximum);
+}
+
+function markdownSection(source: string, names: string[]): { full: string; body: string } | undefined {
+    const alternatives = names.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    const heading = source.match(new RegExp(`^#{1,3}\\s+(?:${alternatives})\\s*(?:\\r?\\n|$)`, 'im'));
+    if (heading?.index === undefined) return undefined;
+    const bodyStart = heading.index + heading[0].length;
+    const remainder = source.slice(bodyStart);
+    const nextHeading = remainder.search(/^#{1,3}\s+/im);
+    const bodyEnd = nextHeading < 0 ? source.length : bodyStart + nextHeading;
+    return { full: source.slice(heading.index, bodyEnd), body: source.slice(bodyStart, bodyEnd).trim() };
 }
 
 function parseProblem(raw: string) {
     const cleaned = cleanText(raw, 2_000);
     const titleMatch = cleaned.match(/^#\s+(.+)$/m);
-    if (!titleMatch) throw new Error('The generated drill omitted its title');
-    const infoMatch = cleaned.match(/^##\s+Info\s*\r?\n([\s\S]*?)(?=^##\s+|(?![\s\S]))/im);
-    const info = (infoMatch?.[1] ?? '').split(/\r?\n/)
+    const labeledTitle = cleaned.match(/^\s*Title\s*:\s*(.+)$/im);
+    const firstLine = cleaned.split(/\r?\n/).map((line) => line.trim()).find((line) => line && !/^```/.test(line));
+    const title = (titleMatch?.[1] ?? labeledTitle?.[1] ?? firstLine ?? 'Syntax Drill')
+        .replace(/^#+\s*/, '')
+        .slice(0, 100);
+    const exampleSection = markdownSection(cleaned, ['Example', 'Code Example', 'Example Code']);
+    const infoSection = markdownSection(cleaned, ['Info', 'About', 'Notes']);
+    const exampleCode = (exampleSection?.body.match(/```[^\r\n]*\r?\n([\s\S]*?)(?:\r?\n```|$)/)?.[1] ?? exampleSection?.body ?? '')
+        .trim()
+        .slice(0, 500);
+    const info = (infoSection?.body ?? '').split(/\r?\n/)
         .map((line) => line.replace(/^\s*(?:[-*]|\d+[.)])\s*/, '').trim())
         .filter(Boolean)
         .slice(0, 2);
-    const statement = cleaned.replace(titleMatch[0], '').replace(infoMatch?.[0] ?? '', '').trim();
-    if (!statement || statement.length > 600) throw new Error('The generated drill omitted its instruction');
+    const remaining = cleaned
+        .replace(titleMatch?.[0] ?? '', '')
+        .replace(labeledTitle?.[0] ?? '', '')
+        .replace(exampleSection?.full ?? '', '')
+        .replace(infoSection?.full ?? '', '')
+        .replace(/^#{1,3}\s+(?:Task|Problem|Instruction|Challenge)\s*$/gim, '')
+        .replace(/```[\s\S]*?```/g, '')
+        .trim();
+    const conciseInstruction = remaining.match(/^[\s\S]{1,600}?(?:[.!?](?=\s|$)|$)/)?.[0]?.trim();
+    const titleInstruction = title && title !== 'Syntax Drill' ? `Practice: ${title.replace(/[.!?]+$/, '')}.` : '';
+    const statement = conciseInstruction || titleInstruction || cleaned.slice(0, 600);
     return {
-        title: titleMatch[1].trim().slice(0, 100),
+        title,
         statement,
+        exampleCode,
         info: info.length ? info : ['This language feature is useful for common, focused operations.']
     };
 }
 
-function comment(value: string): string {
-    return value.replace(/[\r\n]+/g, ' ').replace(/\*\//g, '').slice(0, 180);
+function starterComment(value: string): string {
+    return cleanText(value, 400)
+        .replace(/^```[^\n]*|```$/gim, '')
+        .replace(/^\s*(?:[-*]|\d+[.)])\s*/gm, '')
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/\*\//g, '')
+        .trim()
+        .slice(0, 180);
 }
 
-function starterFor(language: GateLanguage, hint: string): string {
-    const task = comment(hint);
+function starterFor(language: GateLanguage, editorGuidance: string): string {
+    const task = starterComment(editorGuidance);
     if (language === 'cpp') return `#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    void solve() {\n        // ${task}\n    }\n};\n`;
     if (language === 'java') return `import java.util.*;\n\nclass Solution {\n    public void solve() {\n        // ${task}\n    }\n}\n`;
     if (language === 'python') return `from collections import *\nfrom itertools import *\n\nclass Solution:\n    def solve(self) -> None:\n        # ${task}\n        pass\n`;
@@ -67,6 +102,7 @@ function starterFor(language: GateLanguage, hint: string): string {
 
 export function createSyntaxDrill(
     problemRaw: string,
+    starterRaw: string,
     language: GateLanguage,
     sessionId: string,
     challengeId: string
@@ -77,7 +113,7 @@ export function createSyntaxDrill(
         id,
         title: generated.title,
         statement: generated.statement,
-        examples: [],
+        exampleCode: generated.exampleCode,
         info: generated.info,
         functionName: 'solve',
         params: [],
@@ -87,7 +123,7 @@ export function createSyntaxDrill(
     return {
         problem,
         language,
-        starter: starterFor(language, generated.statement),
+        starter: starterFor(language, starterRaw),
         sessionId,
         challengeId
     };
@@ -127,7 +163,12 @@ export function isSyntaxDrillApproved(drill: StoredSyntaxDrill, source: string):
 }
 
 export function syntaxDrillPrompt(language: GateLanguage, seed: number): string {
-    return `/no_think\nCreate one random, extremely basic ${language} syntax drill. This is not an algorithm problem. Test only one concrete standard-library, container, iterator, string, collection, or language feature—for example constructing a container, calling one library method, or iterating a map. Choose freely using random seed ${seed}. The learner will work inside the fixed parameterless solve function and must finish in one to five short lines. Do not require input, output, calculations, algorithms, multiple steps, custom types, or edge-case handling. Keep the visible drill under 65 words. Stream Markdown in exactly this format:\n# <title under 7 words>\n<one direct sentence saying exactly what syntax to demonstrate>\n## Info\n- <one very short note explaining what the feature is>\n- <one very short note explaining a common use for it>\nDo not include code, examples, signatures, solution guidance, metadata, introductions, or closing text.`;
+    return `/no_think\nCreate one random, extremely basic ${language} syntax drill. This is not an algorithm problem. Choose one concrete core-language feature or anything from ${language}'s standard library. Sample broadly across the entire standard library: modules, types, functions, utilities, data structures, text, math, time, formatting, paths, algorithms, I/O, and other APIs are all eligible. Do not repeatedly favor containers or iteration. Choose freely using random seed ${seed}. The learner will work inside the fixed parameterless solve function and must finish in one to five short lines. Do not require external packages, lengthy calculations, multiple steps, custom types, edge-case handling, or implementing an algorithm. Keep all prose under 65 words. Stream Markdown in exactly this format:\n# <title under 7 words>\n<one direct sentence saying exactly what syntax to demonstrate>\n## Example\n\`\`\`${language}\n<one tiny 1-3 line example of the feature, without solve or a complete answer to the task>\n\`\`\`\n## Info\n- <one very short note explaining what the feature is>\n- <one very short note explaining a common use for it>\nDo not include signatures, solution guidance, metadata, introductions, or closing text.`;
+}
+
+export function syntaxDrillStarterPrompt(language: GateLanguage, problemRaw: string): string {
+    const problem = parseProblem(problemRaw);
+    return `/no_think\nCreate the inline starter comment for this tiny ${language} syntax drill. The editor already supplies the fixed parameterless solve scaffold and required imports. Return exactly one short imperative sentence describing the first coding action the learner should take. Keep it under 16 words. Do not provide code, a solution, Markdown, a list, a label, or commentary.\n<task>\n${problem.statement}\n</task>`;
 }
 
 export function syntaxDrillReviewPrompt(drill: StoredSyntaxDrill, source: string): string {

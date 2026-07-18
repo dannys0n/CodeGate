@@ -3,7 +3,7 @@ import { randomInt } from 'node:crypto';
 import { eventStream, streamModelText } from '$lib/server/codegate/ai/model-runner';
 import { requireActiveChallenge } from '$lib/server/codegate/sessions';
 import { gateLanguages, type GateLanguage } from '$lib/codegate/types';
-import { createSyntaxDrill, storeSyntaxDrill, syntaxDrillPrompt, syntaxDrillResponse } from '$lib/server/codegate/syntax-drills';
+import { createSyntaxDrill, storeSyntaxDrill, syntaxDrillPrompt, syntaxDrillResponse, syntaxDrillStarterPrompt } from '$lib/server/codegate/syntax-drills';
 
 export const POST: RequestHandler = async ({ request }) => {
     try {
@@ -31,7 +31,19 @@ export const POST: RequestHandler = async ({ request }) => {
                 }
             }, signal, { seed, temperature: 0.85 });
 
-            const drill = createSyntaxDrill(problem, language, sessionId, challengeId);
+            let starterGuidance = '';
+            emit('status', 'Preparing the editor…');
+            await streamModelText([
+                {
+                    role: 'system',
+                    content: 'You create one concise inline starter comment for a programming syntax exercise. Never provide the solution.'
+                },
+                { role: 'user', content: syntaxDrillStarterPrompt(language, problem) }
+            ], (type, value) => {
+                if (type === 'text') starterGuidance += value;
+            }, signal, { seed: seed + 1, temperature: 0.2 });
+
+            const drill = createSyntaxDrill(problem, starterGuidance, language, sessionId, challengeId);
             const response = syntaxDrillResponse(drill);
             emit('status', 'Preparing the syntax drill…');
             await storeSyntaxDrill(drill);
