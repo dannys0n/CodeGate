@@ -76,9 +76,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create '${{ github.ref_name }}' `
-            '${{ steps.artifact.outputs.installer }}' `
-            '${{ steps.artifact.outputs.checksum }}' `
-            --verify-tag `
-            --generate-notes `
-            --title 'CodeGate ${{ github.ref_name }}'
+          $tag = '${{ github.ref_name }}'
+          $tagMessage = @(git for-each-ref --format='%(contents)' "refs/tags/$tag") -join "`n"
+          $messageParts = $tagMessage -split '\r?\n', 2
+          $releaseNote = if ($messageParts.Count -gt 1) { $messageParts[1].Trim() } else { '' }
+          $arguments = @(
+            'release', 'create', $tag,
+            '${{ steps.artifact.outputs.installer }}',
+            '${{ steps.artifact.outputs.checksum }}',
+            '--verify-tag',
+            '--generate-notes',
+            '--title', "CodeGate $tag"
+          )
+          if ($releaseNote) { $arguments += @('--notes', $releaseNote) }
+          & gh @arguments
+          if ($LASTEXITCODE -ne 0) { throw "GitHub release creation failed with exit code $LASTEXITCODE." }

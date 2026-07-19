@@ -61,8 +61,13 @@ if errorlevel 2 set "BUMP=minor"
 if errorlevel 1 set "BUMP=patch"
 
 echo.
+set "RELEASE_NOTE="
+set /p "RELEASE_NOTE=Release note (optional, one line): "
+
+echo.
 echo This will include ALL files shown above, increment the %BUMP% version,
 echo create a release commit and annotated tag, then push both to origin.
+echo Any release note entered above will appear before the generated changelog.
 echo Pushing the tag will trigger the GitHub Actions release build.
 choice /C YN /N /M "Continue? [Y/N]: "
 if errorlevel 2 exit /b 0
@@ -116,8 +121,18 @@ if errorlevel 1 (
     exit /b 1
 )
 
-git tag -a "%RELEASE_TAG%" -m "CodeGate %RELEASE_TAG%"
+set "TAG_MESSAGE_FILE=%TEMP%\codegate-tag-%RANDOM%-%RANDOM%.txt"
+node -e "const fs=require('fs'); const title='CodeGate '+process.env.RELEASE_TAG; const note=(process.env.RELEASE_NOTE||'').trim(); fs.writeFileSync(process.env.TAG_MESSAGE_FILE, title+(note?'\n\n'+note:'')+'\n', 'utf8');"
 if errorlevel 1 (
+    del /q "%TAG_MESSAGE_FILE%" >nul 2>nul
+    echo Unable to prepare the annotated tag message. The release commit exists locally but was not tagged.
+    exit /b 1
+)
+
+git tag -a "%RELEASE_TAG%" -F "%TAG_MESSAGE_FILE%"
+set "TAG_RESULT=%ERRORLEVEL%"
+del /q "%TAG_MESSAGE_FILE%" >nul 2>nul
+if not "%TAG_RESULT%"=="0" (
     echo Tag creation failed. The release commit exists locally but was not pushed.
     exit /b 1
 )
