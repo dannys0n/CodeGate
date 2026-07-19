@@ -35,6 +35,7 @@ let desktopSettingsPresent = false;
 let desktopSettingsSaveQueue = Promise.resolve(desktopSettings);
 let modelUnloadStarted = false;
 let modelUnloadFinished = false;
+let dockerModelMayBeLoaded = false;
 
 function startupMode() {
   const argument = process.argv.find((value) => value.startsWith('--startup='));
@@ -98,6 +99,9 @@ async function initializeDesktopSettings() {
   desktopSettingsFile = path.join(app.getPath('userData'), 'settings.json');
   desktopSettingsPresent = existsSync(desktopSettingsFile);
   desktopSettings = await loadDesktopSettings(desktopSettingsFile);
+  dockerModelMayBeLoaded = desktopSettings.aiEnabled
+    && desktopSettings.aiDockerEnabled
+    && !desktopSettings.aiEndpoint;
 }
 
 async function handleStartupCommand(mode) {
@@ -232,6 +236,9 @@ ipcMain.handle('codegate:settings-save', async (_event, patch) => {
   if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error('Invalid settings update');
   desktopSettingsSaveQueue = desktopSettingsSaveQueue.catch(() => desktopSettings).then(async () => {
     desktopSettings = normalizeDesktopSettings({ ...desktopSettings, ...patch });
+    if (desktopSettings.aiEnabled && desktopSettings.aiDockerEnabled && !desktopSettings.aiEndpoint) {
+      dockerModelMayBeLoaded = true;
+    }
     if (desktopSettingsFile) {
       desktopSettings = await saveDesktopSettings(desktopSettingsFile, desktopSettings);
       desktopSettingsPresent = true;
@@ -250,7 +257,7 @@ ipcMain.handle('codegate:set-startup-events', (_event, events) => setStartupEven
 app.on('before-quit', (event) => {
   quitting = true;
   if (serverProcess && !serverProcess.killed) serverProcess.kill();
-  if (modelUnloadFinished || !desktopSettings.aiEnabled) return;
+  if (modelUnloadFinished || !dockerModelMayBeLoaded) return;
 
   event.preventDefault();
   if (modelUnloadStarted) return;

@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import { randomInt } from 'node:crypto';
-import { eventStream, streamModelText } from '$lib/server/codegate/ai/model-runner';
+import { eventStream, requestedAiEndpoint, streamModelText } from '$lib/server/codegate/ai/model-runner';
 import { requireActiveChallenge } from '$lib/server/codegate/sessions';
 import { gateLanguages, type GateLanguage } from '$lib/codegate/types';
 import { createSyntaxDrill, storeSyntaxDrill, syntaxDrillPrompt, syntaxDrillResponse, syntaxDrillStarterPrompt } from '$lib/server/codegate/syntax-drills';
@@ -12,6 +12,7 @@ export const POST: RequestHandler = async ({ request }) => {
         const challengeId = String(body.challengeId ?? '');
         requireActiveChallenge(sessionId, challengeId);
         const language = String(body.language ?? '') as GateLanguage;
+        const endpoint = requestedAiEndpoint(body);
         if (!gateLanguages.includes(language)) return new Response('Unsupported syntax drill language', { status: 400 });
 
         return eventStream(async (emit, signal) => {
@@ -29,7 +30,7 @@ export const POST: RequestHandler = async ({ request }) => {
                     problem += value;
                     emit('problem', value);
                 }
-            }, signal, { seed, temperature: 0.85 });
+            }, signal, { seed, temperature: 0.85, endpoint });
 
             let starterGuidance = '';
             emit('status', 'Preparing the editor…');
@@ -41,7 +42,7 @@ export const POST: RequestHandler = async ({ request }) => {
                 { role: 'user', content: syntaxDrillStarterPrompt(language, problem) }
             ], (type, value) => {
                 if (type === 'text') starterGuidance += value;
-            }, signal, { seed: seed + 1, temperature: 0.2 });
+            }, signal, { seed: seed + 1, temperature: 0.2, endpoint });
 
             const drill = createSyntaxDrill(problem, starterGuidance, language, sessionId, challengeId);
             const response = syntaxDrillResponse(drill);

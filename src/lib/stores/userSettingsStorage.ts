@@ -21,6 +21,8 @@ export interface UserSettings {
     problemNumberMin: number | null;
     problemNumberMax: number | null;
     aiEnabled: boolean;
+    aiDockerEnabled: boolean;
+    aiEndpoint: string;
 }
 
 const STORAGE_KEY = 'user-settings';
@@ -39,6 +41,8 @@ const defaultSettings: UserSettings = {
     problemNumberMin: null,
     problemNumberMax: null,
     aiEnabled: false,
+    aiDockerEnabled: true,
+    aiEndpoint: '',
 };
 
 function optionalProblemNumber(value: unknown): number | null {
@@ -71,7 +75,9 @@ function normalizeSettings(input: any): UserSettings {
         [problemNumberMin, problemNumberMax] = [problemNumberMax, problemNumberMin];
     }
     const aiEnabled = typeof input?.aiEnabled === 'boolean' ? input.aiEnabled : defaultSettings.aiEnabled;
-    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties, problemNumberMin, problemNumberMax, aiEnabled };
+    const aiDockerEnabled = typeof input?.aiDockerEnabled === 'boolean' ? input.aiDockerEnabled : defaultSettings.aiDockerEnabled;
+    const aiEndpoint = typeof input?.aiEndpoint === 'string' ? input.aiEndpoint.trim().slice(0, 2_048) : defaultSettings.aiEndpoint;
+    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties, problemNumberMin, problemNumberMax, aiEnabled, aiDockerEnabled, aiEndpoint };
 }
 
 // Packaged Electron uses its user-data settings file. A missing file falls back

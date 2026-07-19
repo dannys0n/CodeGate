@@ -15,7 +15,7 @@
     export let gameMode = false;
     export let gameStartTime = 0;
     export let gateBinding: { sessionId: string; challengeId: string; difficulty: string } | null = null;
-    export let syntaxDrillBinding: { sessionId: string; challengeId: string; syntaxDrillId: string } | null = null;
+    export let syntaxDrillBinding: { sessionId: string; challengeId: string; syntaxDrillId: string; aiEndpoint?: string } | null = null;
     let gameRunCount = 0;
     let gameSubmitCount = 0;
     const dispatch = createEventDispatcher();
@@ -93,6 +93,9 @@
                         showedReasoning = true;
                     }
                     aiConsoleOutput += event.text;
+                }
+                if (event.type === "output" && event.text) {
+                    aiConsoleOutput += `\n[Program output]\n${event.text}${event.text.endsWith("\n") ? "" : "\n"}`;
                 }
                 if (event.type === "text" && event.text) {
                     if (!showedFinal) {

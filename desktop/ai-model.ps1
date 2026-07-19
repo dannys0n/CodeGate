@@ -16,6 +16,10 @@ function Set-AiPreference([bool]$Enabled) {
             try { $settings = Get-Content -LiteralPath $SettingsPath -Raw | ConvertFrom-Json } catch {}
         }
         $settings | Add-Member -NotePropertyName aiEnabled -NotePropertyValue $Enabled -Force
+        if ($Enabled) {
+            $settings | Add-Member -NotePropertyName aiDockerEnabled -NotePropertyValue $true -Force
+            $settings | Add-Member -NotePropertyName aiEndpoint -NotePropertyValue '' -Force
+        }
         $directory = Split-Path -Parent $SettingsPath
         $null = New-Item -ItemType Directory -Path $directory -Force
         $temporary = "$SettingsPath.tmp"

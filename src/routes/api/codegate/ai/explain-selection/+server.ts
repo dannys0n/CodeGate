@@ -1,5 +1,5 @@
 import type { RequestHandler } from './$types';
-import { eventStream, streamModelText } from '$lib/server/codegate/ai/model-runner';
+import { eventStream, requestedAiEndpoint, streamModelText } from '$lib/server/codegate/ai/model-runner';
 import { boundedText, promptExcerpt, requireAiChallenge } from '$lib/server/codegate/ai/context';
 import { getSyntaxDrill } from '$lib/server/codegate/syntax-drills';
 
@@ -35,7 +35,7 @@ export const POST: RequestHandler = async ({ request }) => {
                     role: 'user',
                     content: `/no_think\nLanguage: ${language}\nSelected lines: ${startLine}-${endLine}\n<problem>\n${promptExcerpt(statement, 4_000)}\n</problem>\n<current_source>\n${promptExcerpt(source, 8_000)}\n</current_source>\n<selected_code>\n${selection}\n</selected_code>\nExplain only the selected code.`
                 }
-            ], emit, signal);
+            ], emit, signal, { endpoint: requestedAiEndpoint(body) });
         }, request.signal);
     } catch (error) {
         return new Response(error instanceof Error ? error.message : String(error), { status: 400 });

@@ -91,13 +91,17 @@ function starterComment(value: string): string {
 
 function starterFor(language: GateLanguage, editorGuidance: string): string {
     const task = starterComment(editorGuidance);
-    if (language === 'cpp') return `#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    void solve() {\n        // ${task}\n    }\n};\n`;
-    if (language === 'java') return `import java.util.*;\n\nclass Solution {\n    public void solve() {\n        // ${task}\n    }\n}\n`;
-    if (language === 'python') return `from collections import *\nfrom itertools import *\n\nclass Solution:\n    def solve(self) -> None:\n        # ${task}\n        pass\n`;
-    if (language === 'csharp') return `using System;\nusing System.Collections.Generic;\nusing System.Linq;\n\npublic class Solution {\n    public void solve() {\n        // ${task}\n    }\n}\n`;
-    if (language === 'rust') return `use std::collections::*;\n\npub struct Solution;\n\nimpl Solution {\n    pub fn solve() {\n        // ${task}\n    }\n}\n`;
-    if (language === 'go') return `package main\n\nimport (\n    "fmt"\n    "sort"\n    "strings"\n)\n\nfunc solve() {\n    // ${task}\n    _, _, _ = fmt.Println, sort.Ints, strings.Contains\n}\n`;
-    return `export function solve(): void {\n    // ${task}\n}\n`;
+    if (language === 'cpp') return `#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    int solve() {\n        // ${task}\n        return 0;\n    }\n};\n`;
+    if (language === 'java') return `import java.util.*;\n\nclass Solution {\n    public int solve() {\n        // ${task}\n        return 0;\n    }\n}\n`;
+    if (language === 'python') return `from collections import *\nfrom itertools import *\n\nclass Solution:\n    def solve(self) -> int:\n        # ${task}\n        return 0\n`;
+    if (language === 'csharp') return `using System;\nusing System.Collections.Generic;\nusing System.Linq;\n\npublic class Solution {\n    public int Solve() {\n        // ${task}\n        return 0;\n    }\n}\n`;
+    if (language === 'rust') return `use std::collections::*;\n\npub struct Solution;\n\nimpl Solution {\n    pub fn solve() -> i32 {\n        // ${task}\n        0\n    }\n}\n`;
+    if (language === 'go') return `package main\n\nimport (\n    "fmt"\n    "sort"\n    "strings"\n)\n\nfunc Solve() int {\n    // ${task}\n    _, _, _ = fmt.Println, sort.Ints, strings.Contains\n    return 0\n}\n`;
+    return `export function solve(): number {\n    // ${task}\n    return 0;\n}\n`;
+}
+
+export function syntaxDrillConsoleOutput(outputs: string[]): string {
+    return outputs.join('---\n').replace(/:::RESULT:::[^\r\n]*(?:\r?\n|$)/g, '').trimEnd();
 }
 
 export function createSyntaxDrill(
@@ -163,7 +167,7 @@ export function isSyntaxDrillApproved(drill: StoredSyntaxDrill, source: string):
 }
 
 export function syntaxDrillPrompt(language: GateLanguage, seed: number): string {
-    return `/no_think\nCreate one random, extremely basic ${language} syntax drill. This is not an algorithm problem. Choose one concrete core-language feature or anything from ${language}'s standard library. Sample broadly across the entire standard library: modules, types, functions, utilities, data structures, text, math, time, formatting, paths, algorithms, I/O, and other APIs are all eligible. Do not repeatedly favor containers or iteration. Choose freely using random seed ${seed}. The learner will work inside the fixed parameterless solve function and must finish in one to five short lines. Do not require external packages, lengthy calculations, multiple steps, custom types, edge-case handling, or implementing an algorithm. Keep all prose under 65 words. Stream Markdown in exactly this format:\n# <title under 7 words>\n<one direct sentence saying exactly what syntax to demonstrate>\n## Example\n\`\`\`${language}\n<one tiny 1-3 line example of the feature, without solve or a complete answer to the task>\n\`\`\`\n## Info\n- <one very short note explaining what the feature is>\n- <one very short note explaining a common use for it>\nDo not include signatures, solution guidance, metadata, introductions, or closing text.`;
+    return `/no_think\nCreate one random, extremely basic ${language} syntax drill. This is not an algorithm problem. Choose one concrete core-language feature or anything from ${language}'s standard library. Sample broadly across the entire standard library: modules, types, functions, utilities, data structures, text, math, time, formatting, paths, algorithms, I/O, and other APIs are all eligible. Do not repeatedly favor containers or iteration. Choose freely using random seed ${seed}. The learner will work inside the fixed parameterless solve function and must finish in one to five short lines. Do not require external packages, lengthy calculations, multiple steps, custom types, edge-case handling, or implementing an algorithm. Keep all prose under 65 words. Stream Markdown in exactly this format:\n# <title under 7 words>\n<one direct sentence saying exactly what syntax to demonstrate>\n## Example\n\`\`\`${language}\n<one tiny 1-5 line example that begins with every header or import required for the feature, then directly shows the exact syntax or standard-library API required by the task; use different names or values and do not include solve or the complete task answer>\n\`\`\`\n## Info\n- <one very short note explaining what the feature is>\n- <one very short note explaining a common use for it>\nDo not include signatures, solution guidance beyond the required syntax example, metadata, introductions, or closing text.`;
 }
 
 export function syntaxDrillStarterPrompt(language: GateLanguage, problemRaw: string): string {

@@ -20,6 +20,8 @@ export const defaultDesktopSettings = Object.freeze({
   problemNumberMin: null,
   problemNumberMax: null,
   aiEnabled: false,
+  aiDockerEnabled: true,
+  aiEndpoint: '',
   leftPaneWidth: 50,
   execPaneHeight: 50
 });
@@ -64,6 +66,8 @@ export function normalizeDesktopSettings(input = {}) {
     problemNumberMin,
     problemNumberMax,
     aiEnabled: typeof input.aiEnabled === 'boolean' ? input.aiEnabled : defaultDesktopSettings.aiEnabled,
+    aiDockerEnabled: typeof input.aiDockerEnabled === 'boolean' ? input.aiDockerEnabled : defaultDesktopSettings.aiDockerEnabled,
+    aiEndpoint: typeof input.aiEndpoint === 'string' ? input.aiEndpoint.trim().slice(0, 2048) : defaultDesktopSettings.aiEndpoint,
     leftPaneWidth: boundedNumber(input.leftPaneWidth, 0, 90, defaultDesktopSettings.leftPaneWidth),
     execPaneHeight: boundedNumber(input.execPaneHeight, 0, 100, defaultDesktopSettings.execPaneHeight)
   };

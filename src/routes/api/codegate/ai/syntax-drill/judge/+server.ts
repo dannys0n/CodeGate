@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
-import { eventStream, streamModelText } from '$lib/server/codegate/ai/model-runner';
-import { approveSyntaxDrill, getSyntaxDrill, syntaxDrillReviewPrompt } from '$lib/server/codegate/syntax-drills';
+import { eventStream, requestedAiEndpoint, streamModelText } from '$lib/server/codegate/ai/model-runner';
+import { approveSyntaxDrill, getSyntaxDrill, syntaxDrillConsoleOutput, syntaxDrillReviewPrompt } from '$lib/server/codegate/syntax-drills';
 import { requireActiveChallenge } from '$lib/server/codegate/sessions';
 import { createProgramRunner } from '$lib/server/program-runner';
 
@@ -16,9 +16,10 @@ export const POST: RequestHandler = async ({ request }) => {
 
         return eventStream(async (emit, signal) => {
             emit('status', 'Compiling the syntax drill…');
-            const runner = createProgramRunner(drill.language, drill.problem.id, [], source);
+            const runner = createProgramRunner(drill.language, drill.problem.id, [{}], source);
             await runner.compile();
-            await runner.run();
+            const programOutput = syntaxDrillConsoleOutput(await runner.run());
+            if (programOutput) emit('output', programOutput);
             emit('status', 'Compile check passed. Reviewing the requested syntax…');
 
             let review = '';
@@ -34,7 +35,7 @@ export const POST: RequestHandler = async ({ request }) => {
                     emit('text', value);
                 }
                 if (type === 'reasoning') emit('reasoning', value);
-            }, signal, { temperature: 0.05, includeReasoning: true });
+            }, signal, { temperature: 0.05, includeReasoning: true, endpoint: requestedAiEndpoint(body) });
 
             const verdict = review.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
             const approved = /^PASS\b/i.test(verdict) && !/^PASS\s*(?:BUT|WITH\s+CHANGES)/i.test(verdict);

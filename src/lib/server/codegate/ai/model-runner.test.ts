@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { eventStream, extractModelDelta } from './model-runner';
+import { describe, expect, it, vi } from 'vitest';
+import { eventStream, extractModelDelta, streamModelText } from './model-runner';
 
 describe('Docker Model Runner stream deltas', () => {
     it('prefers normal assistant content', () => {
@@ -37,5 +37,25 @@ describe('Docker Model Runner stream deltas', () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
 
         expect(operationSignal?.aborted).toBe(true);
+    });
+
+    it('discovers and streams from an OpenAI-compatible custom endpoint', async () => {
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(Response.json({ data: [{ id: 'loaded-model', state: 'loaded' }] }))
+            .mockResolvedValueOnce(new Response('data: {"choices":[{"delta":{"content":"ready"}}]}\n\ndata: [DONE]\n\n', {
+                headers: { 'content-type': 'text/event-stream' }
+            }));
+        vi.stubGlobal('fetch', fetchMock);
+        const output: string[] = [];
+
+        await streamModelText([{ role: 'user', content: 'test' }], (type, text) => {
+            if (type === 'text') output.push(text);
+        }, undefined, { endpoint: 'http://127.0.0.1:43123' });
+
+        expect(fetchMock.mock.calls[0][0]).toBe('http://127.0.0.1:43123/v1/models');
+        expect(fetchMock.mock.calls[1][0]).toBe('http://127.0.0.1:43123/v1/chat/completions');
+        expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({ model: 'loaded-model', stream: true });
+        expect(output).toEqual(['ready']);
+        vi.unstubAllGlobals();
     });
 });

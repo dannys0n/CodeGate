@@ -4,8 +4,62 @@ export const codeGateModel = 'hf.co/jica98/qwen3.5-4B-super-coder:Q4_0';
 export const modelRunnerBaseUrl = 'http://127.0.0.1:12434';
 export const codeGateModelContextTokens = 8192;
 
-type StreamEvent = (type: 'status' | 'text' | 'reasoning' | 'problem' | 'result', text: string) => void;
-type ModelRequestOptions = { seed?: number; temperature?: number; includeReasoning?: boolean };
+type StreamEvent = (type: 'status' | 'text' | 'reasoning' | 'problem' | 'output' | 'result', text: string) => void;
+type ModelRequestOptions = { seed?: number; temperature?: number; includeReasoning?: boolean; endpoint?: string };
+type EndpointTarget = { key: string; chatUrl: string; modelsUrl: string };
+const endpointModels = new Map<string, string>();
+
+function customEndpoint(value: unknown): string {
+    return typeof value === 'string' ? value.trim().slice(0, 2_048) : '';
+}
+
+function endpointTarget(value: string): EndpointTarget {
+    let url: URL;
+    try { url = new URL(value); } catch { throw new Error('The custom AI endpoint is not a valid URL'); }
+    if (!['http:', 'https:'].includes(url.protocol)) throw new Error('The custom AI endpoint must use HTTP or HTTPS');
+    url.hash = '';
+    url.search = '';
+    const path = url.pathname.replace(/\/+$/, '');
+    let apiRoot: string;
+    if (/\/chat\/completions$/i.test(path)) apiRoot = path.replace(/\/chat\/completions$/i, '');
+    else if (/\/v1$/i.test(path)) apiRoot = path;
+    else apiRoot = `${path}/v1`.replace(/\/+/g, '/');
+    const origin = `${url.protocol}//${url.host}`;
+    return {
+        key: `${origin}${apiRoot}`,
+        chatUrl: `${origin}${apiRoot}/chat/completions`,
+        modelsUrl: `${origin}${apiRoot}/models`
+    };
+}
+
+async function discoverEndpointModel(target: EndpointTarget, signal?: AbortSignal): Promise<string> {
+    const cached = endpointModels.get(target.key);
+    if (cached) return cached;
+    const response = await fetch(target.modelsUrl, { signal });
+    if (!response.ok) throw new Error(`Custom AI endpoint model discovery returned ${response.status}`);
+    const payload = await response.json().catch(() => ({}));
+    const models = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload?.models) ? payload.models : [];
+    const selected = models.find((model: any) => model?.state === 'loaded' && typeof model?.id === 'string')
+        ?? models.find((model: any) => typeof model?.id === 'string' || typeof model?.name === 'string');
+    const model = typeof selected?.id === 'string' ? selected.id : typeof selected?.name === 'string' ? selected.name : '';
+    if (!model) throw new Error('The custom AI endpoint did not report an available model');
+    endpointModels.set(target.key, model);
+    return model;
+}
+
+export function requestedAiEndpoint(body: Record<string, unknown>): string {
+    return customEndpoint(body.aiEndpoint);
+}
+
+export async function warmCustomAiEndpoint(endpoint: string, onEvent: StreamEvent = () => {}, signal?: AbortSignal) {
+    onEvent('status', 'Custom endpoint selected; unloading the CodeGate Docker model if it is running...\n');
+    await unloadCodeGateModel(onEvent, signal);
+    const target = endpointTarget(endpoint);
+    endpointModels.delete(target.key);
+    onEvent('status', 'Connecting to the custom AI endpoint...\n');
+    await discoverEndpointModel(target, signal);
+    onEvent('status', 'Custom AI endpoint is ready.\n');
+}
 
 function dockerCommand() {
     return process.platform === 'win32' ? 'docker.exe' : 'docker';
@@ -115,22 +169,26 @@ export async function streamModelText(messages: ChatMessage[], onEvent: StreamEv
     if (inferenceActive) throw new Error('Another local AI explanation is already running');
     inferenceActive = true;
     try {
-        const response = await fetch(`${modelRunnerBaseUrl}/engines/v1/chat/completions`, {
+        const endpoint = customEndpoint(options.endpoint);
+        const target = endpoint ? endpointTarget(endpoint) : undefined;
+        const model = target ? await discoverEndpointModel(target, signal) : codeGateModel;
+        const response = await fetch(target?.chatUrl ?? `${modelRunnerBaseUrl}/engines/v1/chat/completions`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
-                model: codeGateModel,
+                model,
                 messages,
                 stream: true,
                 temperature: options.temperature ?? 0.15,
                 ...(Number.isInteger(options.seed) ? { seed: options.seed } : {}),
-                chat_template_kwargs: { enable_thinking: false }
+                ...(!target ? { chat_template_kwargs: { enable_thinking: false } } : {})
             }),
             signal
         });
         if (!response.ok || !response.body) {
             const detail = await response.text().catch(() => '');
-            throw new Error(detail.trim() || `Docker Model Runner returned ${response.status}`);
+            if (target) endpointModels.delete(target.key);
+            throw new Error(detail.trim() || `${target ? 'Custom AI endpoint' : 'Docker Model Runner'} returned ${response.status}`);
         }
 
         const reader = response.body.getReader();

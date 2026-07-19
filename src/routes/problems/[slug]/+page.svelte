@@ -117,7 +117,7 @@
     $: gateBinding = isCodeGate ? { sessionId: gateSessionId, challengeId: gateChallengeId, difficulty } : null;
     $: activeGateBinding = codegateWorkspaceTab === 'ai-drill' ? null : gateBinding;
     $: activeSyntaxDrillBinding = codegateWorkspaceTab === 'ai-drill' && syntaxDrill
-        ? { sessionId: gateSessionId, challengeId: gateChallengeId, syntaxDrillId: syntaxDrill.problem.id }
+        ? { sessionId: gateSessionId, challengeId: gateChallengeId, syntaxDrillId: syntaxDrill.problem.id, aiEndpoint: $userSettingsStorage.aiEndpoint }
         : null;
     const fileKey = () => `${problemId}`;
     const codeKey = () => `${problemId}:${language}`;
@@ -246,6 +246,11 @@
     let aiSettingsBusy = false;
     let aiSettingsStatus = '';
     let aiSettingsError = '';
+    let aiEndpointDraft = $userSettingsStorage.aiEndpoint;
+    let aiEndpointDraftUnloadedDocker = Boolean(aiEndpointDraft);
+    let aiEndpointDraftUnloadPromise: Promise<void> | null = null;
+    $: aiHelperConfigured = $userSettingsStorage.aiEnabled
+        && (Boolean($userSettingsStorage.aiEndpoint) || $userSettingsStorage.aiDockerEnabled);
     let viewMode: 'statement' | 'solution' = 'statement';
 
     let showSettings = false;
@@ -478,7 +483,7 @@
         hasDesktopStartupControls = Boolean(window.codegateDesktop?.startupEventsStatus);
         const module = await import('$lib/components/CodeEditor.svelte');
         CodeEditor = module.default;
-        if (isCodeGate && $userSettingsStorage.aiEnabled) void runAiLifecycle('warm');
+        if (isCodeGate && aiHelperConfigured) void runAiLifecycle('warm');
 
         const fb = initFirebase();
         if (fb) isFirebaseAvailable = true;
@@ -636,15 +641,20 @@
         aiSettingsStatus = `${aiSettingsStatus}${text}`.slice(-800);
     }
 
-    async function runAiLifecycle(endpoint: 'provision' | 'warm' | 'unload') {
+    async function runAiLifecycle(action: 'provision' | 'warm' | 'unload', backend = $userSettingsStorage) {
         aiSettingsBusy = true;
         aiSettingsStatus = '';
         aiSettingsError = '';
         try {
-            const response = await fetch(`/api/codegate/ai/${endpoint}`, {
+            const response = await fetch(`/api/codegate/ai/${action}`, {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ sessionId: gateSessionId, challengeId: gateChallengeId })
+                body: JSON.stringify({
+                    sessionId: gateSessionId,
+                    challengeId: gateChallengeId,
+                    aiEndpoint: backend.aiEndpoint,
+                    aiDockerEnabled: backend.aiDockerEnabled
+                })
             });
             await consumeAiStream(response, (event) => {
                 if ((event.type === 'status' || event.type === 'text') && event.text) appendAiStatus(event.text);
@@ -659,7 +669,8 @@
     }
 
     async function setAiEnabled(enabled: boolean) {
-        userSettingsStorage.update((settings) => ({ ...settings, aiEnabled: enabled }));
+        const backend = { ...$userSettingsStorage, aiEnabled: enabled };
+        userSettingsStorage.set(backend);
         aiHintController?.abort();
         aiExplainController?.abort();
         syntaxDrillController?.abort();
@@ -669,7 +680,35 @@
             aiHintText = '';
             if (codegateWorkspaceTab === 'ai-drill') await openEditorWorkspace();
         }
-        await runAiLifecycle(enabled ? 'provision' : 'unload');
+        await runAiLifecycle(enabled ? (backend.aiEndpoint ? 'warm' : 'provision') : 'unload', backend);
+    }
+
+    async function setAiEndpoint() {
+        const aiEndpoint = aiEndpointDraft.trim();
+        const backend = { ...$userSettingsStorage, aiEndpoint };
+        userSettingsStorage.set(backend);
+        aiEndpointDraftUnloadedDocker = Boolean(aiEndpoint);
+        if (!backend.aiEnabled) return;
+        if (aiEndpointDraftUnloadPromise) await aiEndpointDraftUnloadPromise;
+        aiEndpointDraftUnloadPromise = null;
+        await runAiLifecycle(aiEndpoint ? 'warm' : backend.aiDockerEnabled ? 'provision' : 'unload', backend);
+    }
+
+    function handleAiEndpointInput() {
+        if (!aiEndpointDraft.trim()) {
+            aiEndpointDraftUnloadedDocker = false;
+            return;
+        }
+        if (aiEndpointDraftUnloadedDocker || !$userSettingsStorage.aiEnabled) return;
+        aiEndpointDraftUnloadedDocker = true;
+        aiEndpointDraftUnloadPromise = runAiLifecycle('unload', { ...$userSettingsStorage, aiEndpoint: aiEndpointDraft.trim() });
+    }
+
+    async function setAiDockerEnabled(aiDockerEnabled: boolean) {
+        const backend = { ...$userSettingsStorage, aiDockerEnabled };
+        userSettingsStorage.set(backend);
+        if (!backend.aiEnabled || backend.aiEndpoint) return;
+        await runAiLifecycle(aiDockerEnabled ? 'provision' : 'unload', backend);
     }
 
     async function toggleAiHint() {
@@ -684,7 +723,7 @@
             const response = await fetch('/api/codegate/ai/algorithm-hint', {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ sessionId: gateSessionId, challengeId: gateChallengeId }),
+                body: JSON.stringify({ sessionId: gateSessionId, challengeId: gateChallengeId, aiEndpoint: $userSettingsStorage.aiEndpoint }),
                 signal: aiHintController.signal
             });
             await consumeAiStream(response, (event) => {
@@ -710,7 +749,7 @@
     }
 
     async function explainSelection(event: CustomEvent<{ source: string; selection: string; startLine: number; endLine: number }>) {
-        if (!$userSettingsStorage.aiEnabled || !isCodeGate) return;
+        if (!aiHelperConfigured || !isCodeGate) return;
         aiExplainController?.abort();
         aiExplainController = new AbortController();
         const { source, selection, startLine, endLine } = event.detail;
@@ -721,7 +760,7 @@
             const response = await fetch('/api/codegate/ai/explain-selection', {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ sessionId: gateSessionId, challengeId: gateChallengeId, syntaxDrillId: codegateWorkspaceTab === 'ai-drill' ? syntaxDrill?.problem.id : undefined, source, selection, startLine, endLine }),
+                body: JSON.stringify({ sessionId: gateSessionId, challengeId: gateChallengeId, aiEndpoint: $userSettingsStorage.aiEndpoint, syntaxDrillId: codegateWorkspaceTab === 'ai-drill' ? syntaxDrill?.problem.id : undefined, source, selection, startLine, endLine }),
                 signal: aiExplainController.signal
             });
             await consumeAiStream(response, (streamEvent) => {
@@ -1058,7 +1097,7 @@
     }
 
     async function openSyntaxDrill() {
-        if (!$userSettingsStorage.aiEnabled || aiSettingsBusy) return;
+        if (!aiHelperConfigured || aiSettingsBusy) return;
         codegateWorkspaceTab = 'ai-drill';
         if (syntaxDrill) {
             suppressSave = true;
@@ -1072,7 +1111,7 @@
     }
 
     async function generateSyntaxDrill() {
-        if (!$userSettingsStorage.aiEnabled || syntaxDrillState === 'loading') return;
+        if (!aiHelperConfigured || syntaxDrillState === 'loading') return;
         syntaxDrillController?.abort();
         syntaxDrillController = new AbortController();
         syntaxDrillState = 'loading';
@@ -1089,6 +1128,7 @@
                     sessionId: gateSessionId,
                     challengeId: gateChallengeId,
                     language: syntaxDrillLanguage,
+                    aiEndpoint: $userSettingsStorage.aiEndpoint,
                 }),
                 signal: syntaxDrillController.signal
             });
@@ -1202,7 +1242,7 @@
             </Tooltip>
             {#if codegateWorkspaceTab === 'ai-drill'}
                 <div class="codegate-problem-actions">
-                    <button class="btn gate-action" on:click={() => { syntaxDrill = null; syntaxDrillCode = ''; void generateSyntaxDrill(); }} disabled={syntaxDrillState === 'loading' || !$userSettingsStorage.aiEnabled}>New Drill</button>
+                    <button class="btn gate-action" on:click={() => { syntaxDrill = null; syntaxDrillCode = ''; void generateSyntaxDrill(); }} disabled={syntaxDrillState === 'loading' || !aiHelperConfigured}>New Drill</button>
                     <button class="btn gate-give-up" on:click={giveUpGate} disabled={gateActionPending}>Give Up</button>
                 </div>
                 {#if syntaxDrillState === 'loading'}
@@ -1333,7 +1373,7 @@
                     {/each}
                 {/if}
 
-                {#if isCodeGate && $userSettingsStorage.aiEnabled}
+                {#if isCodeGate && aiHelperConfigured}
                     <div class="hint-item ai-hint-item">
                         <button class="hint-header" disabled={aiSettingsBusy} on:click={toggleAiHint}>
                             <span>AI Algorithm Hint ✦</span>
@@ -1404,7 +1444,7 @@
                     </svg>
                     Catalogue
                 </button>
-                {#if $userSettingsStorage.aiEnabled}
+                {#if aiHelperConfigured}
                     <button
                         type="button"
                         role="tab"
@@ -1663,13 +1703,35 @@
                                         disabled={aiSettingsBusy}
                                         on:change={(event) => void setAiEnabled(event.currentTarget.checked)}
                                     />
-                                    Enable the AI model
+                                    Enable AI helper
                                 </label>
-                                <div class="settings-note">Enabling downloads about 2–3 GB and turns on Docker Model Runner.</div>
-                                {#if aiSettingsBusy || aiSettingsStatus}
-                                    <pre class="settings-ai-status">{aiSettingsStatus || 'Preparing local AI…'}</pre>
+                                {#if $userSettingsStorage.aiEnabled}
+                                    <label class="settings-field-label" for="ai-endpoint-input">Custom endpoint</label>
+                                    <input
+                                        id="ai-endpoint-input"
+                                        class="settings-text-input"
+                                        type="url"
+                                        placeholder="http://127.0.0.1:1234"
+                                        bind:value={aiEndpointDraft}
+                                        on:input={handleAiEndpointInput}
+                                        on:change={() => void setAiEndpoint()}
+                                    />
+                                    <div class="settings-note">Use an OpenAI-compatible server address. The first loaded model reported by the endpoint is selected.</div>
+                                    <label class:option-disabled={Boolean(aiEndpointDraft.trim())} class="startup-event-option">
+                                        <input
+                                            type="checkbox"
+                                            checked={$userSettingsStorage.aiDockerEnabled}
+                                            disabled={aiSettingsBusy || Boolean(aiEndpointDraft.trim())}
+                                            on:change={(event) => void setAiDockerEnabled(event.currentTarget.checked)}
+                                        />
+                                        Use Docker Model Runner
+                                    </label>
+                                    <div class="settings-note">A custom endpoint takes priority and unloads the Docker model without deleting its files.</div>
+                                    {#if aiSettingsBusy || aiSettingsStatus}
+                                        <pre class="settings-ai-status">{aiSettingsStatus || 'Preparing AI helper…'}</pre>
+                                    {/if}
+                                    {#if aiSettingsError}<div class="settings-error">{aiSettingsError}</div>{/if}
                                 {/if}
-                                {#if aiSettingsError}<div class="settings-error">{aiSettingsError}</div>{/if}
                             {/if}
                             {#if hasDesktopStartupControls}
                                 <div class="settings-divider"></div>
@@ -1713,7 +1775,7 @@
                     {theme} 
                     {vimMode} 
                     viewState={currentViewState}
-                    enableAiExplain={isCodeGate && $userSettingsStorage.aiEnabled && !aiSettingsBusy}
+                    enableAiExplain={isCodeGate && aiHelperConfigured && !aiSettingsBusy}
                     on:explainSelection={explainSelection}
                 />
             {:else}
@@ -2391,6 +2453,19 @@
         font-size: 0.85rem;
         color: var(--color-text-secondary);
     }
+    .settings-field-label {
+        margin-top: var(--spacing-1);
+    }
+    .settings-text-input {
+        width: 100%;
+        box-sizing: border-box;
+        background: var(--color-bg);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        padding: 6px 8px;
+        font-family: inherit;
+    }
     .settings-dropdown select, #language-select, #difficulty-select, .leetcode-filter-trigger {
         background: var(--color-bg);
         color: var(--color-text);
@@ -2589,6 +2664,10 @@
         gap: 8px;
         color: var(--color-text);
         cursor: pointer;
+    }
+    .settings-dropdown .startup-event-option.option-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
     .settings-note {
         font-size: 0.8rem;

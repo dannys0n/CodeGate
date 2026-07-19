@@ -81,13 +81,15 @@ developers can include it with:
 Docker Desktop may download a language image the first time that language is judged. Keep Docker
 running and allow a little extra time for the first submission.
 
-The optional local AI helper requires Docker Desktop 4.41 or newer with Docker Model Runner support.
-On Windows, CodeGate enables GPU-backed inference by default when Docker detects a compatible GPU;
-unsupported systems fall back to CPU inference.
-It is disabled by default. Enable it during installation or from the editor settings to download
-the AI model (about 2–3 GB). Algorithm help appears as a streamed sidebar hint; highlighting code and
+The optional AI helper can use Docker Model Runner or a custom OpenAI-compatible endpoint. The
+Docker backend requires Docker Desktop 4.41 or newer; on Windows, CodeGate enables GPU-backed
+inference when Docker detects a compatible GPU and otherwise falls back to CPU inference. It is
+disabled by default. Enable it during installation or from the editor settings to download the AI
+model (about 2–3 GB), or enter a custom endpoint to use a model managed by another local server.
+A custom endpoint takes priority and unloads CodeGate's Docker model without deleting its files.
+Algorithm help appears as a streamed sidebar hint; highlighting code and
 choosing **Explain selection with local AI** streams its explanation into the existing Console tab.
-CodeGate warms the model when AI is enabled and unloads it during normal application shutdown so it
+CodeGate warms the selected backend when AI is enabled and unloads its Docker model during normal application shutdown so it
 does not continue reserving VRAM after the app closes.
 Its runtime profile uses one inference slot, an 8K context, and no cross-request prompt cache because
 each CodeGate hint is an independent request.

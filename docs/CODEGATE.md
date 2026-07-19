@@ -17,13 +17,15 @@ CodeGate is a mode around CoJudge, not a second judge:
 
 CodeGate is a self-discipline gate, not a Windows security boundary.
 
-The optional AI model is separate from algorithm judging. It uses Docker Model Runner for streamed
-algorithm hints, selected-code explanations, and short syntax drills. Drill submissions compile through the existing runners and an
+The optional AI helper is separate from algorithm judging. It uses Docker Model Runner or a custom
+OpenAI-compatible endpoint for streamed algorithm hints, selected-code explanations, and short syntax drills.
+Drill submissions compile through the existing runners and an
 AI review enables their Solution button only for the exact reviewed source.
 Windows provisioning requests GPU-backed inference by default and safely falls back to CPU when
 Docker reports that no compatible GPU is available.
-When AI is enabled, the desktop process warms the model at launch and unloads it during normal
-shutdown without disabling Docker Model Runner or removing the downloaded model.
+When the Docker backend is enabled, the desktop process warms the model at launch and unloads it
+during normal shutdown without disabling Docker Model Runner or removing the downloaded model.
+A configured custom endpoint takes priority and unloads the Docker model while leaving its stored files intact.
 The model is configured for one inference slot, an 8,192-token context, no prompt cache, and no
 reasoning budget; every hint or selection explanation carries all of the bounded context it needs.
 

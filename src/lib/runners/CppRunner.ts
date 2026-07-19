@@ -1,4 +1,4 @@
-import { cppImage, cppListNodeClass, cppTreeNodeClass, cppGraphNodeClass, generateCppRunner, generateCppClassSolution } from "$lib/utils/cppUtil";
+import { cppImage, cppListNodeClass, cppTreeNodeClass, cppGraphNodeClass, cppStandardFlag, generateCppRunner, generateCppClassSolution } from "$lib/utils/cppUtil";
 import { extractOperations } from "$lib/utils/util";
 import { ensureImageAvailable, EXECUTION_TIMEOUT_SECONDS, LINUX_TIMEOUT_CODE, TIMEOUT_MESSAGE } from "$lib/utils/util";
 import Dockerode from "dockerode";
@@ -58,7 +58,7 @@ export class CppRunner extends ProgramRunner {
             await this.container.putArchive(pack as any, { path: '/app' });
 
             const exec = await this.container.exec({
-                Cmd: ['/bin/sh', '-c', 'g++ -std=c++17 -O2 -pipe -g -rdynamic -o main Main.cpp'],
+                Cmd: ['/bin/sh', '-c', `g++ ${cppStandardFlag} -O2 -pipe -g -rdynamic -o main Main.cpp`],
                 AttachStdout: true,
                 AttachStderr: true
             });

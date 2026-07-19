@@ -2,6 +2,7 @@ import type { Param } from './util';
 
 // Use official GCC image with g++ available
 export const cppImage = 'gcc:13';
+export const cppStandardFlag = '-std=c++23';
 
 export const cppListNodeClass = `
 struct ListNode {

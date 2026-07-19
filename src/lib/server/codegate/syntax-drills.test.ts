@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { approveSyntaxDrill, createSyntaxDrill, isSyntaxDrillApproved, syntaxDrillPrompt, syntaxDrillReviewPrompt, syntaxDrillResponse, syntaxDrillStarterPrompt } from './syntax-drills';
+import { approveSyntaxDrill, createSyntaxDrill, isSyntaxDrillApproved, syntaxDrillConsoleOutput, syntaxDrillPrompt, syntaxDrillReviewPrompt, syntaxDrillResponse, syntaxDrillStarterPrompt } from './syntax-drills';
 
 const problem = `# Iterate a Map
 Iterate through an unordered map once using a range-based loop.
@@ -15,7 +15,7 @@ counts[7] = 1;
 - Iteration is useful when every stored pair must be visited.`;
 
 describe('AI syntax drills', () => {
-    it('creates a deterministic compile-only scaffold without test cases', () => {
+    it('creates a deterministic runnable scaffold without authored test cases', () => {
         const drill = createSyntaxDrill(problem, 'Declare the map before iterating over its entries.', 'cpp', 'session', 'challenge');
         const response = syntaxDrillResponse(drill);
         expect(response.problem.functionName).toBe('solve');
@@ -23,10 +23,21 @@ describe('AI syntax drills', () => {
         expect(response.problem.testCases).toEqual([]);
         expect(response.problem.exampleCode).toContain('counts[7] = 1');
         expect(response.source).toContain('class Solution');
-        expect(response.source).toContain('void solve()');
+        expect(response.source).toContain('int solve()');
+        expect(response.source).toContain('return 0;');
         expect(response.problem.info).toHaveLength(2);
         expect(response.source).toContain('Declare the map before iterating');
         expect(response.source).not.toContain('Iterate through an unordered map once');
+    });
+
+    it('keeps user prints while removing the internal result marker', () => {
+        expect(syntaxDrillConsoleOutput(['debug value\n:::RESULT:::0\n'])).toBe('debug value');
+        expect(syntaxDrillConsoleOutput(['debug without newline:::RESULT:::0\n'])).toBe('debug without newline');
+    });
+
+    it('uses the callable names expected by capitalizing language runners', () => {
+        expect(createSyntaxDrill(problem, 'Print once.', 'csharp', 'session', 'challenge').starter).toContain('int Solve()');
+        expect(createSyntaxDrill(problem, 'Print once.', 'go', 'session', 'challenge').starter).toContain('func Solve() int');
     });
 
     it('keeps generation focused on one syntax feature rather than algorithms', () => {
@@ -38,7 +49,9 @@ describe('AI syntax drills', () => {
         expect(prompt).toContain('random seed 42');
         expect(prompt).toContain('## Info');
         expect(prompt).toContain('## Example');
-        expect(prompt).toContain('tiny 1-3 line example');
+        expect(prompt).toContain('directly shows the exact syntax or standard-library API required');
+        expect(prompt).toContain('every header or import required for the feature');
+        expect(prompt).toContain('use different names or values');
         expect(prompt).toContain('common use');
     });
 
