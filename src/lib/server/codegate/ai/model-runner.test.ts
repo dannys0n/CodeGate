@@ -50,12 +50,30 @@ describe('Docker Model Runner stream deltas', () => {
 
         await streamModelText([{ role: 'user', content: 'test' }], (type, text) => {
             if (type === 'text') output.push(text);
-        }, undefined, { endpoint: 'http://127.0.0.1:43123' });
+        }, undefined, { endpoint: 'http://127.0.0.1:43123', maxTokens: 96 });
 
         expect(fetchMock.mock.calls[0][0]).toBe('http://127.0.0.1:43123/v1/models');
         expect(fetchMock.mock.calls[1][0]).toBe('http://127.0.0.1:43123/v1/chat/completions');
-        expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({ model: 'loaded-model', stream: true });
+        expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({ model: 'loaded-model', stream: true, max_tokens: 96 });
         expect(output).toEqual(['ready']);
+        vi.unstubAllGlobals();
+    });
+
+    it('cancels model output when the stream consumer reaches its limit', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(new Response(
+            'data: {"choices":[{"delta":{"content":"first"}}]}\n\ndata: {"choices":[{"delta":{"content":"late"}}]}\n\ndata: [DONE]\n\n',
+            { headers: { 'content-type': 'text/event-stream' } }
+        ));
+        vi.stubGlobal('fetch', fetchMock);
+        const output: string[] = [];
+
+        await streamModelText([{ role: 'user', content: 'test' }], (type, text) => {
+            if (type !== 'text') return;
+            output.push(text);
+            return false;
+        });
+
+        expect(output).toEqual(['first']);
         vi.unstubAllGlobals();
     });
 });

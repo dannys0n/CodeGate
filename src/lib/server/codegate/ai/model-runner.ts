@@ -6,7 +6,8 @@ const codeGateModelContextTokens = 8192;
 const codeGateModelKeepAlive = '1h';
 
 type StreamEvent = (type: 'status' | 'text' | 'reasoning' | 'problem' | 'output' | 'result', text: string) => void;
-type ModelRequestOptions = { seed?: number; temperature?: number; includeReasoning?: boolean; endpoint?: string };
+type ModelStreamEvent = (type: 'status' | 'text' | 'reasoning' | 'problem' | 'output' | 'result', text: string) => void | boolean;
+type ModelRequestOptions = { seed?: number; temperature?: number; maxTokens?: number; includeReasoning?: boolean; endpoint?: string };
 type EndpointTarget = { key: string; chatUrl: string; modelsUrl: string };
 const endpointModels = new Map<string, string>();
 
@@ -167,7 +168,7 @@ export function extractModelDelta(payload: any) {
     };
 }
 
-export async function streamModelText(messages: ChatMessage[], onEvent: StreamEvent, signal?: AbortSignal, options: ModelRequestOptions = {}) {
+export async function streamModelText(messages: ChatMessage[], onEvent: ModelStreamEvent, signal?: AbortSignal, options: ModelRequestOptions = {}) {
     if (inferenceActive) throw new Error('Another local AI explanation is already running');
     inferenceActive = true;
     try {
@@ -182,6 +183,7 @@ export async function streamModelText(messages: ChatMessage[], onEvent: StreamEv
                 messages,
                 stream: true,
                 temperature: options.temperature ?? 0.15,
+                ...(Number.isInteger(options.maxTokens) && options.maxTokens! > 0 ? { max_tokens: options.maxTokens } : {}),
                 ...(Number.isInteger(options.seed) ? { seed: options.seed } : {}),
                 ...(!target ? { chat_template_kwargs: { enable_thinking: false } } : {})
             }),
@@ -213,11 +215,17 @@ export async function streamModelText(messages: ChatMessage[], onEvent: StreamEv
                     const { content, reasoning } = extractModelDelta(payload);
                     if (content) {
                         emitted = true;
-                        onEvent('text', content);
+                        if (onEvent('text', content) === false) {
+                            await reader.cancel();
+                            return;
+                        }
                     }
                     if (reasoning) {
                         reasoningFallback += reasoning;
-                        if (options.includeReasoning) onEvent('reasoning', reasoning);
+                        if (options.includeReasoning && onEvent('reasoning', reasoning) === false) {
+                            await reader.cancel();
+                            return;
+                        }
                     }
                 } catch {
                     // Ignore keepalive and non-chat events from compatible backends.

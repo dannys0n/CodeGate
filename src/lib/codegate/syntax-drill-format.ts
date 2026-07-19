@@ -20,3 +20,19 @@ export function parseSyntaxDrillInfo(source: string, maximum = 8): string[] {
     flush();
     return items.slice(0, maximum);
 }
+
+export function truncateSyntaxDrillAtInfoLimit(source: string, maximum = 8): { text: string; reached: boolean } {
+    const heading = source.match(/^#{1,3}\s+Info\s*(?:\r?\n|$)/im);
+    if (heading?.index === undefined) return { text: source, reached: false };
+    const bodyStart = heading.index + heading[0].length;
+    const bulletPattern = /^\s*(?:[-*+]\s+|\d+[.)]\s+)/gm;
+    const bulletStarts: number[] = [];
+    let match: RegExpExecArray | null;
+    const body = source.slice(bodyStart);
+    while ((match = bulletPattern.exec(body)) !== null) bulletStarts.push(bodyStart + match.index);
+    if (bulletStarts.length < maximum) return { text: source, reached: false };
+
+    const lineEnd = source.indexOf('\n', bulletStarts[maximum - 1]);
+    if (lineEnd < 0) return { text: source, reached: false };
+    return { text: source.slice(0, lineEnd + 1), reached: true };
+}

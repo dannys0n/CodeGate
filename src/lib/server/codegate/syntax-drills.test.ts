@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { approveSyntaxDrill, createSyntaxDrill, isSyntaxDrillApproved, syntaxDrillConsoleOutput, syntaxDrillPrompt, syntaxDrillReviewPrompt, syntaxDrillResponse, syntaxDrillStarterPrompt } from './syntax-drills';
+import { truncateSyntaxDrillAtInfoLimit } from '../../codegate/syntax-drill-format';
+import { approveSyntaxDrill, createSyntaxDrill, isSyntaxDrillApproved, normalizeSyntaxDrillTitle, syntaxDrillConsoleOutput, syntaxDrillPrompt, syntaxDrillReviewPrompt, syntaxDrillResponse, syntaxDrillStarterPrompt, syntaxDrillTitlePrompt } from './syntax-drills';
 
 const problem = `# Iterate a Map
 Iterate through an unordered map once using a range-based loop.
@@ -41,20 +42,36 @@ describe('AI syntax drills', () => {
     });
 
     it('keeps generation focused on one syntax feature rather than algorithms', () => {
-        const prompt = syntaxDrillPrompt('cpp', 42);
+        const titlePrompt = syntaxDrillTitlePrompt('cpp', 42);
+        const prompt = syntaxDrillPrompt('cpp', 'Use std::exchange');
         expect(prompt).toContain('This is not an algorithm problem');
-        expect(prompt).toContain("anything from cpp's standard library");
-        expect(prompt).toContain('Do not repeatedly favor containers or iteration');
+        expect(prompt).toContain('titled "Use std::exchange"');
+        expect(prompt).toContain('authoritative syntax feature or API');
         expect(prompt).toContain('one to five short lines');
-        expect(prompt).toContain('random seed 42');
         expect(prompt).toContain('## Info');
         expect(prompt).toContain('## Example');
         expect(prompt).toContain('directly shows the exact syntax or standard-library API required');
         expect(prompt).toContain('every header or import required for the feature');
         expect(prompt).toContain('use different names or values');
-        expect(prompt).toContain('explain what it does and how to use its syntax');
-        expect(prompt).toContain('tiny inline-code example');
-        expect(prompt).toContain('must have its own useful Info explanation and inline syntax example');
+        expect(prompt).toContain('briefly explain what it does');
+        expect(prompt).toContain('generic syntax template with placeholder names');
+        expect(prompt).toContain('filled-in valid example using concrete names and values');
+        expect(prompt).toContain('group every required header or import into this single entry');
+        expect(prompt).toContain('Headers and imports are setup, not syntax features');
+        expect(prompt).toContain('does not need a generic Syntax template or filled-in Example');
+        expect(prompt).toContain('both the generic Syntax template and the distinct filled-in Example are mandatory');
+        expect(prompt).toContain('no more than eight Info entries');
+        expect(prompt).toContain('Keep every Info entry on one line');
+        expect(titlePrompt).toContain("anything from cpp's standard library");
+        expect(titlePrompt).toContain('30 seconds or less using one to five short lines');
+        expect(titlePrompt).toContain('Avoid defaulting to containers, loops, printing');
+        expect(titlePrompt).toContain('random seed 42');
+        expect(titlePrompt).toContain('Return only a descriptive title under seven words');
+    });
+
+    it('normalizes common title-only response variations', () => {
+        expect(normalizeSyntaxDrillTitle('## Title: Exchange Two Values!')).toBe('Exchange Two Values');
+        expect(normalizeSyntaxDrillTitle('```text\nFormat a Duration\n```')).toBe('Format a Duration');
     });
 
     it('retains explanations for multiple required syntax features', () => {
@@ -70,6 +87,15 @@ describe('AI syntax drills', () => {
         expect(drill.problem.info[0]).toContain('values.push_back(7);');
         expect(drill.problem.info[0]).toContain('```cpp');
         expect(drill.problem.info[1]).toContain('values.size()');
+    });
+
+    it('ends streamed problem text after the eighth completed Info entry', () => {
+        const entries = Array.from({ length: 9 }, (_, index) => `- Info ${index + 1}: Syntax: \`item${index + 1}\`. Example: \`value${index + 1}\`.`).join('\n');
+        const limited = truncateSyntaxDrillAtInfoLimit(`# Drill\nTask.\n## Info\n${entries}\nclosing text`);
+        expect(limited.reached).toBe(true);
+        expect(limited.text).toContain('Info 8');
+        expect(limited.text).not.toContain('Info 9');
+        expect(limited.text).not.toContain('closing text');
     });
 
     it('gives editor generation only the task and requests a comment rather than code', () => {
