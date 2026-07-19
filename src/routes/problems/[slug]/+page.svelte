@@ -22,6 +22,7 @@
     import gameResultsStore, { computeGameResult } from '$lib/stores/gameResultsStore';
     import { gateLanguages, leetcodeDifficultyLevels, type DifficultyLevel, type GateLanguage, type LeetcodeDifficulty } from '$lib/codegate/types';
     import { consumeAiStream } from '$lib/codegate/ai-stream';
+    import { parseSyntaxDrillInfo } from '$lib/codegate/syntax-drill-format';
 
     export let data;
     const problemId = data.problem.id;
@@ -84,10 +85,7 @@
         const infoText = infoHeading?.index === undefined
             ? ''
             : cleaned.slice(infoHeading.index + infoHeading[0].length);
-        const info = infoText.split(/\r?\n/)
-            .map((line) => line.replace(/^\s*(?:[-*]|\d+[.)])\s*/, '').trim())
-            .filter(Boolean)
-            .slice(0, 2);
+        const info = parseSyntaxDrillInfo(infoText);
         let statement = cleaned.replace(titleMatch?.[0] ?? '', '').trim();
         const headingInStatement = statement.search(/^##\s+(?:Example|Info)\s*(?:\r?\n|$)/im);
         if (headingInStatement >= 0) statement = statement.slice(0, headingInStatement).trim();

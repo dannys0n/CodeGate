@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { parseSyntaxDrillInfo } from '../../codegate/syntax-drill-format';
 import type { GateLanguage } from '../../codegate/types';
 import { deactivateGeneratedProblem, materializeRuntimeProblem } from '../problem-files';
 
@@ -56,10 +57,7 @@ function parseProblem(raw: string) {
     const exampleCode = (exampleSection?.body.match(/```[^\r\n]*\r?\n([\s\S]*?)(?:\r?\n```|$)/)?.[1] ?? exampleSection?.body ?? '')
         .trim()
         .slice(0, 500);
-    const info = (infoSection?.body ?? '').split(/\r?\n/)
-        .map((line) => line.replace(/^\s*(?:[-*]|\d+[.)])\s*/, '').trim())
-        .filter(Boolean)
-        .slice(0, 8);
+    const info = parseSyntaxDrillInfo(infoSection?.body ?? '');
     const remaining = cleaned
         .replace(titleMatch?.[0] ?? '', '')
         .replace(labeledTitle?.[0] ?? '', '')

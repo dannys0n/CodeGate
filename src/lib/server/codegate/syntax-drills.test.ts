@@ -63,6 +63,15 @@ describe('AI syntax drills', () => {
         expect(drill.problem.info).toHaveLength(3);
     });
 
+    it('keeps fenced syntax examples inside their Info item', () => {
+        const fencedInfo = `# Append a Value\nAppend one value to a vector.\n\n## Info\n- push_back adds one value to the end.\n\`\`\`cpp\nvalues.push_back(7);\n\`\`\`\n- size returns the number of values, such as \`values.size()\`.`;
+        const drill = createSyntaxDrill(fencedInfo, 'Append one value.', 'cpp', 'session', 'challenge');
+        expect(drill.problem.info).toHaveLength(2);
+        expect(drill.problem.info[0]).toContain('values.push_back(7);');
+        expect(drill.problem.info[0]).toContain('```cpp');
+        expect(drill.problem.info[1]).toContain('values.size()');
+    });
+
     it('gives editor generation only the task and requests a comment rather than code', () => {
         const prompt = syntaxDrillStarterPrompt('cpp', problem);
         expect(prompt).toContain('inline starter comment');
