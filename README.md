@@ -25,6 +25,7 @@ _Demo GIF coming soon._
 - Uses the familiar Monaco editor with dark mode enabled by default.
 - Supports Java, Python, C++, C#, Rust, Go, and TypeScript through Docker runners.
 - Optionally uses a local AI model for streamed algorithm hints, selected-code explanations, and syntax drills.
+- Keeps the problem catalogue and syntax drills behind a persisted, lazy-loaded extra-features option.
 - Keeps the same problem while you switch language or difficulty.
 - Unlocks only after an explicit submission passes every official test for the active challenge.
 - Runs locally and reuses CoJudge's problem packs, submission API, runners, and validators.
@@ -154,9 +155,9 @@ Windows releases are built by GitHub Actions from version tags. Run the interact
 Choose a patch, minor, or major increment and optionally enter a one-line release note. The script
 previews the files being released, asks for confirmation, runs the type checks and test suite,
 updates both package version files, creates the release commit and matching annotated tag, then
-atomically pushes `main` and that tag to `origin`. The workflow places your note before GitHub's
-automatically generated changelog. The tag push triggers GitHub Actions. The script does not require
-the GitHub CLI or build the installer locally.
+atomically pushes `main` and that tag to `origin`. The workflow places your note before a changelog
+built from commits since the previous version tag. The tag push triggers GitHub Actions. The script
+does not require the GitHub CLI or build the installer locally.
 
 The `Publish Windows Release` workflow restores the pinned problem sources, validates and builds the
 application on Windows, and creates a GitHub Release containing the installer and its SHA-256 file.

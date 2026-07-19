@@ -683,6 +683,17 @@
         await runAiLifecycle(enabled ? (backend.aiEndpoint ? 'warm' : 'provision') : 'unload', backend);
     }
 
+    async function setExtraProblemFeaturesEnabled(extraProblemFeaturesEnabled: boolean) {
+        userSettingsStorage.update((settings) => ({ ...settings, extraProblemFeaturesEnabled }));
+        if (!extraProblemFeaturesEnabled) {
+            syntaxDrillController?.abort();
+            syntaxDrillController = null;
+            syntaxDrillState = syntaxDrill ? 'ready' : 'idle';
+            syntaxDrillStatus = '';
+            if (codegateWorkspaceTab !== 'editor') await openEditorWorkspace();
+        }
+    }
+
     async function setAiEndpoint() {
         const aiEndpoint = aiEndpointDraft.trim();
         const backend = { ...$userSettingsStorage, aiEndpoint };
@@ -1055,6 +1066,7 @@
     }
 
     async function loadProblemCatalog() {
+        if (!$userSettingsStorage.extraProblemFeaturesEnabled) return;
         showLeetcodeDifficultyFilter = false;
         showProblemNumberFilter = false;
         const key = problemCatalogKey();
@@ -1085,6 +1097,7 @@
     }
 
     function openProblemCatalogue() {
+        if (!$userSettingsStorage.extraProblemFeaturesEnabled) return;
         if (codegateWorkspaceTab === 'ai-drill') syntaxDrillCode = code;
         codegateWorkspaceTab = 'catalogue';
         void loadProblemCatalog();
@@ -1097,7 +1110,7 @@
     }
 
     async function openSyntaxDrill() {
-        if (!aiHelperConfigured || aiSettingsBusy) return;
+        if (!$userSettingsStorage.extraProblemFeaturesEnabled || !aiHelperConfigured || aiSettingsBusy) return;
         codegateWorkspaceTab = 'ai-drill';
         if (syntaxDrill) {
             suppressSave = true;
@@ -1111,7 +1124,7 @@
     }
 
     async function generateSyntaxDrill() {
-        if (!aiHelperConfigured || syntaxDrillState === 'loading') return;
+        if (!$userSettingsStorage.extraProblemFeaturesEnabled || !aiHelperConfigured || syntaxDrillState === 'loading') return;
         syntaxDrillController?.abort();
         syntaxDrillController = new AbortController();
         syntaxDrillState = 'loading';
@@ -1417,7 +1430,7 @@
 
     <!-- Right Pane: Editor and Console -->
     <div class="editor-pane">
-        {#if isCodeGate}
+        {#if isCodeGate && $userSettingsStorage.extraProblemFeaturesEnabled}
             <div class="codegate-workspace-tabs" role="tablist" aria-label="Code workspace">
                 <button
                     type="button"
@@ -1694,6 +1707,17 @@
                                 <option value="on">Vim</option>
                             </select>
                             {#if isCodeGate}
+                                <div class="settings-divider"></div>
+                                <div class="settings-section-title">Problem features</div>
+                                <label class="startup-event-option">
+                                    <input
+                                        type="checkbox"
+                                        checked={$userSettingsStorage.extraProblemFeaturesEnabled}
+                                        on:change={(event) => void setExtraProblemFeaturesEnabled(event.currentTarget.checked)}
+                                    />
+                                    Enable extra problem features
+                                </label>
+                                <div class="settings-note">Shows the Catalogue and, when AI is enabled, AI Syntax Drill. Each loads only when opened.</div>
                                 <div class="settings-divider"></div>
                                 <div class="settings-section-title">Local AI helper</div>
                                 <label class="startup-event-option">

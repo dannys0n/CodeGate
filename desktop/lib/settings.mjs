@@ -19,6 +19,7 @@ export const defaultDesktopSettings = Object.freeze({
   leetcodeDifficulties: [...leetcodeDifficulties],
   problemNumberMin: null,
   problemNumberMax: null,
+  extraProblemFeaturesEnabled: true,
   aiEnabled: false,
   aiDockerEnabled: true,
   aiEndpoint: '',
@@ -65,6 +66,9 @@ export function normalizeDesktopSettings(input = {}) {
       : [...defaultDesktopSettings.leetcodeDifficulties],
     problemNumberMin,
     problemNumberMax,
+    extraProblemFeaturesEnabled: typeof input.extraProblemFeaturesEnabled === 'boolean'
+      ? input.extraProblemFeaturesEnabled
+      : defaultDesktopSettings.extraProblemFeaturesEnabled,
     aiEnabled: typeof input.aiEnabled === 'boolean' ? input.aiEnabled : defaultDesktopSettings.aiEnabled,
     aiDockerEnabled: typeof input.aiDockerEnabled === 'boolean' ? input.aiDockerEnabled : defaultDesktopSettings.aiDockerEnabled,
     aiEndpoint: typeof input.aiEndpoint === 'string' ? input.aiEndpoint.trim().slice(0, 2048) : defaultDesktopSettings.aiEndpoint,

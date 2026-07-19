@@ -20,6 +20,7 @@ export interface UserSettings {
     leetcodeDifficulties: LeetcodeDifficulty[];
     problemNumberMin: number | null;
     problemNumberMax: number | null;
+    extraProblemFeaturesEnabled: boolean;
     aiEnabled: boolean;
     aiDockerEnabled: boolean;
     aiEndpoint: string;
@@ -40,6 +41,7 @@ const defaultSettings: UserSettings = {
     leetcodeDifficulties: [...leetcodeDifficultyLevels],
     problemNumberMin: null,
     problemNumberMax: null,
+    extraProblemFeaturesEnabled: true,
     aiEnabled: false,
     aiDockerEnabled: true,
     aiEndpoint: '',
@@ -75,9 +77,12 @@ function normalizeSettings(input: any): UserSettings {
         [problemNumberMin, problemNumberMax] = [problemNumberMax, problemNumberMin];
     }
     const aiEnabled = typeof input?.aiEnabled === 'boolean' ? input.aiEnabled : defaultSettings.aiEnabled;
+    const extraProblemFeaturesEnabled = typeof input?.extraProblemFeaturesEnabled === 'boolean'
+        ? input.extraProblemFeaturesEnabled
+        : defaultSettings.extraProblemFeaturesEnabled;
     const aiDockerEnabled = typeof input?.aiDockerEnabled === 'boolean' ? input.aiDockerEnabled : defaultSettings.aiDockerEnabled;
     const aiEndpoint = typeof input?.aiEndpoint === 'string' ? input.aiEndpoint.trim().slice(0, 2_048) : defaultSettings.aiEndpoint;
-    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties, problemNumberMin, problemNumberMax, aiEnabled, aiDockerEnabled, aiEndpoint };
+    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties, problemNumberMin, problemNumberMax, extraProblemFeaturesEnabled, aiEnabled, aiDockerEnabled, aiEndpoint };
 }
 
 // Packaged Electron uses its user-data settings file. A missing file falls back

@@ -19,6 +19,8 @@ CodeGate is a self-discipline gate, not a Windows security boundary.
 
 The optional AI helper is separate from algorithm judging. It uses Docker Model Runner or a custom
 OpenAI-compatible endpoint for streamed algorithm hints, selected-code explanations, and short syntax drills.
+The Catalogue and AI Syntax Drill tabs are hidden until Extra problem features is enabled; their
+catalog data or generated drill content is loaded only after the corresponding tab is opened.
 Drill submissions compile through the existing runners and an
 AI review enables their Solution button only for the exact reviewed source.
 Windows provisioning requests GPU-backed inference by default and safely falls back to CPU when

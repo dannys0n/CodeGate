@@ -5,6 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { loadDesktopSettings, normalizeDesktopSettings, saveDesktopSettings } from './settings.mjs';
 
 describe('desktop settings', () => {
+  it('keeps extra problem features lazy and enabled by default', () => {
+    expect(normalizeDesktopSettings({}).extraProblemFeaturesEnabled).toBe(true);
+  });
+
   it('normalizes invalid values without persisting a problem identifier', () => {
     const settings = normalizeDesktopSettings({
       codegateLanguage: 'python',
@@ -12,6 +16,7 @@ describe('desktop settings', () => {
       leetcodeDifficulties: ['Hard', 'invalid'],
       problemNumberMin: 500,
       problemNumberMax: 100,
+      extraProblemFeaturesEnabled: true,
       aiEnabled: true,
       aiDockerEnabled: false,
       aiEndpoint: '  http://127.0.0.1:1234  ',
@@ -24,6 +29,7 @@ describe('desktop settings', () => {
     expect(settings.leetcodeDifficulties).toEqual(['Hard']);
     expect(settings.problemNumberMin).toBe(100);
     expect(settings.problemNumberMax).toBe(500);
+    expect(settings.extraProblemFeaturesEnabled).toBe(true);
     expect(settings.aiEnabled).toBe(true);
     expect(settings.aiDockerEnabled).toBe(false);
     expect(settings.aiEndpoint).toBe('http://127.0.0.1:1234');
@@ -34,12 +40,13 @@ describe('desktop settings', () => {
   it('round trips the allow-listed settings file', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'codegate-settings-'));
     const file = path.join(root, 'settings.json');
-    await saveDesktopSettings(file, { theme: 'light', leftPaneWidth: 37, codegateLanguage: 'cpp', aiEnabled: true, aiDockerEnabled: false, aiEndpoint: 'http://127.0.0.1:1234' });
+    await saveDesktopSettings(file, { theme: 'light', leftPaneWidth: 37, codegateLanguage: 'cpp', extraProblemFeaturesEnabled: true, aiEnabled: true, aiDockerEnabled: false, aiEndpoint: 'http://127.0.0.1:1234' });
 
     await expect(loadDesktopSettings(file)).resolves.toMatchObject({
       theme: 'light',
       leftPaneWidth: 37,
       codegateLanguage: 'cpp',
+      extraProblemFeaturesEnabled: true,
       aiEnabled: true,
       aiDockerEnabled: false,
       aiEndpoint: 'http://127.0.0.1:1234'

@@ -80,14 +80,30 @@ jobs:
           $tagMessage = @(git for-each-ref --format='%(contents)' "refs/tags/$tag") -join "`n"
           $messageParts = $tagMessage -split '\r?\n', 2
           $releaseNote = if ($messageParts.Count -gt 1) { $messageParts[1].Trim() } else { '' }
+          $previousTag = "$(git describe --tags --abbrev=0 "$tag^" 2>$null)".Trim()
+          $range = if ($previousTag) { "$previousTag..$tag" } else { $tag }
+          $changes = @(git log --format='%H%x09%s' $range | ForEach-Object {
+            $parts = $_ -split "`t", 2
+            if ($parts.Count -eq 2 -and $parts[1] -notmatch '^Release v\d') {
+              "- $($parts[1]) ($($parts[0].Substring(0, 7)))"
+            }
+          })
+          $sections = @()
+          if ($releaseNote) { $sections += $releaseNote }
+          if ($changes.Count) { $sections += "## Changes`n`n$($changes -join "`n")" }
+          if ($previousTag) {
+            $sections += "**Full Changelog**: ${{ github.server_url }}/${{ github.repository }}/compare/$previousTag...$tag"
+          }
+          if (-not $sections.Count) { $sections += 'No release notes were provided.' }
+          $notesFile = Join-Path $env:RUNNER_TEMP 'release-notes.md'
+          [IO.File]::WriteAllText($notesFile, ($sections -join "`n`n") + "`n", [Text.UTF8Encoding]::new($false))
           $arguments = @(
             'release', 'create', $tag,
             '${{ steps.artifact.outputs.installer }}',
             '${{ steps.artifact.outputs.checksum }}',
             '--verify-tag',
-            '--generate-notes',
+            '--notes-file', $notesFile,
             '--title', "CodeGate $tag"
           )
-          if ($releaseNote) { $arguments += @('--notes', $releaseNote) }
           & gh @arguments
           if ($LASTEXITCODE -ne 0) { throw "GitHub release creation failed with exit code $LASTEXITCODE." }
