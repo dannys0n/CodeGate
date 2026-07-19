@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 
 export const codeGateModel = 'hf.co/jica98/qwen3.5-4B-super-coder:Q4_0';
 export const modelRunnerBaseUrl = 'http://127.0.0.1:12434';
-export const codeGateModelContextTokens = 8192;
+const codeGateModelContextTokens = 8192;
 
 type StreamEvent = (type: 'status' | 'text' | 'reasoning' | 'problem' | 'output' | 'result', text: string) => void;
 type ModelRequestOptions = { seed?: number; temperature?: number; includeReasoning?: boolean; endpoint?: string };
@@ -65,7 +65,7 @@ function dockerCommand() {
     return process.platform === 'win32' ? 'docker.exe' : 'docker';
 }
 
-export function runDockerModelCommand(args: string[], onEvent: StreamEvent, signal?: AbortSignal): Promise<void> {
+function runDockerModelCommand(args: string[], onEvent: StreamEvent, signal?: AbortSignal): Promise<void> {
     return new Promise((resolve, reject) => {
         const child = spawn(dockerCommand(), args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
         let stderr = '';

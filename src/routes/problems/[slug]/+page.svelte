@@ -699,7 +699,7 @@
             aiEndpointDraftUnloadedDocker = false;
             return;
         }
-        if (aiEndpointDraftUnloadedDocker || !$userSettingsStorage.aiEnabled) return;
+        if (aiEndpointDraftUnloadedDocker || aiEndpointDraftUnloadPromise || !$userSettingsStorage.aiEnabled) return;
         aiEndpointDraftUnloadedDocker = true;
         aiEndpointDraftUnloadPromise = runAiLifecycle('unload', { ...$userSettingsStorage, aiEndpoint: aiEndpointDraft.trim() });
     }
