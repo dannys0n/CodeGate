@@ -52,7 +52,15 @@ describe('AI syntax drills', () => {
         expect(prompt).toContain('directly shows the exact syntax or standard-library API required');
         expect(prompt).toContain('every header or import required for the feature');
         expect(prompt).toContain('use different names or values');
-        expect(prompt).toContain('common use');
+        expect(prompt).toContain('explain what it does and how to use its syntax');
+        expect(prompt).toContain('tiny inline-code example');
+        expect(prompt).toContain('must have its own useful Info explanation and inline syntax example');
+    });
+
+    it('retains explanations for multiple required syntax features', () => {
+        const detailed = `# Use Two Features\nUse a map and sort its extracted keys.\n\n## Info\n- A map stores key-value pairs.\n- Sorting orders the extracted keys.\n- Both operations are common standard-library building blocks.`;
+        const drill = createSyntaxDrill(detailed, 'Declare the required values.', 'cpp', 'session', 'challenge');
+        expect(drill.problem.info).toHaveLength(3);
     });
 
     it('gives editor generation only the task and requests a comment rather than code', () => {

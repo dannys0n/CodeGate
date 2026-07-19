@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 export const codeGateModel = 'hf.co/jica98/qwen3.5-4B-super-coder:Q4_0';
 export const modelRunnerBaseUrl = 'http://127.0.0.1:12434';
 const codeGateModelContextTokens = 8192;
+const codeGateModelKeepAlive = '1h';
 
 type StreamEvent = (type: 'status' | 'text' | 'reasoning' | 'problem' | 'output' | 'result', text: string) => void;
 type ModelRequestOptions = { seed?: number; temperature?: number; includeReasoning?: boolean; endpoint?: string };
@@ -125,16 +126,17 @@ export async function provisionCodeGateModel(onEvent: StreamEvent, signal?: Abor
     }
     onEvent('status', `Downloading ${codeGateModel}...\n`);
     await runDockerModelCommand(['model', 'pull', codeGateModel], onEvent, signal);
-    onEvent('status', 'Configuring the model for one independent request at a time...\n');
-    await runDockerModelCommand([
-        'model', 'configure', '--context-size', String(codeGateModelContextTokens), codeGateModel,
-        '--', '--parallel', '1', '--no-cache-prompt', '--cache-ram', '0', '--reasoning-budget', '0'
-    ], onEvent, signal);
     await warmCodeGateModel(onEvent, signal);
 }
 
 export async function warmCodeGateModel(onEvent: StreamEvent = () => {}, signal?: AbortSignal) {
     await ensureDockerReady(onEvent, signal);
+    onEvent('status', 'Configuring the model for one independent request and a one-hour idle keep-alive...\n');
+    await runDockerModelCommand([
+        'model', 'configure', '--context-size', String(codeGateModelContextTokens),
+        '--keep-alive', codeGateModelKeepAlive, codeGateModel,
+        '--', '--parallel', '1', '--no-cache-prompt', '--cache-ram', '0', '--reasoning-budget', '0'
+    ], onEvent, signal);
     onEvent('status', 'Loading the CodeGate AI model into memory...\n');
     await runDockerModelCommand(['model', 'run', '--detach', codeGateModel], onEvent, signal);
     onEvent('status', 'Local AI helper is ready.\n');

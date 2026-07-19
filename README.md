@@ -92,7 +92,8 @@ Algorithm help appears as a streamed sidebar hint; highlighting code and
 choosing **Explain selection with local AI** streams its explanation into the existing Console tab.
 CodeGate warms the selected backend when AI is enabled and unloads its Docker model during normal application shutdown so it
 does not continue reserving VRAM after the app closes.
-Its runtime profile uses one inference slot, an 8K context, and no cross-request prompt cache because
+Its runtime profile keeps the model loaded for up to one hour between requests, uses one inference slot,
+an 8K context, and no cross-request prompt cache because
 each CodeGate hint is an independent request.
 
 On Windows, CodeGate checks the Docker daemon at launch and, when necessary, asks Docker Desktop to
