@@ -7,7 +7,7 @@ const codeGateModelKeepAlive = '1h';
 
 type StreamEvent = (type: 'status' | 'text' | 'reasoning' | 'problem' | 'output' | 'result', text: string) => void;
 type ModelStreamEvent = (type: 'status' | 'text' | 'reasoning' | 'problem' | 'output' | 'result', text: string) => void | boolean;
-type ModelRequestOptions = { seed?: number; temperature?: number; maxTokens?: number; includeReasoning?: boolean; endpoint?: string };
+type ModelRequestOptions = { seed?: number; temperature?: number; topP?: number; maxTokens?: number; frequencyPenalty?: number; includeReasoning?: boolean; endpoint?: string };
 type EndpointTarget = { key: string; chatUrl: string; modelsUrl: string };
 const endpointModels = new Map<string, string>();
 
@@ -152,7 +152,7 @@ export async function unloadCodeGateModel(onEvent: StreamEvent = () => {}, signa
     }
 }
 
-type ChatMessage = { role: 'system' | 'user'; content: string };
+type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 let inferenceActive = false;
 
 export function extractModelDelta(payload: any) {
@@ -183,7 +183,9 @@ export async function streamModelText(messages: ChatMessage[], onEvent: ModelStr
                 messages,
                 stream: true,
                 temperature: options.temperature ?? 0.15,
+                ...(typeof options.topP === 'number' ? { top_p: options.topP } : {}),
                 ...(Number.isInteger(options.maxTokens) && options.maxTokens! > 0 ? { max_tokens: options.maxTokens } : {}),
+                ...(typeof options.frequencyPenalty === 'number' ? { frequency_penalty: options.frequencyPenalty } : {}),
                 ...(Number.isInteger(options.seed) ? { seed: options.seed } : {}),
                 ...(!target ? { chat_template_kwargs: { enable_thinking: false } } : {})
             }),

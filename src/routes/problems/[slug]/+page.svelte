@@ -80,7 +80,9 @@
             : cleaned.slice(exampleHeading.index + exampleHeading[0].length);
         const exampleEnd = exampleRemainder.search(/^##\s+/im);
         const exampleText = (exampleEnd < 0 ? exampleRemainder : exampleRemainder.slice(0, exampleEnd)).trim();
-        const exampleCode = (exampleText.match(/```[^\r\n]*\r?\n([\s\S]*?)(?:\r?\n```|$)/)?.[1] ?? exampleText).trim();
+        const exampleCode = (exampleText.match(/```[^\r\n]*\r?\n([\s\S]*?)(?:\r?\n```|$)/)?.[1]
+            ?? cleaned.match(/```[^\r\n]*\r?\n([\s\S]*?)(?:\r?\n```|$)/)?.[1]
+            ?? exampleText).trim();
         const infoHeading = cleaned.match(/^##\s+Info\s*(?:\r?\n|$)/im);
         const infoText = infoHeading?.index === undefined
             ? ''

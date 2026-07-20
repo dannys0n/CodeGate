@@ -50,11 +50,11 @@ describe('Docker Model Runner stream deltas', () => {
 
         await streamModelText([{ role: 'user', content: 'test' }], (type, text) => {
             if (type === 'text') output.push(text);
-        }, undefined, { endpoint: 'http://127.0.0.1:43123', maxTokens: 96 });
+        }, undefined, { endpoint: 'http://127.0.0.1:43123', maxTokens: 96, topP: 0.8, frequencyPenalty: 0.25 });
 
         expect(fetchMock.mock.calls[0][0]).toBe('http://127.0.0.1:43123/v1/models');
         expect(fetchMock.mock.calls[1][0]).toBe('http://127.0.0.1:43123/v1/chat/completions');
-        expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({ model: 'loaded-model', stream: true, max_tokens: 96 });
+        expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({ model: 'loaded-model', stream: true, max_tokens: 96, top_p: 0.8, frequency_penalty: 0.25 });
         expect(output).toEqual(['ready']);
         vi.unstubAllGlobals();
     });

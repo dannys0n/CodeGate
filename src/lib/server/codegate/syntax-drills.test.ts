@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { truncateSyntaxDrillAtInfoLimit } from '../../codegate/syntax-drill-format';
-import { approveSyntaxDrill, createSyntaxDrill, isSyntaxDrillApproved, normalizeSyntaxDrillTitle, syntaxDrillConsoleOutput, syntaxDrillPrompt, syntaxDrillReviewPrompt, syntaxDrillResponse, syntaxDrillStarterPrompt, syntaxDrillTitlePrompt } from './syntax-drills';
+import { truncateSyntaxDrillAfterFeatureInfo, truncateSyntaxDrillAtInfoLimit } from '../../codegate/syntax-drill-format';
+import { approveSyntaxDrill, createSyntaxDrill, isSyntaxDrillApproved, isUsableSyntaxDrillTitle, normalizeSyntaxDrillTitle, syntaxDrillConsoleOutput, syntaxDrillInstruction, syntaxDrillProblemExample, syntaxDrillProblemSystemPrompt, syntaxDrillPrompt, syntaxDrillReviewPrompt, syntaxDrillResponse, syntaxDrillStarterPrompt, syntaxDrillTitleCategory, syntaxDrillTitlePrompt, syntaxDrillTitlesOverlap } from './syntax-drills';
 
 const problem = `# Iterate a Map
 Iterate through an unordered map once using a range-based loop.
@@ -43,35 +43,60 @@ describe('AI syntax drills', () => {
 
     it('keeps generation focused on one syntax feature rather than algorithms', () => {
         const titlePrompt = syntaxDrillTitlePrompt('cpp', 42);
+        const systemPrompt = syntaxDrillProblemSystemPrompt('cpp');
         const prompt = syntaxDrillPrompt('cpp', 'Use std::exchange');
-        expect(prompt).toContain('This is not an algorithm problem');
-        expect(prompt).toContain('titled "Use std::exchange"');
-        expect(prompt).toContain('authoritative syntax feature or API');
-        expect(prompt).toContain('one to five short lines');
-        expect(prompt).toContain('## Info');
-        expect(prompt).toContain('## Example');
-        expect(prompt).toContain('directly shows the exact syntax or standard-library API required');
-        expect(prompt).toContain('every header or import required for the feature');
-        expect(prompt).toContain('use different names or values');
-        expect(prompt).toContain('briefly explain what it does');
-        expect(prompt).toContain('generic syntax template with placeholder names');
-        expect(prompt).toContain('filled-in valid example using concrete names and values');
-        expect(prompt).toContain('group every required header or import into this single entry');
-        expect(prompt).toContain('Headers and imports are setup, not syntax features');
-        expect(prompt).toContain('does not need a generic Syntax template or filled-in Example');
-        expect(prompt).toContain('both the generic Syntax template and the distinct filled-in Example are mandatory');
-        expect(prompt).toContain('no more than eight Info entries');
-        expect(prompt).toContain('Keep every Info entry on one line');
-        expect(titlePrompt).toContain("anything from cpp's standard library");
-        expect(titlePrompt).toContain('30 seconds or less using one to five short lines');
-        expect(titlePrompt).toContain('Avoid defaulting to containers, loops, printing');
-        expect(titlePrompt).toContain('random seed 42');
-        expect(titlePrompt).toContain('Return only a descriptive title under seven words');
+        expect(prompt).toContain('ASSIGNED FEATURE: Use std::exchange');
+        expect(prompt).toContain('Generate Example and Info now');
+        expect(prompt).toContain('Use this exact feature spelling in the code and Info');
+        expect(prompt).toContain('Include its import/header when required');
+        expect(prompt).toContain('Maximum eight Info bullets');
+        expect(systemPrompt).toContain('Create the Example and Info');
+        expect(systemPrompt).toContain('Never substitute another API');
+        expect(systemPrompt).toContain('assigned name must appear in Info');
+        expect(systemPrompt).toContain('at most 5 nonblank lines');
+        expect(systemPrompt).toContain('## Info');
+        expect(systemPrompt).toContain('## Example');
+        expect(systemPrompt).toContain('one optional flat "Required setup:" bullet');
+        expect(systemPrompt).toContain('"Syntax:" with generic inline code');
+        expect(systemPrompt).toContain('"Example:" with different valid inline code');
+        expect(systemPrompt).toContain('exactly one flat feature bullet');
+        expect(systemPrompt).toContain('Never use bold, nested bullets');
+        expect(titlePrompt).toContain('LANGUAGE MUST BE cpp');
+        expect(titlePrompt).toContain('REQUIRED CATEGORY: fundamental or scalar data type');
+        expect(titlePrompt).toContain('Never invent a name or switch categories');
+        expect(titlePrompt).toContain('seed 42');
+        expect(titlePrompt).toContain('canonical topic name in 1-5 words');
+        expect(syntaxDrillTitleCategory('python', 1)).toBe('container or data-storage type');
+        expect(syntaxDrillTitleCategory('python', 1, ['container or data-storage type'])).toBe('callable, function definition, or function type syntax');
+        expect(syntaxDrillTitlesOverlap('std::sort', 'sort')).toBe(true);
+        expect(syntaxDrillTitlesOverlap('list.sort', 'sorted')).toBe(true);
+        expect(syntaxDrillTitlesOverlap('Move semantics', 'move constructor')).toBe(true);
+        expect(syntaxDrillTitlesOverlap('list comprehension', 'list')).toBe(false);
+        expect(syntaxDrillTitlesOverlap('lambda expressions', 'lambda expression')).toBe(true);
+        expect(syntaxDrillTitlesOverlap('Union type', 'Union type syntax (using |)')).toBe(true);
+        expect(syntaxDrillTitlesOverlap('std::vector', 'lambda expression')).toBe(false);
+        expect(syntaxDrillInstruction('std::exchange')).toBe('Use `std::exchange` once with your own values.');
+        const example = syntaxDrillProblemExample('cpp');
+        expect(example.request).toContain('ASSIGNED FEATURE: std::abs');
+        expect(example.response).toContain('## Example');
+        expect(example.response).toContain('Syntax: `std::abs(value)`');
     });
 
     it('normalizes common title-only response variations', () => {
         expect(normalizeSyntaxDrillTitle('## Title: Exchange Two Values!')).toBe('Exchange Two Values');
         expect(normalizeSyntaxDrillTitle('```text\nFormat a Duration\n```')).toBe('Format a Duration');
+        expect(normalizeSyntaxDrillTitle('Arrays#sort')).toBe('Arrays.sort');
+        expect(normalizeSyntaxDrillTitle('range(10)')).toBe('range');
+        expect(normalizeSyntaxDrillTitle('StringBuilder.\nappend')).toBe('StringBuilder.append');
+        expect(normalizeSyntaxDrillTitle('auto return type deduction for')).toBe('auto return type deduction');
+        expect(normalizeSyntaxDrillTitle('One Two Three Four Five Six Seven Eight')).toBe('One Two Three Four Five');
+        expect(isUsableSyntaxDrillTitle('<no_think>\nCore operator', '<no_think>')).toBe(false);
+        expect(isUsableSyntaxDrillTitle('std::swap\n</think>', 'std::swap')).toBe(true);
+        expect(isUsableSyntaxDrillTitle('fn std::io::write', 'fn std::io::write')).toBe(false);
+        expect(isUsableSyntaxDrillTitle('sync.WaitGroup', 'sync.WaitGroup')).toBe(false);
+        expect(isUsableSyntaxDrillTitle('std::env::vars', 'std::env::vars')).toBe(false);
+        expect(isUsableSyntaxDrillTitle('[T](...)', '[T](...)')).toBe(false);
+        expect(isUsableSyntaxDrillTitle('def f():', 'def f()')).toBe(false);
     });
 
     it('retains explanations for multiple required syntax features', () => {
@@ -98,11 +123,19 @@ describe('AI syntax drills', () => {
         expect(limited.text).not.toContain('closing text');
     });
 
+    it('ends streamed problem text after the expected feature Info entry', () => {
+        const source = '# Drill\nTask.\n## Info\n- Required setup: import x.\n- `feature` works. Syntax: `feature(x)`. Example: `feature(1)`.\n- unrelated detail\n';
+        const limited = truncateSyntaxDrillAfterFeatureInfo(source);
+        expect(limited.reached).toBe(true);
+        expect(limited.text).toContain('Example: `feature(1)`');
+        expect(limited.text).not.toContain('unrelated detail');
+    });
+
     it('gives editor generation only the task and requests a comment rather than code', () => {
         const prompt = syntaxDrillStarterPrompt('cpp', problem);
-        expect(prompt).toContain('inline starter comment');
+        expect(prompt).toContain('imperative starter comment');
         expect(prompt).toContain('Iterate through an unordered map');
-        expect(prompt).toContain('Do not provide code');
+        expect(prompt).toContain('no code or solution');
     });
 
     it('derives an instruction when the model omits the standalone task sentence', () => {
@@ -120,11 +153,25 @@ describe('AI syntax drills', () => {
         expect(drill.problem.exampleCode).toBe('');
     });
 
+    it('recovers a fenced example when the model omits its heading', () => {
+        const irregular = '# Use Length\nUse len.\n```python\ncount = len([1, 2])\n```\n## Info\n- len counts items.';
+        const drill = createSyntaxDrill(irregular, 'Count items.', 'python', 'session', 'challenge');
+        expect(drill.problem.exampleCode).toBe('count = len([1, 2])');
+    });
+
+    it('removes accidental program wrappers from generated examples', () => {
+        const wrapped = `# Sort Values\nUse sort.\n## Example\n\`\`\`cpp\n#include <algorithm>\nint main() {\nint values[] = {2, 1};\nstd::sort(values, values + 2);\nreturn 0;\n}\n\`\`\`\n## Info\n- sort works.`;
+        const drill = createSyntaxDrill(wrapped, 'Sort once.', 'cpp', 'session', 'challenge');
+        expect(drill.problem.exampleCode).toContain('std::sort');
+        expect(drill.problem.exampleCode).not.toContain('main');
+        expect(drill.problem.exampleCode).not.toContain('return 0');
+    });
+
     it('asks the reviewer for a concise natural-language verdict', () => {
         const drill = createSyntaxDrill(problem, 'Declare the map.', 'cpp', 'session', 'challenge');
         const prompt = syntaxDrillReviewPrompt(drill, 'class Solution {};');
         expect(prompt).toContain('PASS or NEEDS WORK');
-        expect(prompt).toContain('not an algorithm review');
+        expect(prompt).toContain('demonstrates the requested syntax with real code');
         expect(prompt).toContain('class Solution {}');
     });
 

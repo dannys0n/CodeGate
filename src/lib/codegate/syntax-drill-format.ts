@@ -36,3 +36,20 @@ export function truncateSyntaxDrillAtInfoLimit(source: string, maximum = 8): { t
     if (lineEnd < 0) return { text: source, reached: false };
     return { text: source.slice(0, lineEnd + 1), reached: true };
 }
+
+export function truncateSyntaxDrillAfterFeatureInfo(source: string): { text: string; reached: boolean } {
+    const heading = source.match(/^#{1,3}\s+Info\s*(?:\r?\n|$)/im);
+    if (heading?.index === undefined) return { text: source, reached: false };
+    const bodyStart = heading.index + heading[0].length;
+    const bulletPattern = /^\s*(?:[-*+]\s+|\d+[.)]\s+)(.*)$/gm;
+    const body = source.slice(bodyStart);
+    let match: RegExpExecArray | null;
+    while ((match = bulletPattern.exec(body)) !== null) {
+        if (/^Required setup\s*:/i.test(match[1].replace(/[*_`]/g, '').trim())) continue;
+        const bulletStart = bodyStart + match.index;
+        const lineEnd = source.indexOf('\n', bulletStart);
+        if (lineEnd < 0) return { text: source, reached: false };
+        return { text: source.slice(0, lineEnd + 1), reached: true };
+    }
+    return { text: source, reached: false };
+}

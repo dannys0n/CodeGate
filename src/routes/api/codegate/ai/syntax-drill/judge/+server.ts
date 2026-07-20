@@ -35,7 +35,7 @@ export const POST: RequestHandler = async ({ request }) => {
                     emit('text', value);
                 }
                 if (type === 'reasoning') emit('reasoning', value);
-            }, signal, { temperature: 0.05, includeReasoning: true, endpoint: requestedAiEndpoint(body) });
+            }, signal, { temperature: 0.05, maxTokens: 160, includeReasoning: true, endpoint: requestedAiEndpoint(body) });
 
             const verdict = review.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
             const approved = /^PASS\b/i.test(verdict) && !/^PASS\s*(?:BUT|WITH\s+CHANGES)/i.test(verdict);
