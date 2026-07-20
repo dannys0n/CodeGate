@@ -24,6 +24,7 @@ _Demo GIF coming soon._
 - Opens a coding challenge at Windows sign-in, unlock, or resume from sleep.
 - Uses the familiar Monaco editor with dark mode enabled by default.
 - Supports Java, Python, C++, C#, Rust, Go, and TypeScript through Docker runners.
+- Optionally provides semantic IntelliSense completion for every supported language through isolated, on-demand language servers.
 - Optionally uses a local AI model for streamed algorithm hints, selected-code explanations, and syntax drills.
 - Keeps the problem catalogue and syntax drills behind a persisted, lazy-loaded extra-features option.
 - Keeps the same problem while you switch language or difficulty.
@@ -81,6 +82,12 @@ developers can include it with:
 
 Docker Desktop may download a language image the first time that language is judged. Keep Docker
 running and allow a little extra time for the first submission.
+
+IntelliSense is optional and uses a separate Docker image for each language. Enable its single
+checkbox from the editor settings; CodeGate then installs and starts only the server for the
+currently selected language, and stops it when the editor switches away or closes. The installer
+can preinstall any combination, with C++ and Python selected by default. Turning IntelliSense off
+keeps downloaded images so it can be re-enabled without another download.
 
 The optional AI helper can use Docker Model Runner or a custom OpenAI-compatible endpoint. The
 Docker backend requires Docker Desktop 4.41 or newer; on Windows, CodeGate enables GPU-backed
@@ -141,6 +148,9 @@ The installer lets the user choose sign-in, unlock, and resume-from-sleep startu
 are selected by default. The same choices can be changed later from the editor's settings gear.
 An optional installer checkbox enables GPU-backed Docker Model Runner when supported and downloads the AI model. The uninstaller
 offers to remove that model and selects model removal by default.
+The following installer page selects which IntelliSense images to prepare; C++ and Python are
+selected by default, while unselected languages remain available through lazy installation. The
+uninstaller has one default-selected option to remove every CodeGate IntelliSense image.
 Uninstalling CodeGate removes its scheduled startup registration,
 application files, and per-user state. Removing shared Docker images is an optional uninstall step
 because those images may be used by other projects.

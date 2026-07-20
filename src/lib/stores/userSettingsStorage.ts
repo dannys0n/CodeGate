@@ -21,6 +21,7 @@ export interface UserSettings {
     problemNumberMin: number | null;
     problemNumberMax: number | null;
     extraProblemFeaturesEnabled: boolean;
+    intellisenseEnabled: boolean;
     aiEnabled: boolean;
     aiDockerEnabled: boolean;
     aiEndpoint: string;
@@ -42,6 +43,7 @@ const defaultSettings: UserSettings = {
     problemNumberMin: null,
     problemNumberMax: null,
     extraProblemFeaturesEnabled: true,
+    intellisenseEnabled: false,
     aiEnabled: false,
     aiDockerEnabled: true,
     aiEndpoint: '',
@@ -80,9 +82,12 @@ function normalizeSettings(input: any): UserSettings {
     const extraProblemFeaturesEnabled = typeof input?.extraProblemFeaturesEnabled === 'boolean'
         ? input.extraProblemFeaturesEnabled
         : defaultSettings.extraProblemFeaturesEnabled;
+    const intellisenseEnabled = typeof input?.intellisenseEnabled === 'boolean'
+        ? input.intellisenseEnabled
+        : defaultSettings.intellisenseEnabled;
     const aiDockerEnabled = typeof input?.aiDockerEnabled === 'boolean' ? input.aiDockerEnabled : defaultSettings.aiDockerEnabled;
     const aiEndpoint = typeof input?.aiEndpoint === 'string' ? input.aiEndpoint.trim().slice(0, 2_048) : defaultSettings.aiEndpoint;
-    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties, problemNumberMin, problemNumberMax, extraProblemFeaturesEnabled, aiEnabled, aiDockerEnabled, aiEndpoint };
+    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties, problemNumberMin, problemNumberMax, extraProblemFeaturesEnabled, intellisenseEnabled, aiEnabled, aiDockerEnabled, aiEndpoint };
 }
 
 // Packaged Electron uses its user-data settings file. A missing file falls back

@@ -7,6 +7,7 @@ import { loadDesktopSettings, normalizeDesktopSettings, saveDesktopSettings } fr
 describe('desktop settings', () => {
   it('keeps extra problem features lazy and enabled by default', () => {
     expect(normalizeDesktopSettings({}).extraProblemFeaturesEnabled).toBe(true);
+    expect(normalizeDesktopSettings({}).intellisenseEnabled).toBe(false);
   });
 
   it('normalizes invalid values without persisting a problem identifier', () => {
@@ -17,6 +18,7 @@ describe('desktop settings', () => {
       problemNumberMin: 500,
       problemNumberMax: 100,
       extraProblemFeaturesEnabled: true,
+      intellisenseEnabled: true,
       aiEnabled: true,
       aiDockerEnabled: false,
       aiEndpoint: '  http://127.0.0.1:1234  ',
@@ -30,6 +32,7 @@ describe('desktop settings', () => {
     expect(settings.problemNumberMin).toBe(100);
     expect(settings.problemNumberMax).toBe(500);
     expect(settings.extraProblemFeaturesEnabled).toBe(true);
+    expect(settings.intellisenseEnabled).toBe(true);
     expect(settings.aiEnabled).toBe(true);
     expect(settings.aiDockerEnabled).toBe(false);
     expect(settings.aiEndpoint).toBe('http://127.0.0.1:1234');
@@ -40,13 +43,14 @@ describe('desktop settings', () => {
   it('round trips the allow-listed settings file', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'codegate-settings-'));
     const file = path.join(root, 'settings.json');
-    await saveDesktopSettings(file, { theme: 'light', leftPaneWidth: 37, codegateLanguage: 'cpp', extraProblemFeaturesEnabled: true, aiEnabled: true, aiDockerEnabled: false, aiEndpoint: 'http://127.0.0.1:1234' });
+    await saveDesktopSettings(file, { theme: 'light', leftPaneWidth: 37, codegateLanguage: 'cpp', extraProblemFeaturesEnabled: true, intellisenseEnabled: true, aiEnabled: true, aiDockerEnabled: false, aiEndpoint: 'http://127.0.0.1:1234' });
 
     await expect(loadDesktopSettings(file)).resolves.toMatchObject({
       theme: 'light',
       leftPaneWidth: 37,
       codegateLanguage: 'cpp',
       extraProblemFeaturesEnabled: true,
+      intellisenseEnabled: true,
       aiEnabled: true,
       aiDockerEnabled: false,
       aiEndpoint: 'http://127.0.0.1:1234'

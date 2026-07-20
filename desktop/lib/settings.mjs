@@ -20,6 +20,7 @@ export const defaultDesktopSettings = Object.freeze({
   problemNumberMin: null,
   problemNumberMax: null,
   extraProblemFeaturesEnabled: true,
+  intellisenseEnabled: false,
   aiEnabled: false,
   aiDockerEnabled: true,
   aiEndpoint: '',
@@ -69,6 +70,9 @@ export function normalizeDesktopSettings(input = {}) {
     extraProblemFeaturesEnabled: typeof input.extraProblemFeaturesEnabled === 'boolean'
       ? input.extraProblemFeaturesEnabled
       : defaultDesktopSettings.extraProblemFeaturesEnabled,
+    intellisenseEnabled: typeof input.intellisenseEnabled === 'boolean'
+      ? input.intellisenseEnabled
+      : defaultDesktopSettings.intellisenseEnabled,
     aiEnabled: typeof input.aiEnabled === 'boolean' ? input.aiEnabled : defaultDesktopSettings.aiEnabled,
     aiDockerEnabled: typeof input.aiDockerEnabled === 'boolean' ? input.aiDockerEnabled : defaultDesktopSettings.aiDockerEnabled,
     aiEndpoint: typeof input.aiEndpoint === 'string' ? input.aiEndpoint.trim().slice(0, 2048) : defaultDesktopSettings.aiEndpoint,

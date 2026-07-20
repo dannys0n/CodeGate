@@ -11,12 +11,35 @@ Var StartAtLogon
 Var StartAtUnlock
 Var StartAtResume
 Var InstallAiModel
+Var IntelliSenseDialog
+Var IntelliSenseCppCheckbox
+Var IntelliSensePythonCheckbox
+Var IntelliSenseJavaCheckbox
+Var IntelliSenseCSharpCheckbox
+Var IntelliSenseRustCheckbox
+Var IntelliSenseGoCheckbox
+Var IntelliSenseTypeScriptCheckbox
+Var IntelliSenseCpp
+Var IntelliSensePython
+Var IntelliSenseJava
+Var IntelliSenseCSharp
+Var IntelliSenseRust
+Var IntelliSenseGo
+Var IntelliSenseTypeScript
+Var IntelliSenseLanguages
 
 !macro customInit
   StrCpy $StartAtLogon ${BST_CHECKED}
   StrCpy $StartAtUnlock ${BST_CHECKED}
   StrCpy $StartAtResume ${BST_CHECKED}
   StrCpy $InstallAiModel ${BST_UNCHECKED}
+  StrCpy $IntelliSenseCpp ${BST_CHECKED}
+  StrCpy $IntelliSensePython ${BST_CHECKED}
+  StrCpy $IntelliSenseJava ${BST_UNCHECKED}
+  StrCpy $IntelliSenseCSharp ${BST_UNCHECKED}
+  StrCpy $IntelliSenseRust ${BST_UNCHECKED}
+  StrCpy $IntelliSenseGo ${BST_UNCHECKED}
+  StrCpy $IntelliSenseTypeScript ${BST_UNCHECKED}
 
   ClearErrors
   ReadRegDWORD $0 HKCU "Software\CodeGate\StartEvents" "Configured"
@@ -72,8 +95,55 @@ Function StartEventsPageLeave
   ${NSD_GetState} $InstallAiModelCheckbox $InstallAiModel
 FunctionEnd
 
+Function IntelliSensePageCreate
+  nsDialogs::Create 1018
+  Pop $IntelliSenseDialog
+  ${If} $IntelliSenseDialog == error
+    Abort
+  ${EndIf}
+
+  ${NSD_CreateLabel} 0 0 100% 26u "Choose which optional IntelliSense language servers to install now. Other languages can be installed automatically when selected in CodeGate."
+  Pop $0
+  ${NSD_CreateCheckbox} 0 34u 48% 12u "C++"
+  Pop $IntelliSenseCppCheckbox
+  ${NSD_SetState} $IntelliSenseCppCheckbox $IntelliSenseCpp
+  ${NSD_CreateCheckbox} 50% 34u 48% 12u "Python"
+  Pop $IntelliSensePythonCheckbox
+  ${NSD_SetState} $IntelliSensePythonCheckbox $IntelliSensePython
+  ${NSD_CreateCheckbox} 0 54u 48% 12u "Java"
+  Pop $IntelliSenseJavaCheckbox
+  ${NSD_SetState} $IntelliSenseJavaCheckbox $IntelliSenseJava
+  ${NSD_CreateCheckbox} 50% 54u 48% 12u "C#"
+  Pop $IntelliSenseCSharpCheckbox
+  ${NSD_SetState} $IntelliSenseCSharpCheckbox $IntelliSenseCSharp
+  ${NSD_CreateCheckbox} 0 74u 48% 12u "Rust"
+  Pop $IntelliSenseRustCheckbox
+  ${NSD_SetState} $IntelliSenseRustCheckbox $IntelliSenseRust
+  ${NSD_CreateCheckbox} 50% 74u 48% 12u "Go"
+  Pop $IntelliSenseGoCheckbox
+  ${NSD_SetState} $IntelliSenseGoCheckbox $IntelliSenseGo
+  ${NSD_CreateCheckbox} 0 94u 48% 12u "TypeScript"
+  Pop $IntelliSenseTypeScriptCheckbox
+  ${NSD_SetState} $IntelliSenseTypeScriptCheckbox $IntelliSenseTypeScript
+  ${NSD_CreateLabel} 0 120u 100% 38u "Each selection downloads an isolated Docker image and can add several hundred MB. Servers start only for the currently selected language and stop when no longer used."
+  Pop $0
+
+  nsDialogs::Show
+FunctionEnd
+
+Function IntelliSensePageLeave
+  ${NSD_GetState} $IntelliSenseCppCheckbox $IntelliSenseCpp
+  ${NSD_GetState} $IntelliSensePythonCheckbox $IntelliSensePython
+  ${NSD_GetState} $IntelliSenseJavaCheckbox $IntelliSenseJava
+  ${NSD_GetState} $IntelliSenseCSharpCheckbox $IntelliSenseCSharp
+  ${NSD_GetState} $IntelliSenseRustCheckbox $IntelliSenseRust
+  ${NSD_GetState} $IntelliSenseGoCheckbox $IntelliSenseGo
+  ${NSD_GetState} $IntelliSenseTypeScriptCheckbox $IntelliSenseTypeScript
+FunctionEnd
+
 !macro customPageAfterChangeDir
   Page custom StartEventsPageCreate StartEventsPageLeave
+  Page custom IntelliSensePageCreate IntelliSensePageLeave
 !macroend
 
 !macro customInstall
@@ -100,6 +170,64 @@ FunctionEnd
     nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -Disable -SettingsPath "$APPDATA\CodeGate\settings.json"'
     Pop $0
   ${EndIf}
+
+  StrCpy $IntelliSenseLanguages ""
+  ${If} $IntelliSenseCpp == ${BST_CHECKED}
+    StrCpy $IntelliSenseLanguages "cpp"
+  ${EndIf}
+  ${If} $IntelliSensePython == ${BST_CHECKED}
+    ${If} $IntelliSenseLanguages == ""
+      StrCpy $IntelliSenseLanguages "python"
+    ${Else}
+      StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,python"
+    ${EndIf}
+  ${EndIf}
+  ${If} $IntelliSenseJava == ${BST_CHECKED}
+    ${If} $IntelliSenseLanguages == ""
+      StrCpy $IntelliSenseLanguages "java"
+    ${Else}
+      StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,java"
+    ${EndIf}
+  ${EndIf}
+  ${If} $IntelliSenseCSharp == ${BST_CHECKED}
+    ${If} $IntelliSenseLanguages == ""
+      StrCpy $IntelliSenseLanguages "csharp"
+    ${Else}
+      StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,csharp"
+    ${EndIf}
+  ${EndIf}
+  ${If} $IntelliSenseRust == ${BST_CHECKED}
+    ${If} $IntelliSenseLanguages == ""
+      StrCpy $IntelliSenseLanguages "rust"
+    ${Else}
+      StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,rust"
+    ${EndIf}
+  ${EndIf}
+  ${If} $IntelliSenseGo == ${BST_CHECKED}
+    ${If} $IntelliSenseLanguages == ""
+      StrCpy $IntelliSenseLanguages "go"
+    ${Else}
+      StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,go"
+    ${EndIf}
+  ${EndIf}
+  ${If} $IntelliSenseTypeScript == ${BST_CHECKED}
+    ${If} $IntelliSenseLanguages == ""
+      StrCpy $IntelliSenseLanguages "typescript"
+    ${Else}
+      StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,typescript"
+    ${EndIf}
+  ${EndIf}
+  ${If} $IntelliSenseLanguages == ""
+    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\intellisense.ps1" -Disable -SettingsPath "$APPDATA\CodeGate\settings.json"'
+    Pop $0
+  ${Else}
+    DetailPrint "Installing selected IntelliSense language servers..."
+    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\intellisense.ps1" -Install -Languages "$IntelliSenseLanguages" -SettingsPath "$APPDATA\CodeGate\settings.json"'
+    Pop $0
+    ${If} $0 != 0
+      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was installed, but one or more optional IntelliSense language servers could not be prepared. CodeGate can retry when that language is selected."
+    ${EndIf}
+  ${EndIf}
 !macroend
 !endif
 
@@ -109,10 +237,13 @@ Var RemoveJudgeImagesCheckbox
 Var RemoveJudgeImages
 Var RemoveAiModelCheckbox
 Var RemoveAiModel
+Var RemoveIntelliSenseCheckbox
+Var RemoveIntelliSense
 
 !macro customUnInit
   StrCpy $RemoveJudgeImages ${BST_UNCHECKED}
   StrCpy $RemoveAiModel ${BST_CHECKED}
+  StrCpy $RemoveIntelliSense ${BST_CHECKED}
 !macroend
 
 Function un.ImageCleanupPageCreate
@@ -136,12 +267,20 @@ Function un.ImageCleanupPageCreate
   Pop $RemoveAiModelCheckbox
   ${NSD_SetState} $RemoveAiModelCheckbox $RemoveAiModel
 
+  ${NSD_CreateCheckbox} 0 124u 100% 12u "Remove all CodeGate IntelliSense language-server images"
+  Pop $RemoveIntelliSenseCheckbox
+  ${NSD_SetState} $RemoveIntelliSenseCheckbox $RemoveIntelliSense
+
+  ${NSD_CreateLabel} 16u 144u 94% 30u "Recommended: these images are CodeGate-specific and can be downloaded again if CodeGate is reinstalled."
+  Pop $0
+
   nsDialogs::Show
 FunctionEnd
 
 Function un.ImageCleanupPageLeave
   ${NSD_GetState} $RemoveJudgeImagesCheckbox $RemoveJudgeImages
   ${NSD_GetState} $RemoveAiModelCheckbox $RemoveAiModel
+  ${NSD_GetState} $RemoveIntelliSenseCheckbox $RemoveIntelliSense
 FunctionEnd
 
 !macro customUnWelcomePage
@@ -182,6 +321,14 @@ FunctionEnd
     Pop $0
     ${If} $0 != 0
       MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker Model Runner could not remove the AI model. Start Docker Desktop and remove the CodeGate AI model to finish cleanup."
+    ${EndIf}
+  ${EndIf}
+
+  ${If} $RemoveIntelliSense == ${BST_CHECKED}
+    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\intellisense.ps1" -Remove'
+    Pop $0
+    ${If} $0 != 0
+      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker could not remove one or more IntelliSense images. Start Docker Desktop and remove images named codegate-intellisense-* to finish cleanup."
     ${EndIf}
   ${EndIf}
 

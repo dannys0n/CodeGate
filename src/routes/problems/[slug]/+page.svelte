@@ -694,6 +694,10 @@
         }
     }
 
+    function setIntellisenseEnabled(intellisenseEnabled: boolean) {
+        userSettingsStorage.update((settings) => ({ ...settings, intellisenseEnabled }));
+    }
+
     async function setAiEndpoint() {
         const aiEndpoint = aiEndpointDraft.trim();
         const backend = { ...$userSettingsStorage, aiEndpoint };
@@ -1719,6 +1723,17 @@
                                 </label>
                                 <div class="settings-note">Shows the Catalogue and, when AI is enabled, AI Syntax Drill. Each loads only when opened.</div>
                                 <div class="settings-divider"></div>
+                                <div class="settings-section-title">Code completion</div>
+                                <label class="startup-event-option">
+                                    <input
+                                        type="checkbox"
+                                        checked={$userSettingsStorage.intellisenseEnabled}
+                                        on:change={(event) => setIntellisenseEnabled(event.currentTarget.checked)}
+                                    />
+                                    Enable IntelliSense
+                                </label>
+                                <div class="settings-note">Installs and starts only the selected language server when needed. Turning this off stops it without deleting its image.</div>
+                                <div class="settings-divider"></div>
                                 <div class="settings-section-title">Local AI helper</div>
                                 <label class="startup-event-option">
                                     <input
@@ -1800,6 +1815,7 @@
                     {vimMode} 
                     viewState={currentViewState}
                     enableAiExplain={isCodeGate && aiHelperConfigured && !aiSettingsBusy}
+                    enableIntellisense={$userSettingsStorage.intellisenseEnabled}
                     on:explainSelection={explainSelection}
                 />
             {:else}

@@ -1,5 +1,7 @@
 <script lang="ts">
     import type * as Monaco from 'monaco-editor';
+    import { intellisenseLanguages, isIntellisenseLanguage } from '$lib/codegate/intellisense';
+    import type { GateLanguage } from '$lib/codegate/types';
     import { configureMonacoVim } from '$lib/utils/vimMode';
     import { createEventDispatcher, onMount } from 'svelte';
     export let value = '';
@@ -10,6 +12,7 @@
     export let readOnly: boolean = false;
     export let viewState: string | null = null;
     export let enableAiExplain = false;
+    export let enableIntellisense = false;
 
     const dispatch = createEventDispatcher();
 
@@ -19,6 +22,185 @@
     let vimModeInstance: any = null;
     let vimStatusElement: HTMLDivElement;
     let aiAction: Monaco.IDisposable | null = null;
+    let intellisenseProviders: Monaco.IDisposable[] = [];
+    let intellisenseDocumentId = '';
+    let intellisenseSyncTimer: ReturnType<typeof setTimeout> | null = null;
+    let intellisenseSyncInFlight: Promise<void> | null = null;
+    let intellisenseDesiredSnapshot: { source: string; version: number; language: GateLanguage } | null = null;
+    let intellisenseSyncedModelVersion = 0;
+    let intellisenseActiveLanguage: GateLanguage | null = null;
+    let intellisenseRetryAfter = 0;
+    let intellisenseLifecycleController: AbortController | null = null;
+
+    function lspCompletionKind(monaco: typeof Monaco, kind: unknown) {
+        const kinds: Record<number, Monaco.languages.CompletionItemKind> = {
+            2: monaco.languages.CompletionItemKind.Method,
+            3: monaco.languages.CompletionItemKind.Function,
+            4: monaco.languages.CompletionItemKind.Constructor,
+            5: monaco.languages.CompletionItemKind.Field,
+            6: monaco.languages.CompletionItemKind.Variable,
+            7: monaco.languages.CompletionItemKind.Class,
+            8: monaco.languages.CompletionItemKind.Interface,
+            9: monaco.languages.CompletionItemKind.Module,
+            10: monaco.languages.CompletionItemKind.Property,
+            13: monaco.languages.CompletionItemKind.Enum,
+            14: monaco.languages.CompletionItemKind.Keyword,
+            15: monaco.languages.CompletionItemKind.Snippet,
+            20: monaco.languages.CompletionItemKind.EnumMember,
+            21: monaco.languages.CompletionItemKind.Constant,
+            22: monaco.languages.CompletionItemKind.Struct,
+            24: monaco.languages.CompletionItemKind.Operator,
+            25: monaco.languages.CompletionItemKind.TypeParameter
+        };
+        return typeof kind === 'number' ? kinds[kind] ?? monaco.languages.CompletionItemKind.Text : monaco.languages.CompletionItemKind.Text;
+    }
+
+    function stageIntellisenseSync(model: Monaco.editor.ITextModel) {
+        const modelLanguage = model.getLanguageId();
+        if (!enableIntellisense || !isIntellisenseLanguage(modelLanguage)) return false;
+        const snapshot = { source: model.getValue(), version: model.getVersionId(), language: modelLanguage };
+        if (!intellisenseDesiredSnapshot || intellisenseDesiredSnapshot.version <= snapshot.version || intellisenseDesiredSnapshot.language !== snapshot.language) {
+            intellisenseDesiredSnapshot = snapshot;
+        }
+        return true;
+    }
+
+    async function closeIntellisenseDocument(language = intellisenseActiveLanguage) {
+        if (!language || !intellisenseDocumentId) return;
+        try {
+            await fetch('/api/codegate/intellisense', {
+                method: 'POST', headers: { 'content-type': 'application/json' }, keepalive: true,
+                body: JSON.stringify({ action: 'close', language, documentId: intellisenseDocumentId })
+            });
+        } catch {}
+        if (intellisenseActiveLanguage === language) intellisenseActiveLanguage = null;
+    }
+
+    async function runIntellisenseSync() {
+        if (intellisenseSyncInFlight) return intellisenseSyncInFlight;
+        intellisenseSyncInFlight = (async () => {
+            while (intellisenseDesiredSnapshot) {
+                const snapshot = intellisenseDesiredSnapshot;
+                intellisenseDesiredSnapshot = null;
+                if (intellisenseActiveLanguage === snapshot.language && snapshot.version <= intellisenseSyncedModelVersion) continue;
+                try {
+                    if (intellisenseActiveLanguage && intellisenseActiveLanguage !== snapshot.language) {
+                        await closeIntellisenseDocument(intellisenseActiveLanguage);
+                        intellisenseSyncedModelVersion = 0;
+                    }
+                    const response = await fetch('/api/codegate/intellisense', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'sync',
+                            language: snapshot.language,
+                            documentId: intellisenseDocumentId,
+                            source: snapshot.source
+                        }),
+                        signal: intellisenseLifecycleController?.signal
+                    });
+                    if (!response.ok) throw new Error(await response.text());
+                    intellisenseActiveLanguage = snapshot.language;
+                    intellisenseSyncedModelVersion = snapshot.version;
+                    intellisenseRetryAfter = 0;
+                } catch (error) {
+                    const queued = intellisenseDesiredSnapshot as typeof snapshot | null;
+                    if (!queued || queued.version < snapshot.version || queued.language !== snapshot.language) intellisenseDesiredSnapshot = snapshot;
+                    intellisenseRetryAfter = Date.now() + 30_000;
+                    throw error;
+                }
+            }
+        })().finally(() => {
+            intellisenseSyncInFlight = null;
+        });
+        return intellisenseSyncInFlight;
+    }
+
+    function scheduleIntellisenseSync(model: Monaco.editor.ITextModel, delay = 80) {
+        if (intellisenseSyncTimer) clearTimeout(intellisenseSyncTimer);
+        intellisenseSyncTimer = null;
+        if (!stageIntellisenseSync(model)) {
+            intellisenseDesiredSnapshot = null;
+            if (!enableIntellisense) void closeIntellisenseDocument();
+            return;
+        }
+        const retryDelay = Math.max(delay, intellisenseRetryAfter - Date.now());
+        intellisenseSyncTimer = setTimeout(() => {
+            intellisenseSyncTimer = null;
+            void runIntellisenseSync().catch(() => {});
+        }, retryDelay);
+    }
+
+    async function flushIntellisenseSync(model: Monaco.editor.ITextModel) {
+        if (intellisenseSyncTimer) clearTimeout(intellisenseSyncTimer);
+        intellisenseSyncTimer = null;
+        if (!stageIntellisenseSync(model)) throw new Error('IntelliSense is disabled');
+        const targetVersion = model.getVersionId();
+        const targetLanguage = model.getLanguageId();
+        if (Date.now() < intellisenseRetryAfter) throw new Error('IntelliSense is temporarily unavailable');
+        while (intellisenseActiveLanguage !== targetLanguage || intellisenseSyncedModelVersion < targetVersion) await runIntellisenseSync();
+    }
+
+    function registerIntellisense(monaco: typeof Monaco) {
+        intellisenseProviders = intellisenseLanguages.map((providerLanguage) => monaco.languages.registerCompletionItemProvider(providerLanguage, {
+            triggerCharacters: ['.', '>', ':'],
+            async provideCompletionItems(model, position, _context, token) {
+                if (model !== editor?.getModel()) return { suggestions: [] };
+                const controller = new AbortController();
+                const cancellation = token.onCancellationRequested(() => controller.abort());
+                try {
+                    await flushIntellisenseSync(model);
+                    if (token.isCancellationRequested) return { suggestions: [] };
+                    const response = await fetch('/api/codegate/intellisense', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'complete',
+                            language: providerLanguage,
+                            documentId: intellisenseDocumentId,
+                            line: position.lineNumber - 1,
+                            character: position.column - 1
+                        }),
+                        signal: controller.signal
+                    });
+                    if (!response.ok) throw new Error(await response.text());
+                    if (token.isCancellationRequested) return { suggestions: [] };
+                    const payload = await response.json();
+                    const word = model.getWordUntilPosition(position);
+                    const range = {
+                        startLineNumber: position.lineNumber,
+                        endLineNumber: position.lineNumber,
+                        startColumn: word.startColumn,
+                        endColumn: word.endColumn
+                    };
+                    return {
+                        suggestions: (Array.isArray(payload?.items) ? payload.items : []).map((entry: any) => ({
+                            label: typeof entry.label === 'string' ? entry.label : entry.label?.label ?? '',
+                            insertText: entry.textEdit?.newText ?? entry.insertText ?? entry.label?.label ?? entry.label ?? '',
+                            detail: entry.detail,
+                            documentation: entry.documentation,
+                            filterText: entry.filterText,
+                            sortText: entry.sortText,
+                            kind: lspCompletionKind(monaco, entry.kind),
+                            insertTextRules: entry.insertTextFormat === 2
+                                ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                                : undefined,
+                            range
+                        })).filter((entry: { label: string; insertText: string }) => entry.label && entry.insertText)
+                    };
+                } catch {
+                    if (!token.isCancellationRequested) {
+                        intellisenseSyncedModelVersion = 0;
+                        intellisenseRetryAfter = Date.now() + 30_000;
+                        scheduleIntellisenseSync(model);
+                    }
+                    return { suggestions: [] };
+                } finally {
+                    cancellation.dispose();
+                }
+            }
+        }));
+    }
 
     export function getViewState() {
         if (!editor) return null;
@@ -56,6 +238,8 @@
 
     onMount(() => {
         let disposed = false;
+        intellisenseDocumentId = globalThis.crypto.randomUUID();
+        intellisenseLifecycleController = new AbortController();
         Promise.all([
             import('monaco-editor'),
             import('monaco-vim')
@@ -64,6 +248,7 @@
             const { initVimMode, VimMode } = vim as any;
             monacoRef = monaco;
             configureMonacoVim(VimMode.Vim);
+            registerIntellisense(monaco);
             
             monaco.editor.defineTheme('custom-dark', {
                 base: 'vs-dark',
@@ -118,6 +303,8 @@
                 fontSize,
                 readOnly,
                 fixedOverflowWidgets: true,
+                quickSuggestions: { other: true, comments: false, strings: false },
+                suggestOnTriggerCharacters: true,
                 minimap: {
                     enabled: false
                 }
@@ -126,7 +313,12 @@
             editor.onDidChangeModelContent(() => {
                 if (!editor) return;
                 value = editor.getValue();
+                const model = editor.getModel();
+                if (model) scheduleIntellisenseSync(model);
             });
+
+            const model = editor.getModel();
+            if (model) scheduleIntellisenseSync(model, 0);
 
             updateAiAction();
 
@@ -152,10 +344,17 @@
 
         return () => {
             disposed = true;
+            if (intellisenseSyncTimer) clearTimeout(intellisenseSyncTimer);
+            intellisenseSyncTimer = null;
+            intellisenseLifecycleController?.abort();
+            intellisenseLifecycleController = null;
+            void closeIntellisenseDocument();
             if (vimModeInstance) {
                 vimModeInstance.dispose();
             }
             aiAction?.dispose();
+            intellisenseProviders.forEach((provider) => provider.dispose());
+            intellisenseProviders = [];
             editor?.dispose();
         };
     });
@@ -165,7 +364,14 @@
         const model = editor.getModel();
         if (model) {
             monacoRef.editor.setModelLanguage(model, language);
+            intellisenseSyncedModelVersion = 0;
+            scheduleIntellisenseSync(model, 0);
         }
+    }
+
+    $: if (editor && typeof enableIntellisense === 'boolean') {
+        const model = editor.getModel();
+        if (model) scheduleIntellisenseSync(model, 0);
     }
 
     $: if (editor && typeof vimMode === 'string') {
