@@ -60,10 +60,12 @@ describe('Docker Model Runner stream deltas', () => {
     });
 
     it('cancels model output when the stream consumer reaches its limit', async () => {
-        const fetchMock = vi.fn().mockResolvedValue(new Response(
-            'data: {"choices":[{"delta":{"content":"first"}}]}\n\ndata: {"choices":[{"delta":{"content":"late"}}]}\n\ndata: [DONE]\n\n',
-            { headers: { 'content-type': 'text/event-stream' } }
-        ));
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(Response.json({ data: [{ id: 'loaded-model', state: 'loaded' }] }))
+            .mockResolvedValueOnce(new Response(
+                'data: {"choices":[{"delta":{"content":"first"}}]}\n\ndata: {"choices":[{"delta":{"content":"late"}}]}\n\ndata: [DONE]\n\n',
+                { headers: { 'content-type': 'text/event-stream' } }
+            ));
         vi.stubGlobal('fetch', fetchMock);
         const output: string[] = [];
 
@@ -71,7 +73,7 @@ describe('Docker Model Runner stream deltas', () => {
             if (type !== 'text') return;
             output.push(text);
             return false;
-        });
+        }, undefined, { endpoint: 'http://127.0.0.1:43124' });
 
         expect(output).toEqual(['first']);
         vi.unstubAllGlobals();

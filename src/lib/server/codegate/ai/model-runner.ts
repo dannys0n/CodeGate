@@ -4,6 +4,7 @@ export const codeGateModel = 'hf.co/jica98/qwen3.5-4B-super-coder:Q4_0';
 export const modelRunnerBaseUrl = 'http://127.0.0.1:12434';
 const codeGateModelContextTokens = 8192;
 const codeGateModelKeepAlive = '1h';
+const modelWakeFreshMs = 60_000;
 
 type StreamEvent = (type: 'status' | 'text' | 'reasoning' | 'problem' | 'output' | 'result', text: string) => void;
 type ModelStreamEvent = (type: 'status' | 'text' | 'reasoning' | 'problem' | 'output' | 'result', text: string) => void | boolean;
@@ -67,10 +68,11 @@ function dockerCommand() {
     return process.platform === 'win32' ? 'docker.exe' : 'docker';
 }
 
-function runDockerModelCommand(args: string[], onEvent: StreamEvent, signal?: AbortSignal): Promise<void> {
+function runDockerModelCommand(args: string[], onEvent: StreamEvent, signal?: AbortSignal, timeoutMs = 120_000): Promise<void> {
     return new Promise((resolve, reject) => {
         const child = spawn(dockerCommand(), args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
         let stderr = '';
+        let settled = false;
         const emit = (chunk: Buffer | string) => {
             const text = String(chunk).replace(/\r/g, '');
             if (text) onEvent('status', text);
@@ -80,21 +82,32 @@ function runDockerModelCommand(args: string[], onEvent: StreamEvent, signal?: Ab
             stderr += String(chunk);
             emit(chunk);
         });
-        const abort = () => child.kill();
-        signal?.addEventListener('abort', abort, { once: true });
-        child.once('error', reject);
-        child.once('close', (code) => {
+        const finish = (operation: () => void) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
             signal?.removeEventListener('abort', abort);
-            if (signal?.aborted) return reject(new Error('Operation cancelled'));
-            if (code === 0) resolve();
-            else reject(new Error(stderr.trim() || `docker ${args.join(' ')} exited with code ${code}`));
+            operation();
+        };
+        const abort = () => child.kill();
+        const timeout = setTimeout(() => {
+            child.kill();
+            finish(() => reject(new Error(`docker ${args.slice(0, 2).join(' ')} timed out`)));
+        }, timeoutMs);
+        signal?.addEventListener('abort', abort, { once: true });
+        if (signal?.aborted) abort();
+        child.once('error', (error) => finish(() => reject(error)));
+        child.once('close', (code) => {
+            if (signal?.aborted) return finish(() => reject(new Error('Operation cancelled')));
+            if (code === 0) finish(resolve);
+            else finish(() => reject(new Error(stderr.trim() || `docker ${args.join(' ')} exited with code ${code}`)));
         });
     });
 }
 
 async function commandSucceeds(args: string[]): Promise<boolean> {
     try {
-        await runDockerModelCommand(args, () => {});
+        await runDockerModelCommand(args, () => {}, undefined, 10_000);
         return true;
     } catch {
         return false;
@@ -140,10 +153,28 @@ export async function warmCodeGateModel(onEvent: StreamEvent = () => {}, signal?
     ], onEvent, signal);
     onEvent('status', 'Loading the CodeGate AI model into memory...\n');
     await runDockerModelCommand(['model', 'run', '--detach', codeGateModel], onEvent, signal);
+    localModelReadyUntil = Date.now() + modelWakeFreshMs;
     onEvent('status', 'Local AI helper is ready.\n');
 }
 
+let localModelReadyUntil = 0;
+let localModelWake: Promise<void> | null = null;
+
+export async function ensureCodeGateModelLoaded(onEvent: StreamEvent = () => {}, signal?: AbortSignal) {
+    if (Date.now() < localModelReadyUntil) return;
+    if (localModelWake) return localModelWake;
+    localModelWake = (async () => {
+        await ensureDockerReady(onEvent, signal);
+        onEvent('status', 'Waking the local AI model...\n');
+        await runDockerModelCommand(['model', 'run', '--detach', codeGateModel], onEvent, signal);
+        localModelReadyUntil = Date.now() + modelWakeFreshMs;
+        onEvent('status', 'Local AI model is ready.\n');
+    })().finally(() => { localModelWake = null; });
+    return localModelWake;
+}
+
 export async function unloadCodeGateModel(onEvent: StreamEvent = () => {}, signal?: AbortSignal) {
+    localModelReadyUntil = 0;
     if (!(await commandSucceeds(['model', 'status']))) return;
     try {
         await runDockerModelCommand(['model', 'unload', codeGateModel], onEvent, signal);
@@ -174,72 +205,96 @@ export async function streamModelText(messages: ChatMessage[], onEvent: ModelStr
     try {
         const endpoint = customEndpoint(options.endpoint);
         const target = endpoint ? endpointTarget(endpoint) : undefined;
+        if (!target) await ensureCodeGateModelLoaded(onEvent, signal);
         const model = target ? await discoverEndpointModel(target, signal) : codeGateModel;
-        const response = await fetch(target?.chatUrl ?? `${modelRunnerBaseUrl}/engines/v1/chat/completions`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-                model,
-                messages,
-                stream: true,
-                temperature: options.temperature ?? 0.15,
-                ...(typeof options.topP === 'number' ? { top_p: options.topP } : {}),
-                ...(Number.isInteger(options.maxTokens) && options.maxTokens! > 0 ? { max_tokens: options.maxTokens } : {}),
-                ...(typeof options.frequencyPenalty === 'number' ? { frequency_penalty: options.frequencyPenalty } : {}),
-                ...(Number.isInteger(options.seed) ? { seed: options.seed } : {}),
-                ...(!target ? { chat_template_kwargs: { enable_thinking: false } } : {})
-            }),
-            signal
-        });
-        if (!response.ok || !response.body) {
-            const detail = await response.text().catch(() => '');
-            if (target) endpointModels.delete(target.key);
-            throw new Error(detail.trim() || `${target ? 'Custom AI endpoint' : 'Docker Model Runner'} returned ${response.status}`);
+        const requestController = new AbortController();
+        const cancelRequest = () => requestController.abort();
+        signal?.addEventListener('abort', cancelRequest, { once: true });
+        const responseTimeout = setTimeout(() => requestController.abort('AI response timeout'), 45_000);
+        let response: Response;
+        try {
+            response = await fetch(target?.chatUrl ?? `${modelRunnerBaseUrl}/engines/v1/chat/completions`, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                    model,
+                    messages,
+                    stream: true,
+                    temperature: options.temperature ?? 0.15,
+                    ...(typeof options.topP === 'number' ? { top_p: options.topP } : {}),
+                    ...(Number.isInteger(options.maxTokens) && options.maxTokens! > 0 ? { max_tokens: options.maxTokens } : {}),
+                    ...(typeof options.frequencyPenalty === 'number' ? { frequency_penalty: options.frequencyPenalty } : {}),
+                    ...(Number.isInteger(options.seed) ? { seed: options.seed } : {}),
+                    ...(!target ? { chat_template_kwargs: { enable_thinking: false } } : {})
+                }),
+                signal: requestController.signal
+            });
+        } catch (error) {
+            if (!signal?.aborted && requestController.signal.aborted) throw new Error('The AI model did not start responding in time');
+            throw error;
+        } finally {
+            clearTimeout(responseTimeout);
         }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let emitted = false;
-        let reasoningFallback = '';
-        while (true) {
-            const { done, value } = await reader.read();
-            buffer += decoder.decode(value, { stream: !done });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() ?? '';
-            for (const rawLine of lines) {
-                const line = rawLine.trim();
-                if (!line.startsWith('data:')) continue;
-                const data = line.slice(5).trim();
-                if (!data || data === '[DONE]') continue;
-                try {
-                    const payload = JSON.parse(data);
-                    const { content, reasoning } = extractModelDelta(payload);
-                    if (content) {
-                        emitted = true;
-                        if (onEvent('text', content) === false) {
-                            await reader.cancel();
-                            return;
-                        }
-                    }
-                    if (reasoning) {
-                        reasoningFallback += reasoning;
-                        if (options.includeReasoning && onEvent('reasoning', reasoning) === false) {
-                            await reader.cancel();
-                            return;
-                        }
-                    }
-                } catch {
-                    // Ignore keepalive and non-chat events from compatible backends.
-                }
+        try {
+            if (!response.ok || !response.body) {
+                const detail = await response.text().catch(() => '');
+                if (target) endpointModels.delete(target.key);
+                throw new Error(detail.trim() || `${target ? 'Custom AI endpoint' : 'Docker Model Runner'} returned ${response.status}`);
             }
-            if (done) break;
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let emitted = false;
+            let reasoningFallback = '';
+            while (true) {
+                let idleTimeout: ReturnType<typeof setTimeout> | undefined;
+                const stalled = new Promise<never>((_, reject) => {
+                    idleTimeout = setTimeout(() => {
+                        requestController.abort('AI stream timeout');
+                        reject(new Error('The AI model stopped responding'));
+                    }, 45_000);
+                });
+                const { done, value } = await Promise.race([reader.read(), stalled]).finally(() => clearTimeout(idleTimeout));
+                buffer += decoder.decode(value, { stream: !done });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() ?? '';
+                for (const rawLine of lines) {
+                    const line = rawLine.trim();
+                    if (!line.startsWith('data:')) continue;
+                    const data = line.slice(5).trim();
+                    if (!data || data === '[DONE]') continue;
+                    try {
+                        const payload = JSON.parse(data);
+                        const { content, reasoning } = extractModelDelta(payload);
+                        if (content) {
+                            emitted = true;
+                            if (onEvent('text', content) === false) {
+                                await reader.cancel();
+                                return;
+                            }
+                        }
+                        if (reasoning) {
+                            reasoningFallback += reasoning;
+                            if (options.includeReasoning && onEvent('reasoning', reasoning) === false) {
+                                await reader.cancel();
+                                return;
+                            }
+                        }
+                    } catch {
+                        // Ignore keepalive and non-chat events from compatible backends.
+                    }
+                }
+                if (done) break;
+            }
+            if (!emitted && reasoningFallback.trim() && !options.includeReasoning) {
+                onEvent('text', reasoningFallback.replace(/<\/?think>/gi, '').trim());
+                emitted = true;
+            }
+            if (!emitted) throw new Error('The local model returned no explanation text');
+        } finally {
+            signal?.removeEventListener('abort', cancelRequest);
         }
-        if (!emitted && reasoningFallback.trim() && !options.includeReasoning) {
-            onEvent('text', reasoningFallback.replace(/<\/?think>/gi, '').trim());
-            emitted = true;
-        }
-        if (!emitted) throw new Error('The local model returned no explanation text');
     } finally {
         inferenceActive = false;
     }

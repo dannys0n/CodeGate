@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import { randomInt } from 'node:crypto';
-import { eventStream, requestedAiEndpoint, streamModelText } from '$lib/server/codegate/ai/model-runner';
+import { ensureCodeGateModelLoaded, eventStream, requestedAiEndpoint, streamModelText } from '$lib/server/codegate/ai/model-runner';
 import { requireActiveChallenge } from '$lib/server/codegate/sessions';
 import { gateLanguages, type GateLanguage } from '$lib/codegate/types';
 import { truncateSyntaxDrillAfterFeatureInfo, truncateSyntaxDrillAtInfoLimit } from '$lib/codegate/syntax-drill-format';
@@ -34,6 +34,7 @@ export const POST: RequestHandler = async ({ request }) => {
         if (!gateLanguages.includes(language)) return new Response('Unsupported syntax drill language', { status: 400 });
 
         return eventStream(async (emit, signal) => {
+            if (!endpoint) await ensureCodeGateModelLoaded(emit, signal);
             const seed = randomInt(1, 2_147_483_640);
             let title = '';
             emit('status', 'Choosing a syntax topic...');
