@@ -161,6 +161,7 @@ function windowOptions(display, recovery = false) {
 }
 
 function secureWindow(win) {
+  win.removeMenu();
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.webContents.on('will-navigate', (event, target) => {
     if (!target.startsWith(baseUrl) && !target.startsWith('data:text/html')) event.preventDefault();

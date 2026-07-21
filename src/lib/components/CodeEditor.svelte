@@ -20,6 +20,7 @@
     let editorElement: HTMLDivElement;
     let monacoRef: any;
     let vimModeInstance: any = null;
+    let initVimModeRef: ((editor: Monaco.editor.IStandaloneCodeEditor, statusbarNode?: HTMLElement | null) => any) | null = null;
     let vimStatusElement: HTMLDivElement;
     let aiAction: Monaco.IDisposable | null = null;
     let intellisenseProviders: Monaco.IDisposable[] = [];
@@ -31,6 +32,38 @@
     let intellisenseActiveLanguage: GateLanguage | null = null;
     let intellisenseRetryAfter = 0;
     let intellisenseLifecycleController: AbortController | null = null;
+    let cleanupEditorInput: (() => void) | null = null;
+
+    function disableVimMode() {
+        if (!vimModeInstance) return;
+        const instance = vimModeInstance;
+        vimModeInstance = null;
+        instance.dispose();
+    }
+
+    function syncVimMode() {
+        if (!editor || !initVimModeRef) return;
+        if (vimMode === 'on') {
+            if (!vimModeInstance) vimModeInstance = initVimModeRef(editor, vimStatusElement);
+            return;
+        }
+        disableVimMode();
+        editor.updateOptions({ readOnly });
+    }
+
+    function recoverStandardInput(cancelTransientState = false) {
+        if (!editor || vimMode !== 'off') return;
+        disableVimMode();
+        editor.updateOptions({ readOnly });
+        if (cancelTransientState) editor.trigger('codegate.inputRecovery', 'editor.action.cancel', null);
+        editor.focus();
+    }
+
+    function restoreEditorFocus() {
+        if (!editor) return;
+        if (vimMode === 'off') recoverStandardInput(true);
+        else editor.focus();
+    }
 
     function lspCompletionKind(monaco: typeof Monaco, kind: unknown) {
         const kinds: Record<number, Monaco.languages.CompletionItemKind> = {
@@ -246,6 +279,7 @@
         ]).then(([monaco, vim]) => {
             if (disposed) return;
             const { initVimMode, VimMode } = vim as any;
+            initVimModeRef = initVimMode;
             monacoRef = monaco;
             configureMonacoVim(VimMode.Vim);
             registerIntellisense(monaco);
@@ -322,23 +356,63 @@
 
             updateAiAction();
 
-            // Reactively handle vim mode after editor creation
-            const updateVimMode = (enabled: string) => {
-                if (!editor) return;
-                if (enabled === 'on') {
-                    if (!vimModeInstance) {
-                        vimModeInstance = initVimMode(editor, vimStatusElement);
+            syncVimMode();
+
+            let restoreTextFocus = false;
+            let inputRecoveryTimer: ReturnType<typeof setTimeout> | null = null;
+            const editorFocus = editor.onDidFocusEditorText(() => {
+                restoreTextFocus = true;
+                if (vimMode === 'off') recoverStandardInput();
+            });
+            const editorBlur = editor.onDidBlurEditorText(() => {
+                if (document.hasFocus()) restoreTextFocus = false;
+            });
+            const editorKeyDown = editor.onKeyDown((event) => {
+                const keyboardEvent = event.browserEvent;
+                const isPlainTextKey = keyboardEvent.key.length === 1
+                    && !keyboardEvent.ctrlKey
+                    && !keyboardEvent.metaKey
+                    && !keyboardEvent.altKey
+                    && !keyboardEvent.isComposing;
+                if (vimMode !== 'off' || readOnly || !isPlainTextKey) return;
+                const activeModel = editor?.getModel();
+                if (!activeModel) return;
+                const versionBeforeKey = activeModel.getVersionId();
+                if (inputRecoveryTimer) clearTimeout(inputRecoveryTimer);
+                inputRecoveryTimer = setTimeout(() => {
+                    inputRecoveryTimer = null;
+                    if (editor?.hasTextFocus() && activeModel.getVersionId() === versionBeforeKey) {
+                        recoverStandardInput(true);
                     }
-                } else {
-                    if (vimModeInstance) {
-                        vimModeInstance.dispose();
-                        vimModeInstance = null;
-                    }
+                }, 0);
+            });
+            const handleWindowBlur = () => {
+                restoreTextFocus = Boolean(editor?.hasTextFocus()) || restoreTextFocus;
+            };
+            const handleWindowFocus = () => {
+                if (!restoreTextFocus) return;
+                requestAnimationFrame(restoreEditorFocus);
+            };
+            const handleVisibilityChange = () => {
+                if (document.visibilityState === 'hidden') {
+                    restoreTextFocus = Boolean(editor?.hasTextFocus()) || restoreTextFocus;
+                } else if (restoreTextFocus) {
+                    requestAnimationFrame(restoreEditorFocus);
                 }
             };
-            
-            // Initial vim mode
-            updateVimMode(vimMode);
+            window.addEventListener('blur', handleWindowBlur);
+            window.addEventListener('focus', handleWindowFocus);
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            cleanupEditorInput = () => {
+                editorFocus.dispose();
+                editorBlur.dispose();
+                editorKeyDown.dispose();
+                window.removeEventListener('blur', handleWindowBlur);
+                window.removeEventListener('focus', handleWindowFocus);
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+                if (inputRecoveryTimer) clearTimeout(inputRecoveryTimer);
+            };
 
         });
 
@@ -349,9 +423,10 @@
             intellisenseLifecycleController?.abort();
             intellisenseLifecycleController = null;
             void closeIntellisenseDocument();
-            if (vimModeInstance) {
-                vimModeInstance.dispose();
-            }
+            cleanupEditorInput?.();
+            cleanupEditorInput = null;
+            disableVimMode();
+            initVimModeRef = null;
             aiAction?.dispose();
             intellisenseProviders.forEach((provider) => provider.dispose());
             intellisenseProviders = [];
@@ -374,21 +449,7 @@
         if (model) scheduleIntellisenseSync(model, 0);
     }
 
-    $: if (editor && typeof vimMode === 'string') {
-        import('monaco-vim').then(({ initVimMode }) => {
-            if (!editor) return;
-            if (vimMode === 'on') {
-                if (!vimModeInstance) {
-                    vimModeInstance = initVimMode(editor, vimStatusElement);
-                }
-            } else {
-                if (vimModeInstance) {
-                    vimModeInstance.dispose();
-                    vimModeInstance = null;
-                }
-            }
-        });
-    }
+    $: if (editor && initVimModeRef && typeof vimMode === 'string') syncVimMode();
 
     $: if (editor && typeof fontSize === 'number') {
         editor.updateOptions({ fontSize });
