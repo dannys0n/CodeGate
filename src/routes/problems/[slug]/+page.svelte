@@ -1877,8 +1877,18 @@
                                 disabled={entry.problemId === problemId || gateActionPending}
                                 on:click={() => selectCatalogProblem(entry)}
                             >
-                                <span>#{entry.number} {entry.title}</span>
-                                <small class="badge {getDifficultyClass(entry.leetcodeDifficulty)}">{entry.leetcodeDifficulty}</small>
+                                <span class="problem-catalog-title">#{entry.number} {entry.title}</span>
+                                <span class="problem-catalog-badges">
+                                    <small class="badge {getDifficultyClass(entry.leetcodeDifficulty)}">{entry.leetcodeDifficulty}</small>
+                                    {#if $userStore[entry.problemId]}
+                                        <span class="solved-pill catalog-solved-pill" title="You've solved this problem" aria-label="Solved" role="status">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                            Solved
+                                        </span>
+                                    {/if}
+                                </span>
                             </button>
                         {/each}
                         {#if visibleProblemCatalog.length === 0}
@@ -2631,13 +2641,19 @@
         color: var(--color-text-secondary);
         cursor: default;
     }
-    .problem-catalog-list button span {
+    .problem-catalog-title {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-    .problem-catalog-list button small {
+    .problem-catalog-badges {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         flex: 0 0 auto;
+    }
+    .catalog-solved-pill {
+        margin: 0;
     }
 
     /* Hints section */
