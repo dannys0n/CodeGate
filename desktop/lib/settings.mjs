@@ -24,6 +24,7 @@ export const defaultDesktopSettings = Object.freeze({
   aiEnabled: false,
   aiDockerEnabled: true,
   aiEndpoint: '',
+  syntaxDrillLearning: {},
   leftPaneWidth: 50,
   execPaneHeight: 50
 });
@@ -40,6 +41,29 @@ function boundedNumber(value, minimum, maximum, fallback) {
 
 function optionalProblemNumber(value) {
   return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null;
+}
+
+function normalizeSyntaxDrillLearning(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const normalized = {};
+  for (const language of gateLanguages) {
+    const rawLanguage = value[language];
+    if (!rawLanguage || typeof rawLanguage !== 'object' || Array.isArray(rawLanguage)) continue;
+    const concepts = {};
+    if (rawLanguage.concepts && typeof rawLanguage.concepts === 'object' && !Array.isArray(rawLanguage.concepts)) {
+      for (const [id, rawProgress] of Object.entries(rawLanguage.concepts).slice(0, 256)) {
+        if (!/^[a-z0-9][a-z0-9._-]{0,79}$/.test(id) || !rawProgress || typeof rawProgress !== 'object' || Array.isArray(rawProgress)) continue;
+        const seen = Number.isSafeInteger(rawProgress.seen) ? Math.min(999, Math.max(0, rawProgress.seen)) : 0;
+        const passed = Number.isSafeInteger(rawProgress.passed) ? Math.min(seen, Math.max(0, rawProgress.passed)) : 0;
+        concepts[id] = { seen, passed };
+      }
+    }
+    const recent = Array.isArray(rawLanguage.recent)
+      ? rawLanguage.recent.filter((id) => typeof id === 'string' && /^[a-z0-9][a-z0-9._-]{0,79}$/.test(id)).slice(-12)
+      : [];
+    normalized[language] = { concepts, recent };
+  }
+  return normalized;
 }
 
 export function normalizeDesktopSettings(input = {}) {
@@ -76,6 +100,7 @@ export function normalizeDesktopSettings(input = {}) {
     aiEnabled: typeof input.aiEnabled === 'boolean' ? input.aiEnabled : defaultDesktopSettings.aiEnabled,
     aiDockerEnabled: typeof input.aiDockerEnabled === 'boolean' ? input.aiDockerEnabled : defaultDesktopSettings.aiDockerEnabled,
     aiEndpoint: typeof input.aiEndpoint === 'string' ? input.aiEndpoint.trim().slice(0, 2048) : defaultDesktopSettings.aiEndpoint,
+    syntaxDrillLearning: normalizeSyntaxDrillLearning(input.syntaxDrillLearning),
     leftPaneWidth: boundedNumber(input.leftPaneWidth, 0, 90, defaultDesktopSettings.leftPaneWidth),
     execPaneHeight: boundedNumber(input.execPaneHeight, 0, 100, defaultDesktopSettings.execPaneHeight)
   };

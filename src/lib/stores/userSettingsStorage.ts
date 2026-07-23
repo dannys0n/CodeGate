@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
 import type { ProgrammingLanguage } from '$lib/utils/util';
 import { leetcodeDifficultyLevels, type DifficultyLevel, type GateLanguage, type LeetcodeDifficulty } from '$lib/codegate/types';
+import { normalizeSyntaxDrillLearning, type SyntaxDrillLearning } from '$lib/codegate/syntax-drill-learning';
 import { writable } from 'svelte/store';
 
 export type ThemeChoice = 'dark' | 'light';
@@ -25,6 +26,7 @@ export interface UserSettings {
     aiEnabled: boolean;
     aiDockerEnabled: boolean;
     aiEndpoint: string;
+    syntaxDrillLearning: SyntaxDrillLearning;
 }
 
 const STORAGE_KEY = 'user-settings';
@@ -47,6 +49,7 @@ const defaultSettings: UserSettings = {
     aiEnabled: false,
     aiDockerEnabled: true,
     aiEndpoint: '',
+    syntaxDrillLearning: {},
 };
 
 function optionalProblemNumber(value: unknown): number | null {
@@ -87,7 +90,8 @@ function normalizeSettings(input: any): UserSettings {
         : defaultSettings.intellisenseEnabled;
     const aiDockerEnabled = typeof input?.aiDockerEnabled === 'boolean' ? input.aiDockerEnabled : defaultSettings.aiDockerEnabled;
     const aiEndpoint = typeof input?.aiEndpoint === 'string' ? input.aiEndpoint.trim().slice(0, 2_048) : defaultSettings.aiEndpoint;
-    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties, problemNumberMin, problemNumberMax, extraProblemFeaturesEnabled, intellisenseEnabled, aiEnabled, aiDockerEnabled, aiEndpoint };
+    const syntaxDrillLearning = normalizeSyntaxDrillLearning(input?.syntaxDrillLearning);
+    return { preferredLanguage, playgroundPreferredLanguage, editorFontSize, theme, vimMode, isSidebarOpen, activePanel, codegateLanguage, solutionDifficulty, leetcodeDifficulties, problemNumberMin, problemNumberMax, extraProblemFeaturesEnabled, intellisenseEnabled, aiEnabled, aiDockerEnabled, aiEndpoint, syntaxDrillLearning };
 }
 
 // Packaged Electron uses its user-data settings file. A missing file falls back

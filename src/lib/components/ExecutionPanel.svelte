@@ -46,6 +46,7 @@
     let syntaxDrillPassed = false;
     let approvedSyntaxSource = "";
     let trackedSyntaxDrillId = "";
+    let recordedSyntaxDrillPassId = "";
 
     $: {
         const currentDrillId = syntaxDrillBinding?.syntaxDrillId ?? "";
@@ -53,6 +54,7 @@
             trackedSyntaxDrillId = currentDrillId;
             syntaxDrillPassed = false;
             approvedSyntaxSource = "";
+            recordedSyntaxDrillPassId = "";
         } else if (syntaxDrillPassed && code !== approvedSyntaxSource) {
             syntaxDrillPassed = false;
             status = "no-status";
@@ -106,10 +108,14 @@
                 }
                 if (event.type === "result" && event.text) payload += event.text;
             });
-            const result = JSON.parse(payload || "{}") as { compiled?: boolean; approved?: boolean };
+            const result = JSON.parse(payload || "{}") as { compiled?: boolean; approved?: boolean; conceptId?: string; language?: string };
             status = result.compiled && result.approved ? "accepted" : "failed";
             syntaxDrillPassed = Boolean(result.compiled && result.approved);
             approvedSyntaxSource = syntaxDrillPassed ? code : "";
+            if (syntaxDrillPassed && trackedSyntaxDrillId && recordedSyntaxDrillPassId !== trackedSyntaxDrillId && result.conceptId && result.language) {
+                recordedSyntaxDrillPassId = trackedSyntaxDrillId;
+                dispatch("syntaxDrillPassed", { conceptId: result.conceptId, language: result.language });
+            }
             if (!result.approved && !aiConsoleOutput.trim()) aiConsoleOutput = "The syntax task was not demonstrated clearly.";
         } catch (error) {
             status = "failed";

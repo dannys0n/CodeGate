@@ -1,5 +1,4 @@
-import { app, BrowserWindow, ipcMain, screen } from 'electron';
-import { spawn } from 'node:child_process';
+import { app, BrowserWindow, ipcMain, screen, utilityProcess } from 'electron';
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -119,13 +118,14 @@ function startServer() {
   const serverEntry = path.join(appRoot, 'build', 'index.js');
   const packagedAssetRoot = path.join(process.resourcesPath, 'app.asar.unpacked');
   const captureServerOutput = smokeTest;
-  serverProcess = spawn(process.execPath, [serverEntry], {
+  const serverEnvironment = { ...process.env };
+  delete serverEnvironment.ELECTRON_RUN_AS_NODE;
+  serverProcess = utilityProcess.fork(serverEntry, [], {
     cwd: app.isPackaged ? process.resourcesPath : appRoot,
-    windowsHide: true,
-    stdio: captureServerOutput ? ['ignore', 'pipe', 'pipe'] : 'ignore',
+    stdio: captureServerOutput ? ['ignore', 'pipe', 'pipe'] : ['ignore', 'ignore', 'ignore'],
+    serviceName: 'CodeGate local server',
     env: {
-      ...process.env,
-      ELECTRON_RUN_AS_NODE: '1',
+      ...serverEnvironment,
       HOST: '127.0.0.1',
       PORT: String(port),
       CODEGATE_DESKTOP: '1',
@@ -257,7 +257,7 @@ ipcMain.handle('codegate:set-startup-events', (_event, events) => setStartupEven
 
 app.on('before-quit', (event) => {
   quitting = true;
-  if (serverProcess && !serverProcess.killed) serverProcess.kill();
+  if (serverProcess?.pid !== undefined) serverProcess.kill();
   if (modelUnloadFinished || !dockerModelMayBeLoaded) return;
 
   event.preventDefault();
@@ -305,8 +305,11 @@ async function runSmokeTest() {
   const diagnostics = [...readinessDiagnostics(server, wslResult, docker), ...(challengeError ? [challengeError] : [])];
   process.stdout.write(`${JSON.stringify({ server: server.ok, challenge, wsl: wslResult.ok, docker: docker.ok, startupMs: Date.now() - launchStartedAt, diagnostics })}\n`);
   quitting = true;
-  serverProcess?.kill();
-  await new Promise((resolve) => serverProcess?.once('exit', resolve) ?? resolve());
+  if (serverProcess?.pid !== undefined) {
+    const serverExited = new Promise((resolve) => serverProcess.once('exit', resolve));
+    serverProcess.kill();
+    await serverExited;
+  }
   process.exit(diagnostics.length === 0 ? 0 : 1);
 }
 

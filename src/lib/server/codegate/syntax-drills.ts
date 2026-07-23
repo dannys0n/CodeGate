@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { parseSyntaxDrillInfo } from '../../codegate/syntax-drill-format';
 import type { GateLanguage } from '../../codegate/types';
 import { deactivateGeneratedProblem, materializeRuntimeProblem } from '../problem-files';
+import type { SyntaxDrillConcept } from './syntax-drill-concepts';
 
 const drills = new Map<string, StoredSyntaxDrill>();
 const maximumDrills = 12;
@@ -22,6 +23,7 @@ export type StoredSyntaxDrill = {
     problem: SyntaxDrillProblem;
     language: GateLanguage;
     starter: string;
+    concept: SyntaxDrillConcept;
     sessionId: string;
     challengeId: string;
     approvedSourceHash?: string;
@@ -109,6 +111,7 @@ export function createSyntaxDrill(
     problemRaw: string,
     starterRaw: string,
     language: GateLanguage,
+    concept: SyntaxDrillConcept,
     sessionId: string,
     challengeId: string
 ): StoredSyntaxDrill {
@@ -129,6 +132,7 @@ export function createSyntaxDrill(
         problem,
         language,
         starter: starterFor(language, starterRaw),
+        concept,
         sessionId,
         challengeId
     };
@@ -146,7 +150,13 @@ export async function storeSyntaxDrill(drill: StoredSyntaxDrill): Promise<void> 
 }
 
 export function syntaxDrillResponse(drill: StoredSyntaxDrill) {
-    return { problem: drill.problem, language: drill.language, source: drill.starter };
+    return {
+        problem: drill.problem,
+        language: drill.language,
+        source: drill.starter,
+        conceptId: drill.concept.id,
+        conceptStage: drill.concept.stage
+    };
 }
 
 export function getSyntaxDrill(id: string, sessionId: string, challengeId: string): StoredSyntaxDrill {
@@ -165,56 +175,6 @@ export function approveSyntaxDrill(drill: StoredSyntaxDrill, source: string): vo
 
 export function isSyntaxDrillApproved(drill: StoredSyntaxDrill, source: string): boolean {
     return drill.approvedSourceHash === sourceHash(source);
-}
-
-export function syntaxDrillTitleCategory(language: GateLanguage, seed: number, recentCategories: string[] = []): string {
-    const cppCategories = [
-        'fundamental or scalar data type',
-        'compound data type such as a pointer, reference, array, enum, or struct form',
-        'callable or function type/declaration syntax',
-        'storage, lifetime, initialization, or type qualifier syntax',
-        'container or data-structure type',
-        'core operator, expression, cast, or declaration form',
-        'standard-library function or method'
-    ];
-    const pythonCategories = [
-        'built-in scalar or text data type',
-        'container or data-storage type',
-        'callable, function definition, or function type syntax',
-        'type annotation or type-construction syntax',
-        'binding, scope, declaration, or lifetime syntax',
-        'core operator or expression form',
-        'built-in or standard-library function or method'
-    ];
-    const generalCategories = [
-        'core data type',
-        'container or data-storage type',
-        'callable or function syntax',
-        'type or declaration syntax',
-        'binding, storage, or lifetime syntax',
-        'core operator or expression form',
-        'standard-library function or method'
-    ];
-    const categories = language === 'cpp' ? cppCategories : language === 'python' ? pythonCategories : generalCategories;
-    const start = Math.abs(seed) % categories.length;
-    return Array.from({ length: categories.length }, (_, offset) => categories[(start + offset) % categories.length])
-        .find((category) => !recentCategories.includes(category))
-        ?? categories[start];
-}
-
-function syntaxDrillCategoryRule(category: string): string {
-    if (/fundamental or scalar/i.test(category)) return 'Name one built-in primitive type keyword. Never output std::, a class, or a template type.';
-    if (/built-in scalar or text/i.test(category)) return 'Name one built-in scalar or text type itself, never a container, function, or method.';
-    if (/type annotation|type-construction/i.test(category)) return 'Name one type-annotation or type-construction form itself, not a method or usage rule.';
-    if (/data type|container|data-storage|data-structure/i.test(category)) return 'Name the type or container itself, never one of its methods, functions, or usage rules.';
-    if (/callable|function type|function definition/i.test(category)) return 'Name one callable/function syntax form or callable type, not a code sample or library algorithm.';
-    if (/storage|lifetime|initialization|qualifier|binding|scope/i.test(category)) return 'Name one language keyword, qualifier, binding, lifetime, or initialization form, not a library API.';
-    if (/operator|expression|cast|declaration/i.test(category)) return 'Name one core-language operator, expression, cast, or declaration form, not a library API.';
-    return 'Name one exact built-in or standard-library function or method.';
-}
-
-export function syntaxDrillTitlePrompt(language: GateLanguage, seed: number, requiredCategory = syntaxDrillTitleCategory(language, seed)): string {
-    return `/no_think\nLANGUAGE MUST BE ${language}. ${syntaxDrillLanguageRule(language)}\nREQUIRED CATEGORY: ${requiredCategory}. ${syntaxDrillCategoryRule(requiredCategory)} Choose one real, well-known syntax topic from this category for a 30-second drill requiring at most five short lines. Never invent a name or switch categories. Use seed ${seed}.\nReply only with the canonical topic name in 1-5 words. No code, explanation, sample values, second topic, or another language.`;
 }
 
 function sanitizeSyntaxDrillExample(source: string): string {
@@ -240,11 +200,11 @@ function syntaxDrillLanguageRule(language: GateLanguage): string {
 }
 
 export function syntaxDrillProblemSystemPrompt(language: GateLanguage): string {
-    return `${syntaxDrillLanguageRule(language)} Create the Example and Info for a valid ${language} syntax drill using only the exact assigned feature. Never substitute another API: the assigned name must appear in Info and its operation must appear in code. Output ## Example first, then a ${language} code fence with at most 5 nonblank lines total, including setup. Use the feature once with concrete values and prefer an inferred local type when the language supports one. Never define main, solve, a class, function, package, or helper. Then output ## Info with one optional flat "Required setup:" bullet and exactly one flat feature bullet. That feature line says what it does, then "Syntax:" with generic inline code, then "Example:" with different valid inline code. Never use bold, nested bullets, separate Syntax/Example bullets, overload lists, related features, placeholders, extra headings, a solution, or closing text. Keep uncertain definitions minimal. Verify every API and code line mentally before output.`;
+    return `${syntaxDrillLanguageRule(language)} Create the Example and Info for a valid ${language} syntax drill using only the assigned concept and requirements. The assigned title must appear in Info and its syntax must be demonstrated in code. Output ## Example first, then a ${language} code fence with at most 5 nonblank lines total, including setup. Keep the exercise completable in seconds. Use concrete values and prefer an inferred local type when the language supports one. Never define main, solve, a package, or an unrelated wrapper; include a tiny declaration only when the assigned syntax itself requires it. Then output ## Info with one optional flat "Required setup:" bullet and exactly one flat feature bullet. That feature line says what it does, then "Syntax:" with generic inline code, then "Example:" with different valid inline code. Never use bold, nested bullets, separate Syntax/Example bullets, overload lists, related features, placeholders, extra headings, a solution, or closing text. Keep uncertain definitions minimal. Verify every API and code line mentally before output.`;
 }
 
-export function syntaxDrillInstruction(title: string): string {
-    return `Use \`${title.replace(/`/g, '')}\` once with your own values.`;
+export function syntaxDrillInstruction(concept: SyntaxDrillConcept): string {
+    return `Use \`${concept.title.replace(/`/g, '')}\` once with your own values.`;
 }
 
 export function syntaxDrillProblemExample(language: GateLanguage): { request: string; response: string } {
@@ -278,51 +238,9 @@ export function syntaxDrillProblemExample(language: GateLanguage): { request: st
     };
 }
 
-export function normalizeSyntaxDrillTitle(raw: string): string {
-    const cleaned = cleanText(raw, 400)
-        .replace(/```[^\r\n]*|```/g, '')
-        .replace(/^\s*#+\s*/i, '')
-        .replace(/^\s*title\s*:\s*/i, '')
-        .trim();
-    const lines = cleaned.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-    const title = lines[0]?.endsWith('.') && lines[1] ? `${lines[0]}${lines[1]}` : lines[0] ?? 'Syntax Drill';
-    const normalized = title.replace(/[`]/g, '').replace(/^['"]+|['".:;!?]+$/g, '').replace(/#/g, '.').replace(/^(?:Python|C\+\+)\s*:\s*/i, '').replace(/\s+syntax$/i, '').replace(/\s+(?:for|with|using|of|in)$/i, '').trim();
-    const operation = normalized.match(/^([A-Za-z_$][\w$]*(?:(?:::|\.)[A-Za-z_$][\w$]*)*)\([^)]*\)$/)?.[1] ?? normalized;
-    return operation.split(/\s+/).slice(0, 5).join(' ').slice(0, 100) || 'Syntax Drill';
-}
-
-export function isUsableSyntaxDrillTitle(raw: string, title: string): boolean {
-    void raw;
-    if (!title || /[<>]/.test(title)) return false;
-    const value = title.trim();
-    if (/^\[/.test(value) || /^(?:def|class|struct|enum)\s+\w+\s*\(/i.test(value)) return false;
-    if (/[={};]/.test(value) || /(^|[^:]):([^:]|$)/.test(value) || /\bmust\b/i.test(value)) return false;
-    if (/^(?:syntax drill|core operator|operation|feature|topic|fn\b|func\b|function\b|class\b|type\b|module\b|package\b)/i.test(value)) return false;
-    return !/(?:\bmutex\b|\bwaitgroup\b|\bthread\b|\basync\b|\bfuture\b|\bchannel\b|\bgoroutine\b|std::(?:io|fs|env)|\bconsole\.|\bsystem\.in\b|\bprintf\b|\bprintln\b|\bfile\b)/i.test(value);
-}
-
-export function syntaxDrillTitlesOverlap(left: string, right: string): boolean {
-    const tokens = (value: string) => value.toLowerCase()
-        .replace(/\bsorted\b/g, 'sort')
-        .split(/[^a-z0-9_]+/)
-        .filter((token) => token.length > 2 && !['std', 'syntax', 'function', 'functions', 'method', 'methods', 'type', 'types', 'form', 'forms', 'semantics', 'constructor', 'constructors', 'expression', 'expressions', 'operator', 'operators', 'using'].includes(token));
-    const a = new Set(tokens(left));
-    const b = new Set(tokens(right));
-    if (!a.size || !b.size) return left.trim().toLowerCase() === right.trim().toLowerCase();
-    const member = (value: string) => /(?:::|\.)/.test(value)
-        ? tokens(value).at(-1)
-        : undefined;
-    const aMember = member(left);
-    const bMember = member(right);
-    if ((aMember && b.has(aMember)) || (bMember && a.has(bMember))) return true;
-    let shared = 0;
-    for (const token of a) if (b.has(token)) shared += 1;
-    if (a.size === 1 || b.size === 1) return a.size === b.size && shared === 1;
-    return shared / Math.min(a.size, b.size) >= 0.5;
-}
-
-export function syntaxDrillPrompt(language: GateLanguage, title: string): string {
-    return `/no_think\nLANGUAGE: ${language}\nASSIGNED FEATURE: ${title}\nGenerate Example and Info now. Use this exact feature spelling in the code and Info. Include its import/header when required. Maximum eight Info bullets.`;
+export function syntaxDrillPrompt(language: GateLanguage, concept: SyntaxDrillConcept): string {
+    const requirements = concept.requirements.map((requirement) => `- ${requirement}`).join('\n');
+    return `/no_think\nLANGUAGE: ${language}\nASSIGNED FEATURE: ${concept.title}\nREQUIRED SYNTAX:\n${requirements}\nGenerate Example and Info now. Demonstrate the assigned feature in code and use its exact title in Info. Satisfy every required syntax item. Include its import/header when required. Maximum eight Info bullets.`;
 }
 
 export function syntaxDrillStarterPrompt(language: GateLanguage, problemRaw: string): string {

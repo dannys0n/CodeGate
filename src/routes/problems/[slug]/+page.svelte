@@ -23,6 +23,7 @@
     import { gateLanguages, leetcodeDifficultyLevels, type DifficultyLevel, type GateLanguage, type LeetcodeDifficulty } from '$lib/codegate/types';
     import { consumeAiStream } from '$lib/codegate/ai-stream';
     import { parseSyntaxDrillInfo } from '$lib/codegate/syntax-drill-format';
+    import { recordSyntaxConcept } from '$lib/codegate/syntax-drill-learning';
 
     export let data;
     const problemId = data.problem.id;
@@ -62,6 +63,8 @@
         problem: any;
         language: GateLanguage;
         source: string;
+        conceptId: string;
+        conceptStage: number;
     };
     let syntaxDrill: SyntaxDrillPayload | null = null;
     let syntaxDrillCode = '';
@@ -1132,7 +1135,7 @@
         syntaxDrillController?.abort();
         syntaxDrillController = new AbortController();
         syntaxDrillState = 'loading';
-        syntaxDrillStatus = 'Generating a one-minute syntax drill…';
+        syntaxDrillStatus = 'Generating a quick syntax drill…';
         syntaxDrillProblemPreview = '';
         syntaxDrillCode = '';
         if (codegateWorkspaceTab === 'ai-drill') code = '';
@@ -1146,6 +1149,7 @@
                     challengeId: gateChallengeId,
                     language: syntaxDrillLanguage,
                     aiEndpoint: $userSettingsStorage.aiEndpoint,
+                    syntaxDrillLearning: $userSettingsStorage.syntaxDrillLearning,
                 }),
                 signal: syntaxDrillController.signal
             });
@@ -1155,6 +1159,10 @@
                 if (event.type === 'result' && event.text) payload += event.text;
             });
             syntaxDrill = JSON.parse(payload) as SyntaxDrillPayload;
+            userSettingsStorage.update((settings) => ({
+                ...settings,
+                syntaxDrillLearning: recordSyntaxConcept(settings.syntaxDrillLearning, syntaxDrill!.language, syntaxDrill!.conceptId, 'seen')
+            }));
             syntaxDrillCode = syntaxDrill.source;
             syntaxDrillState = 'ready';
             syntaxDrillStatus = '';
@@ -1832,6 +1840,13 @@
             gateBinding={activeGateBinding}
             syntaxDrillBinding={activeSyntaxDrillBinding}
             on:gateReleased={handleGateReleased}
+            on:syntaxDrillPassed={(event) => {
+                const detail = event.detail as { language: GateLanguage; conceptId: string };
+                userSettingsStorage.update((settings) => ({
+                    ...settings,
+                    syntaxDrillLearning: recordSyntaxConcept(settings.syntaxDrillLearning, detail.language, detail.conceptId, 'passed')
+                }));
+            }}
             on:gameSubmitSuccess={(e) => {
                 const { runCount, submitCount, timeSpent } = e.detail;
                 const result = computeGameResult(runCount, submitCount, timeSpent, code, language);

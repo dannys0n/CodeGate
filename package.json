@@ -58,6 +58,11 @@
 			"desktop/*.ps1",
 			"docker/intellisense/**/*"
 		],
+		"electronFuses": {
+			"runAsNode": false,
+			"enableNodeOptionsEnvironmentVariable": false,
+			"enableNodeCliInspectArguments": false
+		},
 		"directories": {
 			"output": "dist-desktop",
 			"buildResources": "desktop/resources"

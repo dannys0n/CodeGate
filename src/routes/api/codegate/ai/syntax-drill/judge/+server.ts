@@ -40,7 +40,7 @@ export const POST: RequestHandler = async ({ request }) => {
             const verdict = review.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
             const approved = /^PASS\b/i.test(verdict) && !/^PASS\s*(?:BUT|WITH\s+CHANGES)/i.test(verdict);
             if (approved) approveSyntaxDrill(drill, source);
-            emit('result', JSON.stringify({ compiled: true, approved }));
+            emit('result', JSON.stringify({ compiled: true, approved, conceptId: drill.concept.id, language: drill.language }));
         }, request.signal);
     } catch (error) {
         return new Response(error instanceof Error ? error.message : String(error), { status: 400 });

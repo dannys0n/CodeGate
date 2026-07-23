@@ -22,6 +22,10 @@ describe('desktop settings', () => {
       aiEnabled: true,
       aiDockerEnabled: false,
       aiEndpoint: '  http://127.0.0.1:1234  ',
+      syntaxDrillLearning: {
+        python: { concepts: { assignment: { seen: 2, passed: 7 }, '../bad': { seen: 1, passed: 1 } }, recent: ['assignment', '../bad'] },
+        invalid: { concepts: {} }
+      },
       editorFontSize: 99,
       problemId: 'must-not-persist'
     });
@@ -36,6 +40,9 @@ describe('desktop settings', () => {
     expect(settings.aiEnabled).toBe(true);
     expect(settings.aiDockerEnabled).toBe(false);
     expect(settings.aiEndpoint).toBe('http://127.0.0.1:1234');
+    expect(settings.syntaxDrillLearning).toEqual({
+      python: { concepts: { assignment: { seen: 2, passed: 2 } }, recent: ['assignment'] }
+    });
     expect(settings.editorFontSize).toBe(24);
     expect(settings).not.toHaveProperty('problemId');
   });
@@ -43,7 +50,7 @@ describe('desktop settings', () => {
   it('round trips the allow-listed settings file', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'codegate-settings-'));
     const file = path.join(root, 'settings.json');
-    await saveDesktopSettings(file, { theme: 'light', leftPaneWidth: 37, codegateLanguage: 'cpp', extraProblemFeaturesEnabled: true, intellisenseEnabled: true, aiEnabled: true, aiDockerEnabled: false, aiEndpoint: 'http://127.0.0.1:1234' });
+    await saveDesktopSettings(file, { theme: 'light', leftPaneWidth: 37, codegateLanguage: 'cpp', extraProblemFeaturesEnabled: true, intellisenseEnabled: true, aiEnabled: true, aiDockerEnabled: false, aiEndpoint: 'http://127.0.0.1:1234', syntaxDrillLearning: { cpp: { concepts: { variable: { seen: 1, passed: 1 } }, recent: ['variable'] } } });
 
     await expect(loadDesktopSettings(file)).resolves.toMatchObject({
       theme: 'light',
@@ -53,7 +60,8 @@ describe('desktop settings', () => {
       intellisenseEnabled: true,
       aiEnabled: true,
       aiDockerEnabled: false,
-      aiEndpoint: 'http://127.0.0.1:1234'
+      aiEndpoint: 'http://127.0.0.1:1234',
+      syntaxDrillLearning: { cpp: { concepts: { variable: { seen: 1, passed: 1 } }, recent: ['variable'] } }
     });
     expect(JSON.parse(await readFile(file, 'utf8'))).not.toHaveProperty('problemId');
   });
