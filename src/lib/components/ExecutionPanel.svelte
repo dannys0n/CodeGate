@@ -6,7 +6,7 @@
     import Visualization from "./Visualization.svelte";
     import SaveStatus from "./SaveStatus.svelte";
     import GameModeTimer from "./GameModeTimer.svelte";
-    import userStore from "$lib/stores/userStore";
+    import userStore, { solvedProblemKey } from "$lib/stores/userStore";
     import type { ProgrammingLanguage } from "$lib/utils/util";
     import { consumeAiStream } from "$lib/codegate/ai-stream";
     export let problem: any;
@@ -857,7 +857,7 @@
                         runningMessage = "";
                         userStore.update((prev) => ({
                             ...prev,
-                            [problem.id]: true,
+                            [solvedProblemKey(problem.id, gateBinding ? language : undefined)]: true,
                         }));
                         if (gameMode) {
                             const timeSpent = Math.floor((submitTime - gameStartTime) / 1000);

@@ -4,6 +4,10 @@ import { browser } from '$app/environment';
 // The key we'll use to save the checkbox data in localStorage
 const STORAGE_KEY = 'user-checkboxes';
 
+export function solvedProblemKey(problemId: string, language?: string): string {
+    return language ? `${problemId}:${language}` : problemId;
+}
+
 // Default is an empty object mapping problem IDs to boolean checked state
 const defaultValue: Record<string, boolean> = {};
 

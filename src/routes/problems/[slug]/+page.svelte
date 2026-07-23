@@ -12,7 +12,7 @@
     import fileStore, { type FileEntry } from '$lib/stores/fileStore.js';
     import { leftPaneWidthStore } from '$lib/stores/layoutStore';
     import userSettingsStorage, { type ThemeChoice } from '$lib/stores/userSettingsStorage';
-    import userStore from '$lib/stores/userStore';
+    import userStore, { solvedProblemKey } from '$lib/stores/userStore';
     import { getDifficultyClass, type ProgrammingLanguage } from '$lib/utils/util.js';
     import { doc, setDoc } from 'firebase/firestore';
     import { renderMarkdown } from '$lib/utils/markdown';
@@ -124,6 +124,7 @@
         : null;
     const fileKey = () => `${problemId}`;
     const codeKey = () => `${problemId}:${language}`;
+    const currentSolvedKey = () => solvedProblemKey(problemId, isCodeGate ? language : undefined);
 
     // Tabs are grouped by fileId (language-agnostic)
     type TabMeta = { fileId: string; fileName: string };
@@ -1327,7 +1328,7 @@
             {/if}
             <div class="title-row">
                 <h1>{data.problem.title}</h1>
-                {#if !isGameMode && $userStore && $userStore[fileKey()]}
+                {#if !isGameMode && $userStore && $userStore[currentSolvedKey()]}
                     <span class="solved-pill" title="You've solved this problem" aria-label="Solved" role="status">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1419,9 +1420,9 @@
                     <div class="hint-item">
                         <button
                             class="hint-header"
-                            class:unsolved={!($userStore && $userStore[fileKey()])}
+                            class:unsolved={!($userStore && $userStore[currentSolvedKey()])}
                             on:click={() => {
-                                if ($userStore && $userStore[fileKey()]) {
+                                if ($userStore && $userStore[currentSolvedKey()]) {
                                     viewMode = 'solution';
                                 } else if (confirm('Are you sure you want to view the solution? Try solving it yourself first!')) {
                                     viewMode = 'solution';
@@ -1895,7 +1896,7 @@
                                 <span class="problem-catalog-title">#{entry.number} {entry.title}</span>
                                 <span class="problem-catalog-badges">
                                     <small class="badge {getDifficultyClass(entry.leetcodeDifficulty)}">{entry.leetcodeDifficulty}</small>
-                                    {#if $userStore[entry.problemId]}
+                                    {#if $userStore[solvedProblemKey(entry.problemId, language)]}
                                         <span class="solved-pill catalog-solved-pill" title="You've solved this problem" aria-label="Solved" role="status">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                                 <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
