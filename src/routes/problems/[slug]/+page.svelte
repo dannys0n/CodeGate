@@ -57,7 +57,7 @@
     let problemNumberMax: number | null = data.codegate?.problemNumberRange?.max ?? null;
     let showProblemNumberFilter = false;
     let problemNumberFilterContainer: HTMLElement | null = null;
-    type ProblemCatalogEntry = { problemId: string; number: number; title: string; leetcodeDifficulty: LeetcodeDifficulty };
+    type ProblemCatalogEntry = { problemId: string; number: number; title: string; leetcodeDifficulty: LeetcodeDifficulty | 'Beginner' };
     let codegateWorkspaceTab: 'editor' | 'catalogue' | 'ai-drill' = 'editor';
     type SyntaxDrillPayload = {
         problem: any;
@@ -1350,7 +1350,7 @@
                 {/if}
             </div>
             <span class="badge {getDifficultyClass(data.problem.difficulty)}">
-                LeetCode: {data.problem.difficulty}
+                Difficulty: {data.problem.difficulty}
             </span>
             {#if !isCodeGate}<a href={data.problem.link} target="_blank" rel="noopener noreferrer" class="external-link">↗</a>{/if}
             {#if viewMode === 'solution'}
@@ -2300,6 +2300,7 @@
     }
 
     .difficulty-easy { background-color: var(--color-easy); }
+    .difficulty-beginner { background-color: #2563eb; color: #fff; }
     .difficulty-medium { background-color: var(--color-medium); }
     .difficulty-hard { background-color: var(--color-hard); color: #fff; }
 

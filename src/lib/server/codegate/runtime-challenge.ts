@@ -7,7 +7,7 @@ export type ProblemCatalogEntry = {
     problemId: string;
     number: number;
     title: string;
-    leetcodeDifficulty: LeetcodeDifficulty;
+    leetcodeDifficulty: LeetcodeDifficulty | 'Beginner';
 };
 
 function randomized<T>(items: T[], random: () => number): T[] {
@@ -35,12 +35,14 @@ export async function prepareChallenge(
     const allowedDifficulties = options.leetcodeDifficulties ? new Set(options.leetcodeDifficulties) : undefined;
     const matches = Object.entries(manifest.problems).filter(([frontendId, problem]) => {
         const problemNumber = Number(frontendId);
+        const explicitlyRequested = Boolean(options.problemId);
+        if (explicitlyRequested) return problem.slug === options.problemId && Boolean(problem.languages[language]);
+        if (problemNumber < 0) return false;
         const inNumberRange = Number.isSafeInteger(problemNumber)
             && (options.problemNumberRange?.min === null || options.problemNumberRange?.min === undefined || problemNumber >= options.problemNumberRange.min)
             && (options.problemNumberRange?.max === null || options.problemNumberRange?.max === undefined || problemNumber <= options.problemNumberRange.max);
         return (
         Boolean(problem.languages[language])
-        && (!options.problemId || problem.slug === options.problemId)
         && (!allowedDifficulties || allowedDifficulties.has(problem.leetcodeDifficulty))
         && inNumberRange
         );
@@ -86,16 +88,18 @@ export async function availableProblemCatalog(
     return Object.entries(manifest.problems)
         .flatMap(([frontendId, problem]) => {
             const number = Number(frontendId);
-            if (!Number.isSafeInteger(number)
-                || !problem.languages[language]
-                || !allowedDifficulties.has(problem.leetcodeDifficulty)
+            if (!Number.isSafeInteger(number) || !problem.languages[language]) return [];
+            const bridgeDifficulty = number < 0;
+            if (!bridgeDifficulty && (
+                !allowedDifficulties.has(problem.leetcodeDifficulty)
                 || (problemNumberRange.min !== null && number < problemNumberRange.min)
-                || (problemNumberRange.max !== null && number > problemNumberRange.max)) return [];
+                || (problemNumberRange.max !== null && number > problemNumberRange.max)
+            )) return [];
             return [{
                 problemId: problem.slug,
                 number,
-                title: titleFromSlug(problem.slug),
-                leetcodeDifficulty: problem.leetcodeDifficulty
+                title: problem.catalogTitle ?? titleFromSlug(problem.slug),
+                leetcodeDifficulty: bridgeDifficulty ? 'Beginner' as const : problem.leetcodeDifficulty
             }];
         })
         .sort((left, right) => left.number - right.number);

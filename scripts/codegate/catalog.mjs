@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { loadLeetcodeBundle } from './importer/adapters/leetcode-bundle.mjs';
+import { bridgeProblems, bridgeProblemsVersion } from './bridge-problems.mjs';
 import { sourceTransformVersion } from '../../src/lib/codegate/source-transform.mjs';
 
 export const supportedLanguages = ['java', 'python', 'cpp', 'csharp', 'rust', 'go', 'typescript'];
@@ -20,6 +21,10 @@ async function digestFiles(files) {
 
 function valueSha256(value) {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
+function catalogSourceRevision(source) {
+  return `${source.revision}+bridge@${bridgeProblemsVersion}`;
 }
 
 class AssetBundle {
@@ -115,12 +120,41 @@ export async function buildCandidateCatalog(repositoryRoot = process.cwd(), conf
       languages
     };
   }
+  for (const problem of bridgeProblems) {
+    const recordContents = Buffer.from(JSON.stringify(problem.record));
+    const testContents = Buffer.from(JSON.stringify({ exact_cases: problem.cases }));
+    const judge = {
+      kind: 'generated-exact',
+      metadata: problem.metadata,
+      testRecord: bundle.add(testContents)
+    };
+    problems[String(problem.number)] = {
+      slug: problem.slug,
+      catalogTitle: problem.record.title,
+      // Bridge problems bypass ordinary difficulty filtering and random selection.
+      // Keeping the manifest field compatible avoids a second catalogue schema.
+      leetcodeDifficulty: 'Easy',
+      record: bundle.add(recordContents),
+      judgeSha256: valueSha256(judge),
+      judge,
+      languages: {
+        python: {
+          solutionSource: 'codegate-bridge',
+          solution: bundle.add(Buffer.from(problem.solutions.python))
+        },
+        cpp: {
+          solutionSource: 'codegate-bridge',
+          solution: bundle.add(Buffer.from(problem.solutions.cpp))
+        }
+      }
+    };
+  }
   const bundleContents = bundle.contents();
   return { manifest: {
     schemaVersion: 4,
     generatorVersion: sourceTransformVersion,
     generatedAt: new Date().toISOString(),
-    sourceRevision: source.revision,
+    sourceRevision: catalogSourceRevision(source),
     assetBundle: {
       file: 'candidate-assets.bin',
       length: bundleContents.length,
@@ -161,7 +195,7 @@ export async function ensureCandidateManifest(repositoryRoot = process.cwd(), co
     const source = config.sources?.find((candidate) => candidate.adapter === 'leetcode-bundle');
     const target = path.join(repositoryRoot, 'codegate', 'candidate-manifest.json');
     const manifest = JSON.parse(await fs.readFile(target, 'utf8'));
-    if (manifest.schemaVersion !== 4 || manifest.generatorVersion !== sourceTransformVersion || manifest.sourceRevision !== source?.revision || !manifest.assetBundle?.file) throw new Error('stale catalog');
+    if (manifest.schemaVersion !== 4 || manifest.generatorVersion !== sourceTransformVersion || manifest.sourceRevision !== catalogSourceRevision(source) || !manifest.assetBundle?.file) throw new Error('stale catalog');
     const stat = await fs.stat(path.join(repositoryRoot, 'codegate', manifest.assetBundle.file));
     if (stat.size !== manifest.assetBundle.length) throw new Error('incomplete asset bundle');
     return manifest;

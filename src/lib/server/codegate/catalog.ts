@@ -17,10 +17,11 @@ export function assertCandidateManifest(value: unknown): asserts value is Candid
         throw new Error('Unsupported candidate manifest schema');
     }
     for (const [frontendId, entry] of Object.entries(manifest.problems as Record<string, unknown>)) {
-        if (!/^\d+$/.test(frontendId) || !entry || typeof entry !== 'object') throw new Error('Invalid CodeGate problem');
+        if (!/^(?:[1-9]\d*|-[1-9]\d*)$/.test(frontendId) || !entry || typeof entry !== 'object') throw new Error('Invalid CodeGate problem');
         const problem = entry as Record<string, unknown>;
         if (
-            typeof problem.slug !== 'string' || !leetcodeDifficultyLevels.includes(problem.leetcodeDifficulty as any) || !isLocator(problem.record as Record<string, unknown>) ||
+            typeof problem.slug !== 'string' || (problem.catalogTitle !== undefined && typeof problem.catalogTitle !== 'string') ||
+            !leetcodeDifficultyLevels.includes(problem.leetcodeDifficulty as any) || !isLocator(problem.record as Record<string, unknown>) ||
             !/^[a-f0-9]{64}$/.test(String(problem.judgeSha256)) ||
             !problem.languages || typeof problem.languages !== 'object'
         ) {

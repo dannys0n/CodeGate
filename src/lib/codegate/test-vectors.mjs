@@ -21,6 +21,17 @@ function storedInput(value, type) { return ['int_array', 'int_array_2d', 'string
 
 export function extractExactCases(dataset, metadata) {
   const cases = [];
+  if (Array.isArray(dataset?.exact_cases)) {
+    for (const vector of dataset.exact_cases) {
+      const input = vector?.input;
+      const output = vector?.output;
+      if (!input || typeof input !== 'object' || Array.isArray(input)) continue;
+      if (!metadata.params.every((param) => Object.hasOwn(input, param.name) && matchesType(input[param.name], param.type))) continue;
+      if (!matchesType(output, metadata.outputType)) continue;
+      cases.push({ input, output });
+    }
+    return cases;
+  }
   for (const vector of dataset?.input_output ?? []) {
     try {
       const input = parseKeywordArguments(vector.input);

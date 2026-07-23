@@ -17,6 +17,7 @@ export type AssetLocator = { offset: number; length: number; sha256: string };
 
 export type CandidateProblem = {
     slug: string;
+    catalogTitle?: string;
     leetcodeDifficulty: LeetcodeDifficulty;
     record: AssetLocator;
     judgeSha256: string;
