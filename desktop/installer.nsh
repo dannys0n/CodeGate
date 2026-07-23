@@ -290,53 +290,57 @@ FunctionEnd
 !endif
 
 !macro customUnInstall
-  ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\start-events.ps1" -Disable' $0
-  ; Fall back to the native scheduler command if PowerShell task cleanup failed.
-  ${If} $0 != 0
-    nsExec::ExecToLog '"$SYSDIR\schtasks.exe" /Delete /TN "CodeGate Start Events" /F'
-    Pop $1
-  ${EndIf}
-
-  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "CodeGate"
-  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run" "CodeGate"
-  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32" "CodeGate"
-  DeleteRegKey HKCU "Software\CodeGate"
-
-  ; Remove only containers created by the installed CodeGate desktop app.
-  ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\uninstall-containers.ps1"' $0
-  ${If} $0 != 0
-    MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker was unavailable or could not remove its remaining containers. Start Docker Desktop and remove containers labeled codegate.created=true to finish cleanup."
-  ${EndIf}
-
-  ${If} $RemoveJudgeImages == ${BST_CHECKED}
-    nsExec::ExecToLog 'docker.exe image rm "python:3.11-slim" "gcc:13" "alpine/java:22-jdk" "mcr.microsoft.com/dotnet/sdk:8.0-alpine" "rust:1.78-slim" "golang:1.22-alpine" "node:22-alpine"'
-    Pop $0
+  ; Electron Builder runs the installed uninstaller as part of an in-place
+  ; update. Preserve all user state and reusable Docker resources in that path.
+  ${IfNot} ${isUpdated}
+    ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\start-events.ps1" -Disable' $0
+    ; Fall back to the native scheduler command if PowerShell task cleanup failed.
     ${If} $0 != 0
-      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but one or more shared Docker judge images could not be removed. They may still be in use by another container or Docker Desktop may be unavailable."
+      nsExec::ExecToLog '"$SYSDIR\schtasks.exe" /Delete /TN "CodeGate Start Events" /F'
+      Pop $1
     ${EndIf}
-  ${EndIf}
 
-  ${If} $RemoveAiModel == ${BST_CHECKED}
-    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -Remove'
-    Pop $0
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "CodeGate"
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run" "CodeGate"
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32" "CodeGate"
+    DeleteRegKey HKCU "Software\CodeGate"
+
+    ; Remove only containers created by the installed CodeGate desktop app.
+    ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\uninstall-containers.ps1"' $0
     ${If} $0 != 0
-      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker Model Runner could not remove the AI model. Start Docker Desktop and remove the CodeGate AI model to finish cleanup."
+      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker was unavailable or could not remove its remaining containers. Start Docker Desktop and remove containers labeled codegate.created=true to finish cleanup."
     ${EndIf}
-  ${EndIf}
 
-  ${If} $RemoveIntelliSense == ${BST_CHECKED}
-    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\intellisense.ps1" -Remove'
-    Pop $0
-    ${If} $0 != 0
-      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker could not remove one or more IntelliSense images. Start Docker Desktop and remove images named codegate-intellisense-* to finish cleanup."
+    ${If} $RemoveJudgeImages == ${BST_CHECKED}
+      nsExec::ExecToLog 'docker.exe image rm "python:3.11-slim" "gcc:13" "alpine/java:22-jdk" "mcr.microsoft.com/dotnet/sdk:8.0-alpine" "rust:1.78-slim" "golang:1.22-alpine" "node:22-alpine"'
+      Pop $0
+      ${If} $0 != 0
+        MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but one or more shared Docker judge images could not be removed. They may still be in use by another container or Docker Desktop may be unavailable."
+      ${EndIf}
     ${EndIf}
-  ${EndIf}
 
-  ; Remove Electron state, CodeGate session history, caches, and updater downloads.
-  RMDir /r "$APPDATA\CodeGate"
-  RMDir /r "$APPDATA\codegate"
-  RMDir /r "$LOCALAPPDATA\CodeGate"
-  RMDir /r "$LOCALAPPDATA\codegate"
-  RMDir /r "$LOCALAPPDATA\codegate-updater"
-  Delete "$LOCALAPPDATA\CrashDumps\CodeGate.exe.*.dmp"
+    ${If} $RemoveAiModel == ${BST_CHECKED}
+      nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -Remove'
+      Pop $0
+      ${If} $0 != 0
+        MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker Model Runner could not remove the AI model. Start Docker Desktop and remove the CodeGate AI model to finish cleanup."
+      ${EndIf}
+    ${EndIf}
+
+    ${If} $RemoveIntelliSense == ${BST_CHECKED}
+      nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\intellisense.ps1" -Remove'
+      Pop $0
+      ${If} $0 != 0
+        MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but Docker could not remove one or more IntelliSense images. Start Docker Desktop and remove images named codegate-intellisense-* to finish cleanup."
+      ${EndIf}
+    ${EndIf}
+
+    ; Remove Electron state, CodeGate session history, caches, and updater downloads.
+    RMDir /r "$APPDATA\CodeGate"
+    RMDir /r "$APPDATA\codegate"
+    RMDir /r "$LOCALAPPDATA\CodeGate"
+    RMDir /r "$LOCALAPPDATA\codegate"
+    RMDir /r "$LOCALAPPDATA\codegate-updater"
+    Delete "$LOCALAPPDATA\CrashDumps\CodeGate.exe.*.dmp"
+  ${EndIf}
 !macroend
