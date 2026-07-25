@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     completeLanguageDocument,
     ContentLengthDecoder,
+    hoverLanguageDocument,
     stopLanguageServers,
     syncLanguageDocument
 } from './language-server';
@@ -69,6 +70,12 @@ describe.runIf(Boolean(integrationLanguage))('language-server completion integra
         const items = await completeLanguageDocument(integrationLanguage, documentId, line, character);
         const labels = items.map((entry: any) => (typeof entry.label === 'string' ? entry.label : entry.label?.label)?.trim());
         expect(labels.some((label: string) => test.expected.test(label)), JSON.stringify(labels)).toBe(true);
+        const hoverOffset = test.source.indexOf('values') + 1;
+        const hoverPrefix = test.source.slice(0, hoverOffset);
+        const hoverLine = hoverPrefix.split('\n').length - 1;
+        const hoverCharacter = hoverPrefix.length - hoverPrefix.lastIndexOf('\n') - 1;
+        const hover = await hoverLanguageDocument(integrationLanguage, documentId, hoverLine, hoverCharacter);
+        expect(JSON.stringify(hover?.contents ?? '')).not.toBe('""');
         stopLanguageServers();
     }, 90_000);
 });

@@ -2,6 +2,7 @@ import type { RequestHandler } from './$types';
 import {
     closeLanguageDocument,
     completeLanguageDocument,
+    hoverLanguageDocument,
     requireLanguage,
     syncLanguageDocument
 } from '$lib/server/codegate/language-server';
@@ -22,11 +23,14 @@ export const POST: RequestHandler = async ({ request }) => {
             if (source.length > 200_000) throw new Error('Invalid source');
             return Response.json({ version: await syncLanguageDocument(language, documentId, source) });
         }
-        if (action !== 'complete') throw new Error('Invalid IntelliSense action');
+        if (action !== 'complete' && action !== 'hover') throw new Error('Invalid IntelliSense action');
         const line = Number(body.line);
         const character = Number(body.character);
-        if (!Number.isInteger(line) || line < 0 || line > 20_000) throw new Error('Invalid completion line');
-        if (!Number.isInteger(character) || character < 0 || character > 20_000) throw new Error('Invalid completion column');
+        if (!Number.isInteger(line) || line < 0 || line > 20_000) throw new Error('Invalid IntelliSense line');
+        if (!Number.isInteger(character) || character < 0 || character > 20_000) throw new Error('Invalid IntelliSense column');
+        if (action === 'hover') {
+            return Response.json({ hover: await hoverLanguageDocument(language, documentId, line, character, request.signal) });
+        }
         return Response.json({ items: await completeLanguageDocument(language, documentId, line, character, request.signal) });
     } catch (error) {
         return new Response(error instanceof Error ? error.message : String(error), { status: 503 });

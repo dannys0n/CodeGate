@@ -241,6 +241,7 @@ class LanguageServerClient {
                     textDocument: {
                         synchronization: { dynamicRegistration: false, didSave: false },
                         completion: { completionItem: { snippetSupport: true, documentationFormat: ['markdown', 'plaintext'] } },
+                        hover: { contentFormat: ['markdown', 'plaintext'] },
                         documentSymbol: { hierarchicalDocumentSymbolSupport: true }
                     }
                 },
@@ -296,6 +297,15 @@ class LanguageServerClient {
         }, 10_000, signal);
     }
 
+    async hover(documentId: string, line: number, character: number, signal?: AbortSignal) {
+        await this.start();
+        const state = this.documents.get(documentId);
+        if (!state) throw new Error(`${this.language} document is not synchronized`);
+        return this.request('textDocument/hover', {
+            textDocument: { uri: state.uri }, position: { line, character }
+        }, 10_000, signal);
+    }
+
     close(documentId: string) {
         const state = this.documents.get(documentId);
         if (!state || !this.child) return;
@@ -340,6 +350,10 @@ export async function syncLanguageDocument(language: GateLanguage, documentId: s
 export async function completeLanguageDocument(language: GateLanguage, documentId: string, line: number, character: number, signal?: AbortSignal) {
     const result = await clientFor(language).complete(documentId, line, character, signal);
     return Array.isArray(result) ? result : Array.isArray(result?.items) ? result.items : [];
+}
+
+export async function hoverLanguageDocument(language: GateLanguage, documentId: string, line: number, character: number, signal?: AbortSignal) {
+    return await clientFor(language).hover(documentId, line, character, signal) ?? null;
 }
 
 export function closeLanguageDocument(language: GateLanguage, documentId: string) {

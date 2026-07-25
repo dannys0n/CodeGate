@@ -174,8 +174,37 @@
         while (intellisenseActiveLanguage !== targetLanguage || intellisenseSyncedModelVersion < targetVersion) await runIntellisenseSync();
     }
 
+    function lspHoverContents(monaco: typeof Monaco, value: unknown): Monaco.IMarkdownString[] {
+        const entries = Array.isArray(value) ? value : [value];
+        return entries.flatMap((entry) => {
+            let rendered = '';
+            if (typeof entry === 'string') {
+                if (!entry.trim()) return [];
+                rendered = entry;
+            } else if (entry && typeof entry === 'object' && 'value' in entry && typeof entry.value === 'string') {
+                if (!entry.value.trim()) return [];
+                if ('language' in entry && typeof entry.language === 'string') {
+                    const fence = entry.value.includes('```') ? '````' : '```';
+                    rendered = `${fence}${entry.language}\n${entry.value}\n${fence}`;
+                } else if ('kind' in entry && entry.kind === 'plaintext') {
+                    rendered = entry.value
+                        .replace(/\\/g, '\\\\')
+                        .replace(/([`*_{}[\]()<>#+.!|\-])/g, '\\$1')
+                        .replace(/\r?\n/g, '  \n');
+                } else {
+                    rendered = entry.value;
+                }
+            } else {
+                return [];
+            }
+            return [{ value: rendered, isTrusted: false, supportHtml: false }];
+        });
+    }
+
     function registerIntellisense(monaco: typeof Monaco) {
-        intellisenseProviders = intellisenseLanguages.map((providerLanguage) => monaco.languages.registerCompletionItemProvider(providerLanguage, {
+        const providers: Monaco.IDisposable[] = [];
+        for (const providerLanguage of intellisenseLanguages) {
+            providers.push(monaco.languages.registerCompletionItemProvider(providerLanguage, {
             triggerCharacters: ['.', '>', ':'],
             async provideCompletionItems(model, position, _context, token) {
                 if (model !== editor?.getModel()) return { suggestions: [] };
@@ -232,7 +261,51 @@
                     cancellation.dispose();
                 }
             }
-        }));
+            }));
+            providers.push(monaco.languages.registerHoverProvider(providerLanguage, {
+                async provideHover(model, position, token) {
+                    if (model !== editor?.getModel()) return null;
+                    const controller = new AbortController();
+                    const cancellation = token.onCancellationRequested(() => controller.abort());
+                    try {
+                        await flushIntellisenseSync(model);
+                        if (token.isCancellationRequested) return null;
+                        const response = await fetch('/api/codegate/intellisense', {
+                            method: 'POST',
+                            headers: { 'content-type': 'application/json' },
+                            body: JSON.stringify({
+                                action: 'hover',
+                                language: providerLanguage,
+                                documentId: intellisenseDocumentId,
+                                line: position.lineNumber - 1,
+                                character: position.column - 1
+                            }),
+                            signal: controller.signal
+                        });
+                        if (!response.ok) throw new Error(await response.text());
+                        if (token.isCancellationRequested) return null;
+                        const result = (await response.json())?.hover;
+                        const contents = lspHoverContents(monaco, result?.contents);
+                        if (!contents.length) return null;
+                        const start = result?.range?.start;
+                        const end = result?.range?.end;
+                        const range = Number.isInteger(start?.line)
+                            && Number.isInteger(start?.character)
+                            && Number.isInteger(end?.line)
+                            && Number.isInteger(end?.character)
+                            ? new monaco.Range(start.line + 1, start.character + 1, end.line + 1, end.character + 1)
+                            : undefined;
+                        return { contents, range };
+                    } catch {
+                        if (!token.isCancellationRequested) scheduleIntellisenseSync(model);
+                        return null;
+                    } finally {
+                        cancellation.dispose();
+                    }
+                }
+            }));
+        }
+        intellisenseProviders = providers;
     }
 
     export function getViewState() {
