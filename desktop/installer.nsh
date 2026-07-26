@@ -1,7 +1,9 @@
 !include "LogicLib.nsh"
 !include "nsDialogs.nsh"
+!include "FileFunc.nsh"
 
 !ifndef BUILD_UNINSTALLER
+Var CodeGateExistingInstall
 Var StartEventsDialog
 Var StartAtLogonCheckbox
 Var StartAtUnlockCheckbox
@@ -29,6 +31,16 @@ Var IntelliSenseTypeScript
 Var IntelliSenseLanguages
 
 !macro customInit
+  StrCpy $CodeGateExistingInstall 0
+  StrCpy $0 ""
+  ReadRegStr $0 HKCU "Software\${APP_GUID}" "InstallLocation"
+  ${If} $0 == ""
+    ReadRegStr $0 HKLM "Software\${APP_GUID}" "InstallLocation"
+  ${EndIf}
+  ${If} $0 != ""
+    StrCpy $CodeGateExistingInstall 1
+  ${EndIf}
+
   StrCpy $StartAtLogon ${BST_CHECKED}
   StrCpy $StartAtUnlock ${BST_CHECKED}
   StrCpy $StartAtResume ${BST_CHECKED}
@@ -147,87 +159,87 @@ FunctionEnd
 !macroend
 
 !macro customInstall
-  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "CodeGate"
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "CodeGate"
 
-  ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\start-events.ps1" -ExecutablePath "$INSTDIR\${APP_EXECUTABLE_FILENAME}" -Logon $StartAtLogon -Unlock $StartAtUnlock -Resume $StartAtResume' $0
-  ${If} $0 == 0
-    WriteRegDWORD HKCU "Software\CodeGate\StartEvents" "Configured" 1
-    WriteRegDWORD HKCU "Software\CodeGate\StartEvents" "Logon" $StartAtLogon
-    WriteRegDWORD HKCU "Software\CodeGate\StartEvents" "Unlock" $StartAtUnlock
-    WriteRegDWORD HKCU "Software\CodeGate\StartEvents" "Resume" $StartAtResume
-  ${Else}
-    MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was installed, but Windows start-event registration failed. You can retry it using the manual registration script."
-  ${EndIf}
+    ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\start-events.ps1" -ExecutablePath "$INSTDIR\${APP_EXECUTABLE_FILENAME}" -Logon $StartAtLogon -Unlock $StartAtUnlock -Resume $StartAtResume' $0
+    ${If} $0 == 0
+      WriteRegDWORD HKCU "Software\CodeGate\StartEvents" "Configured" 1
+      WriteRegDWORD HKCU "Software\CodeGate\StartEvents" "Logon" $StartAtLogon
+      WriteRegDWORD HKCU "Software\CodeGate\StartEvents" "Unlock" $StartAtUnlock
+      WriteRegDWORD HKCU "Software\CodeGate\StartEvents" "Resume" $StartAtResume
+    ${Else}
+      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was installed, but Windows start-event registration failed. You can retry it from CodeGate settings."
+    ${EndIf}
 
-  ${If} $InstallAiModel == ${BST_CHECKED}
-    DetailPrint "Enabling Docker Model Runner and downloading the AI model..."
-    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -Enable -SettingsPath "$APPDATA\CodeGate\settings.json"'
-    Pop $0
-    ${If} $0 != 0
-      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was installed, but the optional local AI model could not be prepared. You can retry from CodeGate settings."
+    ${If} $InstallAiModel == ${BST_CHECKED}
+      DetailPrint "Enabling Docker Model Runner and downloading the AI model..."
+      nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -Enable -SettingsPath "$APPDATA\CodeGate\settings.json"'
+      Pop $0
+      ${If} $0 != 0
+        MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was installed, but the optional local AI model could not be prepared. You can retry from CodeGate settings."
+      ${EndIf}
     ${EndIf}
-  ${Else}
-    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -Disable -SettingsPath "$APPDATA\CodeGate\settings.json"'
-    Pop $0
-  ${EndIf}
 
-  StrCpy $IntelliSenseLanguages ""
-  ${If} $IntelliSenseCpp == ${BST_CHECKED}
-    StrCpy $IntelliSenseLanguages "cpp"
-  ${EndIf}
-  ${If} $IntelliSensePython == ${BST_CHECKED}
-    ${If} $IntelliSenseLanguages == ""
-      StrCpy $IntelliSenseLanguages "python"
-    ${Else}
-      StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,python"
+    StrCpy $IntelliSenseLanguages ""
+    ${If} $IntelliSenseCpp == ${BST_CHECKED}
+      StrCpy $IntelliSenseLanguages "cpp"
     ${EndIf}
-  ${EndIf}
-  ${If} $IntelliSenseJava == ${BST_CHECKED}
-    ${If} $IntelliSenseLanguages == ""
-      StrCpy $IntelliSenseLanguages "java"
-    ${Else}
-      StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,java"
+    ${If} $IntelliSensePython == ${BST_CHECKED}
+      ${If} $IntelliSenseLanguages == ""
+        StrCpy $IntelliSenseLanguages "python"
+      ${Else}
+        StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,python"
+      ${EndIf}
     ${EndIf}
-  ${EndIf}
-  ${If} $IntelliSenseCSharp == ${BST_CHECKED}
-    ${If} $IntelliSenseLanguages == ""
-      StrCpy $IntelliSenseLanguages "csharp"
-    ${Else}
-      StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,csharp"
+    ${If} $IntelliSenseJava == ${BST_CHECKED}
+      ${If} $IntelliSenseLanguages == ""
+        StrCpy $IntelliSenseLanguages "java"
+      ${Else}
+        StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,java"
+      ${EndIf}
     ${EndIf}
-  ${EndIf}
-  ${If} $IntelliSenseRust == ${BST_CHECKED}
-    ${If} $IntelliSenseLanguages == ""
-      StrCpy $IntelliSenseLanguages "rust"
-    ${Else}
-      StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,rust"
+    ${If} $IntelliSenseCSharp == ${BST_CHECKED}
+      ${If} $IntelliSenseLanguages == ""
+        StrCpy $IntelliSenseLanguages "csharp"
+      ${Else}
+        StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,csharp"
+      ${EndIf}
     ${EndIf}
-  ${EndIf}
-  ${If} $IntelliSenseGo == ${BST_CHECKED}
-    ${If} $IntelliSenseLanguages == ""
-      StrCpy $IntelliSenseLanguages "go"
-    ${Else}
-      StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,go"
+    ${If} $IntelliSenseRust == ${BST_CHECKED}
+      ${If} $IntelliSenseLanguages == ""
+        StrCpy $IntelliSenseLanguages "rust"
+      ${Else}
+        StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,rust"
+      ${EndIf}
     ${EndIf}
-  ${EndIf}
-  ${If} $IntelliSenseTypeScript == ${BST_CHECKED}
-    ${If} $IntelliSenseLanguages == ""
-      StrCpy $IntelliSenseLanguages "typescript"
-    ${Else}
-      StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,typescript"
+    ${If} $IntelliSenseGo == ${BST_CHECKED}
+      ${If} $IntelliSenseLanguages == ""
+        StrCpy $IntelliSenseLanguages "go"
+      ${Else}
+        StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,go"
+      ${EndIf}
     ${EndIf}
-  ${EndIf}
-  ${If} $IntelliSenseLanguages == ""
-    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\intellisense.ps1" -Disable -SettingsPath "$APPDATA\CodeGate\settings.json"'
-    Pop $0
-  ${Else}
-    DetailPrint "Installing selected IntelliSense language servers..."
-    nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\intellisense.ps1" -Install -Languages "$IntelliSenseLanguages" -SettingsPath "$APPDATA\CodeGate\settings.json"'
-    Pop $0
-    ${If} $0 != 0
-      MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was installed, but one or more optional IntelliSense language servers could not be prepared. CodeGate can retry when that language is selected."
+    ${If} $IntelliSenseTypeScript == ${BST_CHECKED}
+      ${If} $IntelliSenseLanguages == ""
+        StrCpy $IntelliSenseLanguages "typescript"
+      ${Else}
+        StrCpy $IntelliSenseLanguages "$IntelliSenseLanguages,typescript"
+      ${EndIf}
     ${EndIf}
-  ${EndIf}
+    ${If} $IntelliSenseLanguages != ""
+      DetailPrint "Installing selected IntelliSense language servers..."
+      ${If} $CodeGateExistingInstall == 1
+        ; Updating may preinstall selected images, but it must not change the
+        ; user's existing in-app IntelliSense preference.
+        nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\intellisense.ps1" -Install -Languages "$IntelliSenseLanguages"'
+      ${Else}
+        nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\intellisense.ps1" -Install -Languages "$IntelliSenseLanguages" -SettingsPath "$APPDATA\CodeGate\settings.json"'
+      ${EndIf}
+      Pop $0
+      ${If} $0 != 0
+        MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was installed, but one or more optional IntelliSense language servers could not be prepared. CodeGate can retry when that language is selected."
+      ${EndIf}
+    ${EndIf}
 !macroend
 !endif
 
@@ -239,11 +251,29 @@ Var RemoveAiModelCheckbox
 Var RemoveAiModel
 Var RemoveIntelliSenseCheckbox
 Var RemoveIntelliSense
+Var CodeGateUninstallIsUpdate
 
 !macro customUnInit
   StrCpy $RemoveJudgeImages ${BST_UNCHECKED}
   StrCpy $RemoveAiModel ${BST_CHECKED}
   StrCpy $RemoveIntelliSense ${BST_CHECKED}
+  StrCpy $CodeGateUninstallIsUpdate 0
+
+  ; Electron Builder invokes the old uninstaller with --updated while replacing
+  ; an existing installation. Parse it without its optional StdUtils plugin so
+  ; this custom include also compiles into the standalone uninstaller.
+  ${GetParameters} $R0
+  ClearErrors
+  ${GetOptions} $R0 "--updated" $R1
+  ${IfNot} ${Errors}
+    StrCpy $CodeGateUninstallIsUpdate 1
+  ${Else}
+    ClearErrors
+    ${GetOptions} $R0 "/updated" $R1
+    ${IfNot} ${Errors}
+      StrCpy $CodeGateUninstallIsUpdate 1
+    ${EndIf}
+  ${EndIf}
 !macroend
 
 Function un.ImageCleanupPageCreate
@@ -260,18 +290,15 @@ Function un.ImageCleanupPageCreate
   Pop $RemoveJudgeImagesCheckbox
   ${NSD_SetState} $RemoveJudgeImagesCheckbox $RemoveJudgeImages
 
-  ${NSD_CreateLabel} 16u 58u 94% 34u "Warning: these language images are shared Docker resources and may also be used by other development projects. Leave this unchecked to keep them."
-  Pop $0
-
-  ${NSD_CreateCheckbox} 0 100u 100% 12u "Remove the downloaded CodeGate AI model"
+  ${NSD_CreateCheckbox} 0 66u 100% 12u "Remove the downloaded CodeGate AI model"
   Pop $RemoveAiModelCheckbox
   ${NSD_SetState} $RemoveAiModelCheckbox $RemoveAiModel
 
-  ${NSD_CreateCheckbox} 0 124u 100% 12u "Remove all CodeGate IntelliSense language-server images"
+  ${NSD_CreateCheckbox} 0 90u 100% 12u "Remove all CodeGate IntelliSense language-server images"
   Pop $RemoveIntelliSenseCheckbox
   ${NSD_SetState} $RemoveIntelliSenseCheckbox $RemoveIntelliSense
 
-  ${NSD_CreateLabel} 16u 144u 94% 30u "Recommended: these images are CodeGate-specific and can be downloaded again if CodeGate is reinstalled."
+  ${NSD_CreateLabel} 16u 110u 94% 30u "Recommended: these images are CodeGate-specific and can be downloaded again if CodeGate is reinstalled."
   Pop $0
 
   nsDialogs::Show
@@ -292,7 +319,7 @@ FunctionEnd
 !macro customUnInstall
   ; Electron Builder runs the installed uninstaller as part of an in-place
   ; update. Preserve all user state and reusable Docker resources in that path.
-  ${IfNot} ${isUpdated}
+  ${If} $CodeGateUninstallIsUpdate == 0
     ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\start-events.ps1" -Disable' $0
     ; Fall back to the native scheduler command if PowerShell task cleanup failed.
     ${If} $0 != 0
@@ -312,7 +339,7 @@ FunctionEnd
     ${EndIf}
 
     ${If} $RemoveJudgeImages == ${BST_CHECKED}
-      nsExec::ExecToLog 'docker.exe image rm "python:3.11-slim" "gcc:13" "alpine/java:22-jdk" "mcr.microsoft.com/dotnet/sdk:8.0-alpine" "rust:1.78-slim" "golang:1.22-alpine" "node:22-alpine"'
+      nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\uninstall-judge-images.ps1"'
       Pop $0
       ${If} $0 != 0
         MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was uninstalled, but one or more shared Docker judge images could not be removed. They may still be in use by another container or Docker Desktop may be unavailable."

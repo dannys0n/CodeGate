@@ -68,6 +68,19 @@ function dockerCommand() {
     return process.platform === 'win32' ? 'docker.exe' : 'docker';
 }
 
+function terminateProcessTree(child: ReturnType<typeof spawn>) {
+    if (!child.pid) return;
+    if (process.platform === 'win32') {
+        const terminator = spawn('taskkill.exe', ['/pid', String(child.pid), '/t', '/f'], {
+            windowsHide: true,
+            stdio: 'ignore'
+        });
+        terminator.unref();
+        return;
+    }
+    child.kill('SIGKILL');
+}
+
 function runDockerModelCommand(args: string[], onEvent: StreamEvent, signal?: AbortSignal, timeoutMs = 120_000): Promise<void> {
     return new Promise((resolve, reject) => {
         const child = spawn(dockerCommand(), args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -89,9 +102,9 @@ function runDockerModelCommand(args: string[], onEvent: StreamEvent, signal?: Ab
             signal?.removeEventListener('abort', abort);
             operation();
         };
-        const abort = () => child.kill();
+        const abort = () => terminateProcessTree(child);
         const timeout = setTimeout(() => {
-            child.kill();
+            terminateProcessTree(child);
             finish(() => reject(new Error(`docker ${args.slice(0, 2).join(' ')} timed out`)));
         }, timeoutMs);
         signal?.addEventListener('abort', abort, { once: true });
@@ -121,26 +134,36 @@ async function ensureDockerReady(onEvent: StreamEvent, signal?: AbortSignal) {
     await runDockerModelCommand(['desktop', 'start', '--timeout', '60'], onEvent, signal);
 }
 
-export async function provisionCodeGateModel(onEvent: StreamEvent, signal?: AbortSignal) {
-    await ensureDockerReady(onEvent, signal);
-    if (process.platform === 'win32') {
-        onEvent('status', 'Enabling Docker Model Runner with GPU acceleration...\n');
-        try {
-            await runDockerModelCommand(
-                ['desktop', 'enable', 'model-runner', '--gpu=enable', '--tcp=12434'],
-                onEvent,
-                signal
-            );
-        } catch {
-            onEvent('status', 'A compatible GPU is unavailable; continuing with CPU inference.\n');
-            await runDockerModelCommand(['desktop', 'enable', 'model-runner', '--tcp=12434'], onEvent, signal);
+let modelProvision: Promise<void> | null = null;
+
+export function provisionCodeGateModel(onEvent: StreamEvent, signal?: AbortSignal) {
+    if (modelProvision) return modelProvision;
+    modelProvision = (async () => {
+        await ensureDockerReady(onEvent, signal);
+        if (process.platform === 'win32') {
+            onEvent('status', 'Enabling Docker Model Runner with GPU acceleration...\n');
+            try {
+                await runDockerModelCommand(
+                    ['desktop', 'enable', 'model-runner', '--gpu=enable', '--tcp=12434'],
+                    onEvent,
+                    signal
+                );
+            } catch {
+                onEvent('status', 'A compatible GPU is unavailable; continuing with CPU inference.\n');
+                await runDockerModelCommand(['desktop', 'enable', 'model-runner', '--tcp=12434'], onEvent, signal);
+            }
+        } else if (!(await commandSucceeds(['model', 'status']))) {
+            throw new Error('Docker Model Runner is not installed');
         }
-    } else if (!(await commandSucceeds(['model', 'status']))) {
-        throw new Error('Docker Model Runner is not installed');
-    }
-    onEvent('status', `Downloading ${codeGateModel}...\n`);
-    await runDockerModelCommand(['model', 'pull', codeGateModel], onEvent, signal);
-    await warmCodeGateModel(onEvent, signal);
+        if (!(await commandSucceeds(['model', 'show', codeGateModel]))) {
+            onEvent('status', 'Downloading the CodeGate AI model. This can take several minutes...\n');
+            await runDockerModelCommand(['model', 'pull', codeGateModel], onEvent, signal, 1_200_000);
+        } else {
+            onEvent('status', 'The CodeGate AI model is already downloaded.\n');
+        }
+        await warmCodeGateModel(onEvent, signal);
+    })().finally(() => { modelProvision = null; });
+    return modelProvision;
 }
 
 export async function warmCodeGateModel(onEvent: StreamEvent = () => {}, signal?: AbortSignal) {

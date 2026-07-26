@@ -7,6 +7,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. "$PSScriptRoot\docker-process.ps1"
 $supported = @('cpp', 'python', 'java', 'csharp', 'rust', 'go', 'typescript')
 $tags = @{
     cpp = 'codegate-intellisense-cpp:1'
@@ -19,14 +20,8 @@ $tags = @{
 }
 
 function Invoke-DockerProbe([string[]]$Arguments) {
-    $previousPreference = $ErrorActionPreference
-    try {
-        $ErrorActionPreference = 'SilentlyContinue'
-        & $docker.Source @Arguments *> $null
-        return $LASTEXITCODE -eq 0
-    } finally {
-        $ErrorActionPreference = $previousPreference
-    }
+    $result = Invoke-CodeGateDocker -DockerPath $docker.Source -Arguments $Arguments -TimeoutSeconds 15 -Quiet -AllowFailure
+    return $result.Succeeded
 }
 
 function Set-IntelliSensePreference([bool]$Enabled) {
@@ -43,49 +38,59 @@ function Set-IntelliSensePreference([bool]$Enabled) {
     Move-Item -LiteralPath $temporary -Destination $SettingsPath -Force
 }
 
-if ($Disable) {
-    Set-IntelliSensePreference $false
-    exit 0
+if ((@($Install, $Disable, $Remove) | Where-Object { $_ }).Count -ne 1) {
+    throw 'Specify exactly one of -Install, -Disable, or -Remove.'
 }
 
-$docker = Get-Command docker.exe -ErrorAction SilentlyContinue
-if (-not $docker) {
-    if ($Remove) { exit 2 }
-    throw 'Docker Desktop or Docker Engine is required to install IntelliSense.'
-}
-
-if ($Remove) {
-    $containerIds = @(& $docker.Source ps --all --quiet --filter 'label=codegate.intellisense=true' 2>$null)
-    if ($LASTEXITCODE -ne 0) { exit 3 }
-    if ($containerIds.Count -gt 0) { & $docker.Source rm --force @containerIds | Out-Null }
-    foreach ($language in $supported) {
-        if (Invoke-DockerProbe @('image', 'inspect', $tags[$language])) {
-            & $docker.Source image rm --force $tags[$language] | Out-Null
-        }
+$operationMutex = New-CodeGateOperationMutex 'IntelliSense'
+try {
+    if ($Disable) {
+        Set-IntelliSensePreference $false
+        exit 0
     }
-    exit 0
-}
 
-if (-not $Install) { throw 'Specify -Install, -Disable, or -Remove.' }
-$selected = @($Languages.Split(',') | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ -in $supported } | Select-Object -Unique)
-if (-not $selected.Count) {
-    Set-IntelliSensePreference $false
-    exit 0
-}
-Set-IntelliSensePreference $true
+    $docker = Get-Command docker.exe -ErrorAction SilentlyContinue
+    if (-not $docker) {
+        if ($Remove) { exit 2 }
+        throw 'Docker Desktop or Docker Engine is required to install IntelliSense.'
+    }
 
-if (-not (Invoke-DockerProbe @('info', '--format', '{{.ServerVersion}}'))) {
-    & $docker.Source desktop start --timeout 60
-    if ($LASTEXITCODE -ne 0) { throw 'Docker could not be started.' }
-}
+    if ($Remove) {
+        $containers = Invoke-CodeGateDocker -DockerPath $docker.Source -Arguments @(
+            'ps', '--all', '--quiet', '--filter', 'label=codegate.intellisense=true'
+        ) -TimeoutSeconds 15 -Quiet
+        $containerIds = @($containers.Stdout -split '\r?\n' | Where-Object { $_ })
+        if ($containerIds.Count -gt 0) {
+            Invoke-CodeGateDocker -DockerPath $docker.Source -Arguments (@('rm', '--force') + $containerIds) -TimeoutSeconds 60 | Out-Null
+        }
+        foreach ($language in $supported) {
+            if (Invoke-DockerProbe @('image', 'inspect', $tags[$language])) {
+                Invoke-CodeGateDocker -DockerPath $docker.Source -Arguments @('image', 'rm', '--force', $tags[$language]) -TimeoutSeconds 120 | Out-Null
+            }
+        }
+        exit 0
+    }
 
-$assetRoot = Split-Path -Parent $PSScriptRoot
-foreach ($language in $selected) {
-    $tag = $tags[$language]
-    if (Invoke-DockerProbe @('image', 'inspect', $tag)) { continue }
-    $context = Join-Path $assetRoot "docker\intellisense\$language"
-    if (-not (Test-Path -LiteralPath (Join-Path $context 'Dockerfile'))) { throw "Missing IntelliSense definition for $language." }
-    Write-Output "Installing $language IntelliSense..."
-    & $docker.Source build --tag $tag $context
-    if ($LASTEXITCODE -ne 0) { throw "$language IntelliSense installation failed." }
+    $selected = @($Languages.Split(',') | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ -in $supported } | Select-Object -Unique)
+    if (-not $selected.Count) {
+        Set-IntelliSensePreference $false
+        exit 0
+    }
+
+    if (-not (Invoke-DockerProbe @('info', '--format', '{{.ServerVersion}}'))) {
+        Invoke-CodeGateDocker -DockerPath $docker.Source -Arguments @('desktop', 'start', '--timeout', '60') -TimeoutSeconds 75 | Out-Null
+    }
+
+    $assetRoot = Split-Path -Parent $PSScriptRoot
+    foreach ($language in $selected) {
+        $tag = $tags[$language]
+        if (Invoke-DockerProbe @('image', 'inspect', $tag)) { continue }
+        $context = Join-Path $assetRoot "docker\intellisense\$language"
+        if (-not (Test-Path -LiteralPath (Join-Path $context 'Dockerfile'))) { throw "Missing IntelliSense definition for $language." }
+        Write-Output "Installing $language IntelliSense..."
+        Invoke-CodeGateDocker -DockerPath $docker.Source -Arguments @('build', '--tag', $tag, $context) -TimeoutSeconds 900 | Out-Null
+    }
+    Set-IntelliSensePreference $true
+} finally {
+    Close-CodeGateOperationMutex $operationMutex
 }

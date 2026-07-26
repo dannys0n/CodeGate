@@ -155,6 +155,20 @@ Uninstalling CodeGate removes its scheduled startup registration,
 application files, and per-user state. Removing shared Docker images is an optional uninstall step
 because those images may be used by other projects.
 
+### Updating an installed copy
+
+Close CodeGate, then run the newer installer normally. It detects the existing installation and
+replaces the application files while preserving saved settings, solved-problem progress, editor
+state, and downloaded Docker resources. The optional setup pages remain available during updates:
+selected resources are reused when already present, while unchecked options leave their existing
+settings and downloads untouched.
+
+Model downloads and Docker image builds have bounded timeouts and cannot run concurrently with
+another CodeGate setup operation. If optional setup fails because Docker is stopped, unavailable,
+or a download is interrupted, the application still installs and the feature remains disabled;
+enable it later from the editor settings to retry. A normal uninstall remains the explicit path
+that removes user data and offers optional Docker-resource cleanup.
+
 ## Publish a GitHub release
 
 Windows releases are built by GitHub Actions from version tags. Run the interactive publisher:
