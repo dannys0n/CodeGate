@@ -63,6 +63,11 @@ Then:
    by default.
 4. Launch CodeGate.
 
+> [!NOTE]
+> CodeGate is currently distributed without a commercial code-signing certificate. Windows may
+> show an **Unknown publisher** or Microsoft Defender SmartScreen warning. Download releases only
+> from this repository and verify the accompanying SHA-256 checksum.
+
 The first submission in a language may take longer while Docker downloads its runner image. The
 optional local AI model downloads after CodeGate launches, so it cannot block installation.
 
