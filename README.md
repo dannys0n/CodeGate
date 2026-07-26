@@ -48,6 +48,12 @@ You need:
 - Windows 10 or 11
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) with its WSL 2 backend
 
+Docker Desktop is a separate third-party product. It is free for personal use, education,
+non-commercial open-source projects, and qualifying small businesses; other organizational use
+may require a paid Docker subscription. Review the current
+[Docker Desktop license terms](https://docs.docker.com/subscription/desktop-license/) for your use
+case.
+
 Then:
 
 1. Download `CodeGate-Setup-*.exe` from the
@@ -136,8 +142,13 @@ rebuild.
 - Judging runs locally through Docker.
 - The bundled AI path runs locally; data is sent elsewhere only when you configure an external AI
   endpoint.
+- The published application does not include CodeGate analytics or telemetry.
 - **Give Up** does not depend on the judge, Docker, or AI.
 - If the app cannot start safely, its recovery screen provides diagnostics and an immediate exit.
+
+See the [privacy statement](PRIVACY.md) for local storage, downloads, optional endpoints, and the
+legacy development-only Firebase configuration. Please report vulnerabilities through the
+[security policy](SECURITY.md).
 
 ## Development setup
 
