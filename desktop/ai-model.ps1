@@ -1,5 +1,6 @@
 param(
     [switch]$Enable,
+    [switch]$EnablePreference,
     [switch]$Disable,
     [switch]$Remove,
     [string]$SettingsPath = ''
@@ -33,8 +34,13 @@ function Set-AiPreference([bool]$Enabled) {
     New-ItemProperty -Path $registryPath -Name Enabled -Value ([int]$Enabled) -PropertyType DWord -Force | Out-Null
 }
 
-if ((@($Enable, $Disable, $Remove) | Where-Object { $_ }).Count -ne 1) {
-    throw 'Specify exactly one of -Enable, -Disable, or -Remove.'
+if ((@($Enable, $EnablePreference, $Disable, $Remove) | Where-Object { $_ }).Count -ne 1) {
+    throw 'Specify exactly one of -Enable, -EnablePreference, -Disable, or -Remove.'
+}
+
+if ($EnablePreference) {
+    Set-AiPreference $true
+    exit 0
 }
 
 $operationMutex = New-CodeGateOperationMutex 'AI-model'

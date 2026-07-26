@@ -13,7 +13,8 @@ describe('Windows installer update safety', () => {
         const install = macro(source, 'customInstall');
         expect(source).toContain('Page custom StartEventsPageCreate StartEventsPageLeave');
         expect(source).toContain('Page custom IntelliSensePageCreate IntelliSensePageLeave');
-        expect(install).toContain('ai-model.ps1" -Enable');
+        expect(install).toContain('ai-model.ps1" -EnablePreference');
+        expect(install).not.toContain('ai-model.ps1" -Enable ');
         expect(install).not.toContain('ai-model.ps1" -Disable');
         expect(install).toContain('intellisense.ps1" -Install');
         expect(install).not.toContain('intellisense.ps1" -Disable');

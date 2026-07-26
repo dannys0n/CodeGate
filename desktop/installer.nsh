@@ -90,11 +90,11 @@ Function StartEventsPageCreate
   Pop $StartAtResumeCheckbox
   ${NSD_SetState} $StartAtResumeCheckbox $StartAtResume
 
-  ${NSD_CreateCheckbox} 0 98u 100% 12u "Download and enable the AI model"
+  ${NSD_CreateCheckbox} 0 98u 100% 12u "Enable the local AI helper"
   Pop $InstallAiModelCheckbox
   ${NSD_SetState} $InstallAiModelCheckbox $InstallAiModel
 
-  ${NSD_CreateLabel} 16u 116u 94% 28u "Optional: downloads about 2-3 GB, enables Docker Model Runner, and may make installation take several minutes."
+  ${NSD_CreateLabel} 16u 116u 94% 28u "Optional: CodeGate downloads and warms the AI model after launch so installation is never blocked by a multi-gigabyte download."
   Pop $0
 
   nsDialogs::Show
@@ -172,11 +172,11 @@ FunctionEnd
     ${EndIf}
 
     ${If} $InstallAiModel == ${BST_CHECKED}
-      DetailPrint "Enabling Docker Model Runner and downloading the AI model..."
-      nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -Enable -SettingsPath "$APPDATA\CodeGate\settings.json"'
+      DetailPrint "Enabling the local AI helper..."
+      nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\app.asar.unpacked\desktop\ai-model.ps1" -EnablePreference -SettingsPath "$APPDATA\CodeGate\settings.json"'
       Pop $0
       ${If} $0 != 0
-        MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was installed, but the optional local AI model could not be prepared. You can retry from CodeGate settings."
+        MessageBox MB_ICONEXCLAMATION|MB_OK "CodeGate was installed, but the optional AI preference could not be saved. You can enable it from CodeGate settings."
       ${EndIf}
     ${EndIf}
 

@@ -92,8 +92,9 @@ keeps downloaded images so it can be re-enabled without another download.
 The optional AI helper can use Docker Model Runner or a custom OpenAI-compatible endpoint. The
 Docker backend requires Docker Desktop 4.41 or newer; on Windows, CodeGate enables GPU-backed
 inference when Docker detects a compatible GPU and otherwise falls back to CPU inference. It is
-disabled by default. Enable it during installation or from the editor settings to download the AI
-model (about 2–3 GB), or enter a custom endpoint to use a model managed by another local server.
+disabled by default. Enable it during installation or from the editor settings; CodeGate downloads
+the AI model (about 2–3 GB) after launch so the installer is never blocked by the download. You can
+also enter a custom endpoint to use a model managed by another local server.
 A custom endpoint takes priority and unloads CodeGate's Docker model without deleting its files.
 Algorithm help appears as a streamed sidebar hint; highlighting code and
 choosing **Explain selection with local AI** streams its explanation into the existing Console tab.
@@ -146,7 +147,8 @@ updating imported problem sources.
 
 The installer lets the user choose sign-in, unlock, and resume-from-sleep startup events; all three
 are selected by default. The same choices can be changed later from the editor's settings gear.
-An optional installer checkbox enables GPU-backed Docker Model Runner when supported and downloads the AI model. The uninstaller
+An optional installer checkbox enables the local AI helper; CodeGate prepares its GPU-backed Docker
+Model Runner and downloads the model after launch instead of blocking installation. The uninstaller
 offers to remove that model and selects model removal by default.
 The following installer page selects which IntelliSense images to prepare; C++ and Python are
 selected by default, while unselected languages remain available through lazy installation. The
