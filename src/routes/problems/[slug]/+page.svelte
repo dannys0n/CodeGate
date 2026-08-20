@@ -6,6 +6,8 @@
     import GameResultPopup from '$lib/components/GameResultPopup.svelte';
     import GameHistoryPopup from '$lib/components/GameHistoryPopup.svelte';
     import GameModePopup from '$lib/components/GameModePopup.svelte';
+    import AlgorithmAssembly from '$lib/components/AlgorithmAssembly.svelte';
+    import AlgorithmAssemblyBlocks from '$lib/components/AlgorithmAssemblyBlocks.svelte';
     import Tooltip from '$lib/components/Tooltip.svelte';
     import { initFirebase, ensureAuthenticated } from '$lib/firebase';
     import codeStore from '$lib/stores/codeStore.js';
@@ -24,6 +26,7 @@
     import { consumeAiStream } from '$lib/codegate/ai-stream';
     import { parseSyntaxDrillInfo } from '$lib/codegate/syntax-drill-format';
     import { recordSyntaxConcept } from '$lib/codegate/syntax-drill-learning';
+    import { createAlgorithmAssemblySession, type AlgorithmAssemblyLesson, type AlgorithmAssemblySession } from '$lib/codegate/algorithm-assembly';
 
     export let data;
     const problemId = data.problem.id;
@@ -58,7 +61,11 @@
     let showProblemNumberFilter = false;
     let problemNumberFilterContainer: HTMLElement | null = null;
     type ProblemCatalogEntry = { problemId: string; number: number; title: string; leetcodeDifficulty: LeetcodeDifficulty | 'Beginner' };
-    let codegateWorkspaceTab: 'editor' | 'catalogue' | 'ai-drill' = 'editor';
+    let codegateWorkspaceTab: 'editor' | 'catalogue' | 'assembly' | 'ai-drill' = 'editor';
+    let assemblyLesson: AlgorithmAssemblyLesson | null = null;
+    let assemblySession: AlgorithmAssemblySession | null = null;
+    let assemblyLoadState: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
+    let assemblyLoadMessage = '';
     type SyntaxDrillPayload = {
         problem: any;
         language: GateLanguage;
@@ -97,7 +104,7 @@
         return { title: titleMatch?.[1]?.trim() ?? '', statement, exampleCode, info };
     }
     $: syntaxDrillPreview = parseSyntaxDrillPreview(syntaxDrillProblemPreview);
-    $: activeWorkspaceLanguage = codegateWorkspaceTab === 'ai-drill' ? syntaxDrillLanguage : language;
+    $: activeWorkspaceLanguage = codegateWorkspaceTab === 'assembly' ? 'cpp' : codegateWorkspaceTab === 'ai-drill' ? syntaxDrillLanguage : language;
     $: activeWorkspaceProblem = codegateWorkspaceTab === 'ai-drill' && syntaxDrill ? syntaxDrill.problem : data.problem;
     let problemCatalog: ProblemCatalogEntry[] = [];
     let problemCatalogSearch = '';
@@ -118,7 +125,7 @@
         ? Array.from(new Set((data.codegate?.available ?? []).map((variant: { language: GateLanguage }) => variant.language)))
         : [];
     $: gateBinding = isCodeGate ? { sessionId: gateSessionId, challengeId: gateChallengeId, difficulty } : null;
-    $: activeGateBinding = codegateWorkspaceTab === 'ai-drill' ? null : gateBinding;
+    $: activeGateBinding = codegateWorkspaceTab === 'ai-drill' || codegateWorkspaceTab === 'assembly' ? null : gateBinding;
     $: activeSyntaxDrillBinding = codegateWorkspaceTab === 'ai-drill' && syntaxDrill
         ? { sessionId: gateSessionId, challengeId: gateChallengeId, syntaxDrillId: syntaxDrill.problem.id, aiEndpoint: $userSettingsStorage.aiEndpoint }
         : null;
@@ -239,6 +246,8 @@
     let currentViewState: string | null = null;
     let editorComponent: any;
     let isResizing = false;
+    let isResizingAssemblyBlocks = false;
+    let assemblyBlocksWidth = 380;
     let workspaceElement: HTMLElement;
     let openedHints = new Set<number>([]);
     let aiHintOpen = false;
@@ -698,6 +707,29 @@
         }
     }
 
+    function handleAssemblyBlocksMouseDown() {
+        isResizingAssemblyBlocks = true;
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        window.addEventListener('mousemove', handleAssemblyBlocksMouseMove);
+        window.addEventListener('mouseup', handleAssemblyBlocksMouseUp);
+    }
+
+    function handleAssemblyBlocksMouseMove(event: MouseEvent) {
+        if (!isResizingAssemblyBlocks || !workspaceElement) return;
+        const workspaceRect = workspaceElement.getBoundingClientRect();
+        const width = workspaceRect.right - event.clientX;
+        assemblyBlocksWidth = Math.max(260, Math.min(workspaceRect.width * 0.6, width));
+    }
+
+    function handleAssemblyBlocksMouseUp() {
+        isResizingAssemblyBlocks = false;
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        window.removeEventListener('mousemove', handleAssemblyBlocksMouseMove);
+        window.removeEventListener('mouseup', handleAssemblyBlocksMouseUp);
+    }
+
     function setIntellisenseEnabled(intellisenseEnabled: boolean) {
         userSettingsStorage.update((settings) => ({ ...settings, intellisenseEnabled }));
     }
@@ -797,7 +829,7 @@
     }
 
     function saveCurrentViewState() {
-        if (codegateWorkspaceTab === 'ai-drill') return;
+        if (codegateWorkspaceTab !== 'editor') return;
         if (!editorComponent || activeTabId < 0 || activeTabId >= tabs.length) return;
         const state = editorComponent.getViewState();
         if (!state) return;
@@ -1111,6 +1143,35 @@
         void loadProblemCatalog();
     }
 
+    async function loadAlgorithmAssembly() {
+        if (assemblyLoadState === 'loading' || assemblyLoadState === 'ready') return;
+        assemblyLoadState = 'loading';
+        assemblyLoadMessage = 'Loading the indexed C++ solution…';
+        try {
+            const query = new URLSearchParams({ sessionId: gateSessionId, challengeId: gateChallengeId });
+            const response = await fetch(`/api/codegate/assembly?${query}`);
+            const body = await response.json();
+            if (!response.ok) throw new Error(body.error ?? 'Algorithm Assembly is unavailable for this problem');
+            assemblyLesson = body as AlgorithmAssemblyLesson;
+            assemblySession = createAlgorithmAssemblySession(assemblyLesson);
+            assemblyLoadState = 'ready';
+            assemblyLoadMessage = '';
+            openedHints = new Set();
+        } catch (error) {
+            assemblyLesson = null;
+            assemblySession = null;
+            assemblyLoadState = 'error';
+            assemblyLoadMessage = error instanceof Error ? error.message : String(error);
+        }
+    }
+
+    function openAlgorithmAssembly() {
+        if (!$userSettingsStorage.extraProblemFeaturesEnabled) return;
+        if (codegateWorkspaceTab === 'ai-drill') syntaxDrillCode = code;
+        codegateWorkspaceTab = 'assembly';
+        void loadAlgorithmAssembly();
+    }
+
     async function openEditorWorkspace() {
         if (codegateWorkspaceTab === 'ai-drill') syntaxDrillCode = code;
         codegateWorkspaceTab = 'editor';
@@ -1224,7 +1285,7 @@
 <div
     class="workspace"
     bind:this={workspaceElement}
-    style="grid-template-columns: {Math.max(0, $leftPaneWidthStore === null ? 50 : $leftPaneWidthStore)}% auto 1fr;"
+    style="grid-template-columns: {Math.max(0, $leftPaneWidthStore === null ? 50 : $leftPaneWidthStore)}% auto minmax(0, 1fr){codegateWorkspaceTab === 'assembly' && assemblyLoadState === 'ready' ? ` auto minmax(260px, ${assemblyBlocksWidth}px)` : ''};"
 >
     <!-- Left Pane: Problem Statement -->
     <div class="problem-pane" class:hide={($leftPaneWidthStore === null ? 50 : $leftPaneWidthStore) < 5}>
@@ -1316,6 +1377,46 @@
                                 <span>Info {i + 1}</span><span class="chevron">{openedHints.has(i) ? "▾" : "▸"}</span>
                             </button>
                             {#if openedHints.has(i)}<div class="hint-body markdown-body">{@html renderMarkdown(note)}</div>{/if}
+                        </div>
+                    {/each}
+                {/if}
+            {:else if codegateWorkspaceTab === 'assembly'}
+                {#if isCodeGate}
+                    <div class="codegate-problem-actions">
+                        <button class="btn gate-action" on:click={replaceGateChallenge} disabled={gateActionPending}>Different Problem</button>
+                        <button class="btn gate-give-up" on:click={giveUpGate} disabled={gateActionPending}>Give Up</button>
+                    </div>
+                {/if}
+                {#if assemblyLoadState === 'loading' || assemblyLoadState === 'idle'}
+                    <div class="syntax-drill-empty"><h1>Algorithm Assembly</h1><p>{assemblyLoadMessage || 'Loading problem…'}</p></div>
+                {:else if assemblyLoadState === 'error' || !assemblyLesson}
+                    <div class="syntax-drill-empty">
+                        <h1>Assembly unavailable</h1>
+                        <p>{assemblyLoadMessage}</p>
+                        <button class="btn" on:click={() => { assemblyLoadState = 'idle'; void loadAlgorithmAssembly(); }}>Retry</button>
+                    </div>
+                {:else}
+                    <div class="title-row"><h1>#{assemblyLesson.problem.number} {assemblyLesson.problem.title}</h1></div>
+                    <span class="badge {getDifficultyClass(assemblyLesson.problem.difficulty)}">Difficulty: {assemblyLesson.problem.difficulty}</span>
+                    <div class="markdown-body assembly-problem-statement">{@html renderMarkdown(assemblyLesson.problem.statement)}</div>
+                    {#each assemblyLesson.problem.examples as example}
+                        <div class="example">
+                            <pre class="example-input">{example.input}</pre>
+                            {#if example.output}<pre class="example-output">{example.output}</pre>{/if}
+                        </div>
+                    {/each}
+                    {#if assemblyLesson.problem.constraints.length}
+                        <h2>Constraints</h2>
+                        <ul class="assembly-constraints">
+                            {#each assemblyLesson.problem.constraints as constraint}<li><code>{constraint}</code></li>{/each}
+                        </ul>
+                    {/if}
+                    {#each assemblyLesson.problem.hints ?? [] as hint, i}
+                        <div class="hint-item">
+                            <button class="hint-header" on:click={() => { const next = new Set(openedHints); if (next.has(i)) next.delete(i); else next.add(i); openedHints = next; }}>
+                                <span>Hint {i + 1}</span><span class="chevron">{openedHints.has(i) ? "▾" : "▸"}</span>
+                            </button>
+                            {#if openedHints.has(i)}<div class="hint-body markdown-body">{@html renderMarkdown(hint)}</div>{/if}
                         </div>
                     {/each}
                 {/if}
@@ -1470,6 +1571,22 @@
                     </svg>
                     Catalogue
                 </button>
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={codegateWorkspaceTab === 'assembly'}
+                    class:active={codegateWorkspaceTab === 'assembly'}
+                    title="Open Algorithm Assembly"
+                    on:click={openAlgorithmAssembly}
+                >
+                    <svg class="workspace-tab-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <rect x="2.5" y="3" width="6" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                        <rect x="11.5" y="3" width="6" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                        <rect x="2.5" y="12" width="6" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                        <rect x="11.5" y="12" width="6" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                    Algorithm Assembly
+                </button>
                 {#if aiHelperConfigured}
                     <button
                         type="button"
@@ -1494,14 +1611,16 @@
                     <select
                         id="language-select"
                         value={activeWorkspaceLanguage}
-                        disabled={isCodeGate && gateActionPending}
+                        disabled={codegateWorkspaceTab === 'assembly' || (isCodeGate && gateActionPending)}
                         on:focus={() => (suppressSave = true)}
                         on:mousedown={() => (suppressSave = true)}
                         on:keydown={() => (suppressSave = true)}
                         on:change={handleLanguageChange}
                         on:blur={() => (suppressSave = false)}
                     >
-                        {#if isCodeGate}
+                        {#if isCodeGate && codegateWorkspaceTab === 'assembly'}
+                            <option value="cpp">C++</option>
+                        {:else if isCodeGate}
                             {#each codegateWorkspaceTab === 'ai-drill' ? gateLanguages : gateAvailableLanguages as gateLanguage}
                                 <option value={gateLanguage}>{gateLanguageLabels[gateLanguage]}</option>
                             {/each}
@@ -1515,7 +1634,7 @@
                             <option value="go">Go</option>
                         {/if}
                     </select>
-                    {#if isCodeGate && codegateWorkspaceTab !== 'ai-drill'}
+                    {#if isCodeGate && (codegateWorkspaceTab === 'editor' || codegateWorkspaceTab === 'catalogue')}
                         <label for="difficulty-select" style="font-size:0.9rem;color:var(--color-text-secondary);">Solution difficulty</label>
                         <select id="difficulty-select" value={difficulty} on:change={handleDifficultyChange} disabled={gateActionPending}>
                             <option value="0">Original (0%)</option>
@@ -1663,6 +1782,7 @@
                         </svg>
                     </button>
                 </Tooltip>{/if}
+                {#if codegateWorkspaceTab === 'editor' || codegateWorkspaceTab === 'ai-drill'}
                 <Tooltip text={"Reset Code"} pos={"bottom"}>
                     <button
                         class="icon-button"
@@ -1679,6 +1799,7 @@
                         </svg>
                     </button>
                 </Tooltip>
+                {/if}
                 <div class="settings-wrapper" bind:this={settingsContainer}>
                     <Tooltip text={"Settings"} pos={"bottom"}>
                         <button
@@ -1807,7 +1928,7 @@
                         </div>
                     {/if}
                 </div>
-                <div style="font-size:0.85rem;color:var(--color-text-secondary);">{codegateWorkspaceTab === 'ai-drill' ? activeWorkspaceLanguage.toUpperCase() : imageName || activeWorkspaceLanguage.toUpperCase()}</div>
+                <div style="font-size:0.85rem;color:var(--color-text-secondary);">{codegateWorkspaceTab === 'assembly' ? 'C++' : codegateWorkspaceTab === 'ai-drill' ? activeWorkspaceLanguage.toUpperCase() : imageName || activeWorkspaceLanguage.toUpperCase()}</div>
             </div>
         </div>
 
@@ -1864,6 +1985,14 @@
                 <span class="workspace-tab-star" aria-hidden="true">✦</span>
                 <p>{syntaxDrillStatus || 'Open the local AI helper to create a syntax drill.'}</p>
             </section>
+        {:else if codegateWorkspaceTab === 'assembly'}
+            {#if assemblyLesson && assemblySession}
+                <AlgorithmAssembly lesson={assemblyLesson} session={assemblySession} on:complete={handleGateReleased} />
+            {:else}
+                <section class="syntax-drill-editor-empty" aria-live="polite">
+                    <p>{assemblyLoadMessage || 'Loading Algorithm Assembly…'}</p>
+                </section>
+            {/if}
         {:else}
             <section class="problem-catalog-pane" aria-label="Problem catalogue">
                 <div class="problem-catalog-heading">
@@ -1916,6 +2045,11 @@
         {/if}
     </div>
 
+    {#if codegateWorkspaceTab === 'assembly' && assemblyLesson && assemblySession}
+        <button class="resizer" aria-label="Resize available blocks panel" on:mousedown={handleAssemblyBlocksMouseDown}></button>
+        <AlgorithmAssemblyBlocks lesson={assemblyLesson} session={assemblySession} />
+    {/if}
+
     {#if showShareModal}
         <ShareModal 
             url={shareUrl} 
@@ -1959,6 +2093,8 @@
     }
 
     .problem-pane, .editor-pane {
+        min-height: 0;
+        min-width: 0;
         background-color: var(--color-surface); /* Floating surface */
         border: 1px solid var(--color-border);
         border-radius: var(--border-radius-lg);
@@ -2021,13 +2157,25 @@
         font-size: 0.85rem;
     }
 
+    .assembly-problem-statement {
+        margin-top: var(--spacing-3);
+    }
+    .assembly-constraints {
+        display: grid;
+        gap: var(--spacing-2);
+        padding-left: var(--spacing-5);
+    }
+
     .codegate-workspace-tabs {
         display: flex;
         gap: 6px;
         padding: 8px 10px;
         border-bottom: 1px solid var(--color-border);
         background: color-mix(in srgb, var(--color-surface) 88%, var(--color-bg));
+        overflow-x: auto;
+        flex: 0 0 auto;
     }
+    .codegate-workspace-tabs button { flex: 0 0 auto; }
     .codegate-workspace-tabs button {
         display: inline-flex;
         align-items: center;
@@ -2663,6 +2811,7 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+
     .problem-catalog-badges {
         display: inline-flex;
         align-items: center;
