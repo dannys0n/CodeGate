@@ -12,8 +12,8 @@
 <section class="assembly" aria-label="Algorithm assembly">
     <div class="assembly-content">
         <header class="assembly-heading">
-        <div><h2>Algorithm Assembly</h2><p>Arrange up to five C++ blocks into a complete solution.</p></div>
-            <span class="language-badge">C++</span>
+        <div><h2>Algorithm Assembly</h2><p>Arrange up to five {lesson.language === 'cpp' ? 'C++' : 'Python'} blocks into a complete solution.</p></div>
+        <span class="language-badge">{lesson.language === 'cpp' ? 'C++' : 'Python'}</span>
         </header>
 
         <div class="solution-frame" aria-label="C++ solution assembly">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { shuffledAssemblyOrder, splitCppAssemblySource } from './algorithm-assembly-source';
+import { shuffledAssemblyOrder, splitCppAssemblySource, splitPythonAssemblySource } from './algorithm-assembly-source';
 
 describe('C++ Algorithm Assembly source splitting', () => {
     it('reconstructs a multiline reference solution exactly', () => {
@@ -27,5 +27,20 @@ describe('C++ Algorithm Assembly source splitting', () => {
         const blocks = splitCppAssemblySource('class S{public:int f(){int x=1;return x;}};');
         const canonical = blocks.map((block) => block.id);
         expect(shuffledAssemblyOrder(blocks, () => 0.999)).not.toEqual(canonical);
+    });
+
+    it('reconstructs Python while preserving comments and triple-quoted strings', () => {
+        const source = `class Solution:\n    def solve(self, values):\n        """A docstring\n        that spans lines."""\n        # Keep this comment together.\n        total = sum(values)\n        return total\n`;
+        const blocks = splitPythonAssemblySource(source);
+        expect(blocks).toHaveLength(5);
+        expect(blocks.map((block) => block.code).join('')).toBe(source);
+        expect(blocks.every((block) => !block.code.includes('A docstring\n') || block.code.includes('that spans lines.'))).toBe(true);
+    });
+
+    it('supports compact Python separated by statements', () => {
+        const source = 'def solve(value): value += 1; value *= 2; return value';
+        const blocks = splitPythonAssemblySource(source);
+        expect(blocks.length).toBeGreaterThanOrEqual(2);
+        expect(blocks.map((block) => block.code).join('')).toBe(source);
     });
 });

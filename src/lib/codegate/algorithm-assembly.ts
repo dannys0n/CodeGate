@@ -8,7 +8,7 @@ export type AlgorithmAssemblyBlock = {
 
 export type AlgorithmAssemblyLesson = {
     id: string;
-    language: 'cpp';
+    language: 'cpp' | 'python';
     problem: {
         number: number;
         title: string;

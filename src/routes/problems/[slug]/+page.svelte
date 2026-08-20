@@ -64,6 +64,9 @@
     let codegateWorkspaceTab: 'editor' | 'catalogue' | 'assembly' | 'ai-drill' = 'editor';
     let assemblyLesson: AlgorithmAssemblyLesson | null = null;
     let assemblySession: AlgorithmAssemblySession | null = null;
+    let assemblyLanguage: 'cpp' | 'python' = language === 'python' ? 'python' : 'cpp';
+    let assemblyLoadedLanguage: 'cpp' | 'python' | null = null;
+    let assemblyLoadRequest = 0;
     let assemblyLoadState: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
     let assemblyLoadMessage = '';
     type SyntaxDrillPayload = {
@@ -104,7 +107,7 @@
         return { title: titleMatch?.[1]?.trim() ?? '', statement, exampleCode, info };
     }
     $: syntaxDrillPreview = parseSyntaxDrillPreview(syntaxDrillProblemPreview);
-    $: activeWorkspaceLanguage = codegateWorkspaceTab === 'assembly' ? 'cpp' : codegateWorkspaceTab === 'ai-drill' ? syntaxDrillLanguage : language;
+    $: activeWorkspaceLanguage = codegateWorkspaceTab === 'assembly' ? assemblyLanguage : codegateWorkspaceTab === 'ai-drill' ? syntaxDrillLanguage : language;
     $: activeWorkspaceProblem = codegateWorkspaceTab === 'ai-drill' && syntaxDrill ? syntaxDrill.problem : data.problem;
     let problemCatalog: ProblemCatalogEntry[] = [];
     let problemCatalogSearch = '';
@@ -1045,6 +1048,15 @@
     const replaceGateChallenge = () => updateGateChallenge('refresh');
     function handleLanguageChange(event: Event) {
         const requestedLanguage = (event.currentTarget as HTMLSelectElement).value as ProgrammingLanguage;
+        if (codegateWorkspaceTab === 'assembly') {
+            if (requestedLanguage !== 'cpp' && requestedLanguage !== 'python') return;
+            assemblyLanguage = requestedLanguage;
+            assemblyLesson = null;
+            assemblySession = null;
+            assemblyLoadState = 'idle';
+            void loadAlgorithmAssembly();
+            return;
+        }
         if (codegateWorkspaceTab === 'ai-drill') {
             syntaxDrillLanguage = requestedLanguage as GateLanguage;
             syntaxDrill = null;
@@ -1144,22 +1156,27 @@
     }
 
     async function loadAlgorithmAssembly() {
-        if (assemblyLoadState === 'loading' || assemblyLoadState === 'ready') return;
+        if (assemblyLoadState === 'ready' && assemblyLoadedLanguage === assemblyLanguage) return;
+        const requestId = ++assemblyLoadRequest;
         assemblyLoadState = 'loading';
-        assemblyLoadMessage = 'Loading the indexed C++ solution…';
+        assemblyLoadMessage = `Loading the indexed ${assemblyLanguage === 'cpp' ? 'C++' : 'Python'} solution…`;
         try {
-            const query = new URLSearchParams({ sessionId: gateSessionId, challengeId: gateChallengeId });
+            const query = new URLSearchParams({ sessionId: gateSessionId, challengeId: gateChallengeId, language: assemblyLanguage });
             const response = await fetch(`/api/codegate/assembly?${query}`);
             const body = await response.json();
+            if (requestId !== assemblyLoadRequest) return;
             if (!response.ok) throw new Error(body.error ?? 'Algorithm Assembly is unavailable for this problem');
             assemblyLesson = body as AlgorithmAssemblyLesson;
             assemblySession = createAlgorithmAssemblySession(assemblyLesson);
+            assemblyLoadedLanguage = assemblyLanguage;
             assemblyLoadState = 'ready';
             assemblyLoadMessage = '';
             openedHints = new Set();
         } catch (error) {
+            if (requestId !== assemblyLoadRequest) return;
             assemblyLesson = null;
             assemblySession = null;
+            assemblyLoadedLanguage = null;
             assemblyLoadState = 'error';
             assemblyLoadMessage = error instanceof Error ? error.message : String(error);
         }
@@ -1611,7 +1628,7 @@
                     <select
                         id="language-select"
                         value={activeWorkspaceLanguage}
-                        disabled={codegateWorkspaceTab === 'assembly' || (isCodeGate && gateActionPending)}
+                        disabled={isCodeGate && gateActionPending}
                         on:focus={() => (suppressSave = true)}
                         on:mousedown={() => (suppressSave = true)}
                         on:keydown={() => (suppressSave = true)}
@@ -1620,6 +1637,7 @@
                     >
                         {#if isCodeGate && codegateWorkspaceTab === 'assembly'}
                             <option value="cpp">C++</option>
+                            <option value="python">Python</option>
                         {:else if isCodeGate}
                             {#each codegateWorkspaceTab === 'ai-drill' ? gateLanguages : gateAvailableLanguages as gateLanguage}
                                 <option value={gateLanguage}>{gateLanguageLabels[gateLanguage]}</option>
@@ -1928,7 +1946,7 @@
                         </div>
                     {/if}
                 </div>
-                <div style="font-size:0.85rem;color:var(--color-text-secondary);">{codegateWorkspaceTab === 'assembly' ? 'C++' : codegateWorkspaceTab === 'ai-drill' ? activeWorkspaceLanguage.toUpperCase() : imageName || activeWorkspaceLanguage.toUpperCase()}</div>
+                <div style="font-size:0.85rem;color:var(--color-text-secondary);">{codegateWorkspaceTab === 'assembly' ? (assemblyLanguage === 'cpp' ? 'C++' : 'PYTHON') : codegateWorkspaceTab === 'ai-drill' ? activeWorkspaceLanguage.toUpperCase() : imageName || activeWorkspaceLanguage.toUpperCase()}</div>
             </div>
         </div>
 

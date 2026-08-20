@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { AlgorithmAssemblyLesson } from '$lib/codegate/algorithm-assembly';
-import { shuffledAssemblyOrder, splitCppAssemblySource } from '$lib/codegate/algorithm-assembly-source';
+import { shuffledAssemblyOrder, splitAssemblySource } from '$lib/codegate/algorithm-assembly-source';
 import { loadCandidateAssets, loadCandidateManifest } from '$lib/server/codegate/catalog';
 import { requireActiveChallenge } from '$lib/server/codegate/sessions';
 
@@ -23,19 +23,20 @@ function examples(value: unknown): Array<{ input: string; output: string }> {
 export const GET: RequestHandler = async ({ url }) => {
     try {
         const session = requireActiveChallenge(url.searchParams.get('sessionId') ?? '', url.searchParams.get('challengeId') ?? '');
+        const language = url.searchParams.get('language') === 'python' ? 'python' : 'cpp';
         const problemId = session.challenge.variant.problemId;
         const manifest = await loadCandidateManifest();
         const indexed = Object.entries(manifest.problems).find(([, problem]) => problem.slug === problemId);
         if (!indexed) throw new Error('This problem is not indexed for Algorithm Assembly');
         const [frontendId, candidate] = indexed;
-        if (!candidate.languages.cpp) throw new Error('This problem has no indexed C++ solution');
+        if (!candidate.languages[language]) throw new Error(`This problem has no indexed ${language === 'cpp' ? 'C++' : 'Python'} solution`);
 
-        const assets = await loadCandidateAssets(frontendId, 'cpp');
-        const blocks = splitCppAssemblySource(assets.solution);
+        const assets = await loadCandidateAssets(frontendId, language);
+        const blocks = splitAssemblySource(assets.solution, language);
         const correctOrder = blocks.map((block) => block.id);
         const lesson: AlgorithmAssemblyLesson = {
-            id: `${candidate.slug}-cpp`,
-            language: 'cpp',
+            id: `${candidate.slug}-${language}`,
+            language,
             problem: {
                 number: Number(frontendId),
                 title: String(assets.record.title ?? candidate.catalogTitle ?? candidate.slug),

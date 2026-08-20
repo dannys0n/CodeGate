@@ -99,9 +99,8 @@ function chooseCuts(sourceLength: number, candidates: number[], blockCount: numb
     return cuts;
 }
 
-export function splitCppAssemblySource(source: string, maximumBlocks = 5): AssemblySourceBlock[] {
-    if (!source.trim()) throw new Error('The indexed C++ solution is empty');
-    const boundaries = safeBoundaries(source);
+function blocksFromBoundaries(source: string, boundaries: { lines: number[]; structural: number[] }, maximumBlocks: number, language: string): AssemblySourceBlock[] {
+    if (!source.trim()) throw new Error(`The indexed ${language} solution is empty`);
     const allCandidates = [...new Set([...boundaries.lines, ...boundaries.structural])].sort((left, right) => left - right);
     const upperBound = Math.max(2, Math.min(maximumBlocks, allCandidates.length + 1));
     for (let blockCount = upperBound; blockCount >= 2; blockCount -= 1) {
@@ -115,7 +114,81 @@ export function splitCppAssemblySource(source: string, maximumBlocks = 5): Assem
         }));
         if (blocks.every((block) => block.code.length > 0) && blocks.map((block) => block.code).join('') === source) return blocks;
     }
-    throw new Error('The indexed C++ solution has no safe block boundaries');
+    throw new Error(`The indexed ${language} solution has no safe block boundaries`);
+}
+
+export function splitCppAssemblySource(source: string, maximumBlocks = 5): AssemblySourceBlock[] {
+    return blocksFromBoundaries(source, safeBoundaries(source), maximumBlocks, 'C++');
+}
+
+function safePythonBoundaries(source: string): { lines: number[]; structural: number[] } {
+    const lines: number[] = [];
+    const structural: number[] = [];
+    let state: 'code' | 'comment' | 'single' | 'double' | 'triple-single' | 'triple-double' = 'code';
+    let escaped = false;
+
+    for (let index = 0; index < source.length; index += 1) {
+        const current = source[index];
+        if (state === 'comment') {
+            if (current === '\n') {
+                state = 'code';
+                if (source[index - 1] !== '\\') lines.push(index + 1);
+            }
+            continue;
+        }
+        if (state === 'triple-single' || state === 'triple-double') {
+            const terminator = state === 'triple-single' ? "'''" : '"""';
+            if (source.startsWith(terminator, index)) {
+                state = 'code';
+                index += 2;
+            }
+            continue;
+        }
+        if (state === 'single' || state === 'double') {
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (current === '\\') {
+                escaped = true;
+                continue;
+            }
+            if ((state === 'single' && current === "'") || (state === 'double' && current === '"')) state = 'code';
+            continue;
+        }
+
+        if (current === '#') {
+            state = 'comment';
+            continue;
+        }
+        if (source.startsWith("'''", index)) {
+            state = 'triple-single';
+            index += 2;
+            continue;
+        }
+        if (source.startsWith('"""', index)) {
+            state = 'triple-double';
+            index += 2;
+            continue;
+        }
+        if (current === "'") state = 'single';
+        else if (current === '"') state = 'double';
+        else if (current === ';') structural.push(index + 1);
+        else if (current === '\n' && source[index - 1] !== '\\') lines.push(index + 1);
+    }
+
+    const valid = (offset: number) => offset > 0 && offset < source.length;
+    return { lines: lines.filter(valid), structural: structural.filter(valid) };
+}
+
+export function splitPythonAssemblySource(source: string, maximumBlocks = 5): AssemblySourceBlock[] {
+    return blocksFromBoundaries(source, safePythonBoundaries(source), maximumBlocks, 'Python');
+}
+
+export function splitAssemblySource(source: string, language: 'cpp' | 'python', maximumBlocks = 5): AssemblySourceBlock[] {
+    return language === 'python'
+        ? splitPythonAssemblySource(source, maximumBlocks)
+        : splitCppAssemblySource(source, maximumBlocks);
 }
 
 export function shuffledAssemblyOrder(blocks: readonly AssemblySourceBlock[], random: () => number = Math.random): string[] {
