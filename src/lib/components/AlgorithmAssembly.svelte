@@ -23,7 +23,7 @@
                     <button type="button" class="answer-slot" class:filled={Boolean(blockId)} class:locked={$session.assembly.lockedPositions.has(position)} disabled={$session.completed || !blockId || $session.assembly.lockedPositions.has(position)} aria-label={blockId ? `Remove block ${position + 1}` : `Empty block ${position + 1}`} on:click={() => session.removeBlock(position)}>
                         <span class="slot-number">{position + 1}</span>
                         {#if blockId && blockById.get(blockId)}
-                            <pre>{blockById.get(blockId)!.code}</pre>
+                            <pre>{blockById.get(blockId)!.displayCode}</pre>
                             {#if $session.assembly.lockedPositions.has(position)}<span class="lock-label">Revealed</span>{/if}
                         {:else}<span class="empty-label">Choose a block from the right panel</span>{/if}
                     </button>

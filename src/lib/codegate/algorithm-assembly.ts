@@ -4,6 +4,7 @@ import { writable, type Readable } from 'svelte/store';
 export type AlgorithmAssemblyBlock = {
     id: string;
     code: string;
+    displayCode: string;
 };
 
 export type AlgorithmAssemblyLesson = {
@@ -17,11 +18,6 @@ export type AlgorithmAssemblyLesson = {
         examples: Array<{ input: string; output: string }>;
         constraints: string[];
         hints?: string[];
-    };
-    algorithm?: {
-        name: string;
-        explanation: string;
-        complexity: string;
     };
     fixedPrefix: string;
     fixedSuffix: string;

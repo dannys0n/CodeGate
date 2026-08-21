@@ -20,7 +20,7 @@
     <div class="available-blocks">
         {#each available as block}
             <button type="button" on:click={() => session.placeBlock(block.id)} disabled={$session.completed}>
-                <pre>{block.code}</pre>
+                <pre>{block.displayCode}</pre>
             </button>
         {/each}
         {#if available.length === 0}<p>All blocks are placed. Check the order or remove an unlocked block.</p>{/if}

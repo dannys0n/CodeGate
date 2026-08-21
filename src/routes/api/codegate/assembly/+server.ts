@@ -32,7 +32,8 @@ export const GET: RequestHandler = async ({ url }) => {
         if (!candidate.languages[language]) throw new Error(`This problem has no indexed ${language === 'cpp' ? 'C++' : 'Python'} solution`);
 
         const assets = await loadCandidateAssets(frontendId, language);
-        const blocks = splitAssemblySource(assets.solution, language);
+        const sourcePartition = splitAssemblySource(assets.solution, language);
+        const blocks = sourcePartition.blocks;
         const correctOrder = blocks.map((block) => block.id);
         const lesson: AlgorithmAssemblyLesson = {
             id: `${candidate.slug}-${language}`,
@@ -46,8 +47,8 @@ export const GET: RequestHandler = async ({ url }) => {
                 constraints: strings(assets.record.constraints),
                 hints: strings(assets.record.hints)
             },
-            fixedPrefix: '',
-            fixedSuffix: '',
+            fixedPrefix: sourcePartition.fixedPrefix,
+            fixedSuffix: sourcePartition.fixedSuffix,
             blocks,
             initialBlockOrder: shuffledAssemblyOrder(blocks),
             correctOrder
