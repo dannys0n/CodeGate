@@ -22,6 +22,7 @@
 		"codegate:catalog": "node scripts/codegate/catalog.mjs",
 		"codegate:candidates": "node scripts/codegate/catalog.mjs --write",
 		"codegate:candidates:ensure": "node scripts/codegate/catalog.mjs --ensure",
+		"codegate:export:android": "node scripts/codegate/export-android.mjs",
 		"codegate:import:audit": "node scripts/codegate/importer/audit.mjs",
 		"codegate:failure-smoke": "node scripts/codegate/failure-smoke.mjs",
 		"intellisense:images": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File desktop/intellisense.ps1 -Install -Languages cpp,python,java,csharp,rust,go,typescript",

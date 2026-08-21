@@ -165,3 +165,7 @@ blob-report/
 /codegate/candidate-manifest.json
 /codegate/candidate-assets.bin
 /codegate/import-smoke-report.json
+
+# Generated portable Android content export.
+/android-export/
+/android-export.zip
