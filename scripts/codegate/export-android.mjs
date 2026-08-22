@@ -92,6 +92,9 @@ async function main() {
 
   for (const [problemId, problem] of Object.entries(manifest.problems)) {
     const record = JSON.parse(readSlice(bundle, problem.record).toString('utf8'));
+    const difficulty = ['Beginner', 'Easy', 'Medium', 'Hard'].includes(record.difficulty)
+      ? record.difficulty
+      : problem.leetcodeDifficulty;
     const name = await functionName(problem);
     for (const language of ['cpp', 'python']) {
       const languageEntry = problem.languages[language];
@@ -108,14 +111,14 @@ async function main() {
         fallbackCount += 1;
         usedFallback = true;
       }
-      const key = `${language}-${String(problem.leetcodeDifficulty).toLowerCase()}`;
+      const key = `${language}-${String(difficulty).toLowerCase()}`;
       if (!shardMap.has(key)) shardMap.set(key, []);
       shardMap.get(key).push({
         id: `${problemId}-${language}`,
         problemId,
         slug: problem.slug,
         title: String(record.title ?? problem.catalogTitle ?? problem.slug),
-        difficulty: problem.leetcodeDifficulty,
+        difficulty,
         language,
         statement: String(record.description ?? ''),
         examples: examples(record.examples),
