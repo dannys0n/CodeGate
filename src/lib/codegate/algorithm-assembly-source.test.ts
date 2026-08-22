@@ -21,6 +21,32 @@ describe('C++ Algorithm Assembly source splitting', () => {
         expect(() => splitCppAssemblySource(source)).toThrow(/no function body/);
     });
 
+    it('keeps for-loop headers and trailing semicolons with their statements', () => {
+        const source = `class Solution {
+public:
+    int solve(vector<int>& values) {
+        auto read = [&]() { return values.size(); };
+        for (int index = 0; index < read(); ++index) {
+            values[index] += 1;
+        }
+        return {values.front()};
+    }
+};
+`;
+        const result = splitCppAssemblySource(source);
+        expect(result.fixedPrefix + result.blocks.map((block) => block.code).join('') + result.fixedSuffix).toBe(source);
+        expect(result.blocks.every((block) => !/^[;{}]+$/.test(block.displayCode.trim()))).toBe(true);
+        expect(result.blocks.some((block) => block.code.includes('for (int index = 0; index < read(); ++index)'))).toBe(true);
+        expect(result.blocks.some((block) => block.code.includes('return {values.front()};'))).toBe(true);
+    });
+
+    it('does not create selectable blocks from redundant empty statements', () => {
+        const source = 'class Solution{public:bool solve(){bool result=false;;return result;}};';
+        const result = splitCppAssemblySource(source);
+        expect(result.fixedPrefix + result.blocks.map((block) => block.code).join('') + result.fixedSuffix).toBe(source);
+        expect(result.blocks.every((block) => !/^;+$/.test(block.displayCode.trim()))).toBe(true);
+    });
+
     it('never presents an already-correct initial order', () => {
         const blocks = splitCppAssemblySource('class S{public:int f(){int x=1;return x;}};').blocks;
         const canonical = blocks.map((block) => block.id);

@@ -49,10 +49,18 @@ function partition(source: string, body: Span, statements: Span[], maximumBlocks
     return { fixedPrefix: source.slice(0, body.start), fixedSuffix: source.slice(body.end), blocks };
 }
 
-type CppScan = { pairs: Map<number, number>; closingBraces: Set<number>; semicolons: Set<number> };
+type CppScan = {
+    pairs: Map<number, number>;
+    closingBraces: Set<number>;
+    groupingOpenings: Set<number>;
+    groupingClosings: Set<number>;
+    semicolons: Set<number>;
+};
 function scanCpp(source: string): CppScan {
     const pairs = new Map<number, number>();
     const closingBraces = new Set<number>();
+    const groupingOpenings = new Set<number>();
+    const groupingClosings = new Set<number>();
     const semicolons = new Set<number>();
     const stack: number[] = [];
     let state: 'code' | 'line-comment' | 'block-comment' | 'single' | 'double' | 'raw' = 'code';
@@ -83,28 +91,38 @@ function scanCpp(source: string): CppScan {
         else if (char === '"') state = 'double';
         else if (char === '{') stack.push(index);
         else if (char === '}') { const opening = stack.pop(); if (opening !== undefined) { pairs.set(opening, index); closingBraces.add(index); } }
+        else if (char === '(' || char === '[') groupingOpenings.add(index);
+        else if (char === ')' || char === ']') groupingClosings.add(index);
         else if (char === ';') semicolons.add(index);
     }
-    return { pairs, closingBraces, semicolons };
+    return { pairs, closingBraces, groupingOpenings, groupingClosings, semicolons };
 }
 
 function cppStatements(source: string, opening: number, closing: number, scan: CppScan): Span[] {
     const boundaries: number[] = [];
     let depth = 0;
+    let groupingDepth = 0;
     for (let index = opening + 1; index < closing; index += 1) {
+        if (scan.groupingOpenings.has(index)) { groupingDepth += 1; continue; }
+        if (scan.groupingClosings.has(index)) { groupingDepth = Math.max(0, groupingDepth - 1); continue; }
         if (scan.pairs.has(index)) { depth += 1; continue; }
         if (scan.closingBraces.has(index) && depth > 0) {
             depth -= 1;
-            if (depth === 0 && !/^\s*(?:else\b|catch\b|while\s*\()/.test(source.slice(index + 1, closing))) boundaries.push(index + 1);
+            if (depth === 0 && !/^\s*(?:;|else\b|catch\b|while\s*\()/.test(source.slice(index + 1, closing))) boundaries.push(index + 1);
             continue;
         }
-        if (scan.semicolons.has(index) && depth === 0) boundaries.push(index + 1);
+        if (scan.semicolons.has(index) && depth === 0 && groupingDepth === 0) boundaries.push(index + 1);
     }
     const unique = [...new Set(boundaries)].filter((end) => end > opening + 1 && end < closing).sort((a, b) => a - b);
     const spans: Span[] = [];
     let start = opening + 1;
     for (const end of unique) {
-        if (source.slice(start, end).trim()) { spans.push({ start, end }); start = end; }
+        const statement = source.slice(start, end).trim();
+        if (statement) {
+            if (/^;+$/.test(statement) && spans.length) spans[spans.length - 1].end = end;
+            else spans.push({ start, end });
+            start = end;
+        }
     }
     if (source.slice(start, closing).trim()) spans.push({ start, end: closing });
     else if (spans.length) spans[spans.length - 1].end = closing;
